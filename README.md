@@ -320,19 +320,26 @@ GodotProject/                    ← Godot 项目根
 │       └── Utility/             ← DefaultLogHelper, NodeExtension, PhysicsCheck2D, GTween, LayerMask
 │   └── GameFramework.tscn       ← 主场景
 ├── TheGame/                     ← 活跃游戏项目
+│   ├── MainPack/                 ← 主包（共享核心，随应用打包，不参与热更）
+│   │   ├── Scripts/
+│   │   │   ├── ObjectPool/       ← NodePool, NodeObject, PoolContainer
+│   │   │   ├── Procedure/        ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
+│   │   │   ├── Resources/        ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig, ScriptGenerateRes, UpdateSettingRes
+│   │   │   └── UI/               ← LogInForm, QuestionTips（共享 UI）
+│   │   ├── Fonts/                ← simhei.ttf
+│   │   ├── Resources/            ← .tres 配置资源（EntityGroupRes, UIGroupRes, SoundGroupRes 等）
+│   │   ├── Themes/               ← MainThemes.tres
+│   │   └── UI/                   ← .tscn 场景文件（LogInForm, QuestionTips）
 │   ├── GameScripts/
-│   │   ├── Entity/              ← ActorEntity, CatEntity, AngerEntity, GanTanEntity.Logic, DropItem
-│   │   ├── UI/                  ← MenuForm.Logic, MainForm.Logic, GameOver.Logic, DamagePop 等
-│   │   ├── Procedure/           ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
-│   │   ├── Event/               ← BlockClickedEventArgs, ScoreChangedEventArgs 等
-│   │   ├── Archive/             ← GameCatalogue, GameData
-│   │   ├── Manager/             ← LevelManager (SingletonNode, 波次系统)
-│   │   ├── ObjectPool/          ← NodePool, NodeObject, PoolContainer
-│   │   ├── Resources/           ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig 等资源定义
+│   │   ├── Entity/               ← ActorEntity, CatEntity, AngerEntity, GanTanEntity.Logic, DropItem
+│   │   ├── UI/                   ← MenuForm.Logic, MainForm.Logic, GameOver.Logic, DamagePop 等
+│   │   ├── Event/                ← BlockClickedEventArgs, ScoreChangedEventArgs 等
+│   │   ├── Archive/              ← GameCatalogue, GameData
+│   │   ├── Manager/              ← LevelManager (SingletonNode, 波次系统)
 │   │   └── GameProto/
-│   │       ├── GameConfig/      ← Luban 生成的 C# 数据类（EntityConfig, TbEntityConfig 等）
-│   │       ├── EntityGe/        ← 实体脚本 Ge（自动覆盖）
-│   │       └── UIGe/            ← UI 脚本 Ge（自动覆盖）
+│   │       ├── GameConfig/       ← Luban 生成的 C# 数据类（EntityConfig, TbEntityConfig 等）
+│   │       ├── EntityGe/         ← 实体脚本 Ge（自动覆盖）
+│   │       └── UIGe/             ← UI 脚本 Ge（自动覆盖，MenuForm/MainForm/GameOver/SettingForm）
 │   ├── DataTables/
 │   │   ├── GameConfigs/         ← Luban 生成的二进制配置 (.bytes)
 │   │   └── Localizations/      ← 本地化文本 (.txt)
@@ -572,7 +579,7 @@ TheGame/DataTables/GameConfigs/*.bytes          ← 二进制数据（运行时�
 
 模板位于 `Framework/GodotGameFrameworkCore/Templet/`（`UIFormTemplet.txt` + `EntityTemplet.txt` 及对应 Logic 模板）。
 
-**配置文件** `TheGame/Resources/ScriptGenerateRes.tres`:
+**配置文件** `TheGame/MainPack/Resources/ScriptGenerateRes.tres`:
 
 | 字段 | 说明 | 默认值 |
 |------|------|--------|

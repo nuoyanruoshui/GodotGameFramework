@@ -3797,3 +3797,13 @@ Godot/subpackages/SpritesBundle.pck
 Godot/subpackages/UIsBundle.pck
 ---
 
+## Session End: 20260729_180446
+### Commits
+1060432 更新文档
+1fc721f 1
+80653c8 添加快捷打开导出文件夹按钮
+ef9255f 主子包文件夹
+### Uncommitted Changes
+README.md
+---
+
