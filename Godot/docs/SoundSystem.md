@@ -80,7 +80,7 @@ GameFramework
 | `GodotGameFrameworkCore/Sound/DefaultSoundGroupHelper.cs` | 组容器节点（空实现，仅承载 Agent） |
 | `GodotGameFrameworkCore/Sound/DefaultSoundHelper.cs` | `ReleaseSoundAsset` 空实现（Godot 资源由引擎引用计数管理） |
 | `GodotGameFrameworkCore/Sound/SoundExtension.cs` | `PlayBGM / PlaySFX / PlayUISound / StopBGM` |
-| `TheGame/GameScripts/Resources/SoundGroup.cs` / `SoundGroupRes.cs` | 声音组定义资源（Name / AgentCounts / AvoidBeingReplacedBySamePriority） |
+| `TheGame/MainPack/Scripts/Resources/SoundGroup.cs` / `SoundGroupRes.cs` | 声音组定义资源（Name / AgentCounts / AvoidBeingReplacedBySamePriority） |
 
 ---
 
@@ -88,7 +88,7 @@ GameFramework
 
 ### 3.1 声音组与启动注册
 
-`TheGame/Resources/SoundGroupRes.tres` 定义三个组，由 `ProcedurePrelode.LoadSoundGroup()` 启动时注册：
+`TheGame/MainPack/Resources/SoundGroupRes.tres` 定义三个组，由 `ProcedurePrelode.LoadSoundGroup()` 启动时注册：
 
 | 组名 | AgentCounts | 用途 | 特殊处理（按组名硬编码于 `SoundComponent.AddSoundGroup`） |
 |------|:--:|------|------|
@@ -186,7 +186,7 @@ PlaySound(...) → serialId（立即返回，无论成败）
 | `m_SoundHelperTypeName` | `GodotGameFramework.Sound.DefaultSoundHelper` | 声音辅助器 |
 | `m_SoundGroupHelperTypeName` | `GodotGameFramework.Sound.DefaultSoundGroupHelper` | 组辅助器 |
 | `m_SoundAgentHelperTypeName` | `GodotGameFramework.Sound.DefaultSoundAgentHelper` | 代理辅助器（可替换为 2D/3D 实现） |
-| `SoundGroupRes` | `TheGame/Resources/SoundGroupRes.tres` | 声音组定义 |
+| `SoundGroupRes` | `TheGame/MainPack/Resources/SoundGroupRes.tres` | 声音组定义 |
 
 ### 4.2 方法总览
 

@@ -238,7 +238,7 @@ GF.Download.Paused = true;       // 暂停整个队列（进行中的代理完�
 
 ## 5. 热更流程集成（ProcedureUpdate）
 
-`TheGame/GameScripts/Procedure/ProcedureUpdate.cs` 是本模块的主要消费者。完整流程：
+`TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs` 是本模块的主要消费者。完整流程：
 
 ```
 ProcedureLaunch → ProcedureUpdate → ProcedurePrelode → ProcedureGame

@@ -164,7 +164,7 @@ pool.Capacity = 32;  pool.ExpireTime = 120f;  pool.AutoReleaseInterval = 60f;  p
 
 ### 4.2 自定义池化对象
 
-参考 `TheGame/GameScripts/ObjectPool/NodeObject.cs`（NodePool 的 `ObjectBase` 子类）：
+参考 `TheGame/MainPack/Scripts/ObjectPool/NodeObject.cs`（NodePool 的 `ObjectBase` 子类）：
 
 ```csharp
 public class MyPoolObject : ObjectBase
@@ -239,7 +239,7 @@ pool.Unspawn(obj.Target);          // → OnUnspawn
 
 ## 7. NodePool 系统
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/GameScripts/ObjectPool/`、`TheGame/GameScripts/Resources/NodePoolConfig.cs`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/MainPack/Scripts/ObjectPool/`、`TheGame/MainPack/Scripts/Resources/NodePoolConfig.cs`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
 > NodePool 是基于 `GF.ObjectPool` 构建的**场景节点级对象池封装**，提供开箱即用的 Godot Node 复用能力：懒加载实例化、自动回收、编辑器扫描发现。
 
 ---
@@ -379,7 +379,7 @@ public partial class NodePoolConfig : Resource
 }
 ```
 
-资源路径：`res://TheGame/Resources/NodePoolConfigRes.tres`，通过 `ResourcesCollectionConstant.Resources_NodePoolConfigRes` 常量引用。
+资源路径：`res://TheGame/MainPack/Resources/NodePoolConfigRes.tres`，通过 `ResourcesCollectionConstant.Resources_NodePoolConfigRes` 常量引用。
 
 #### 7.3.5 `PoolContainer : Node`（容器节点）
 
@@ -487,17 +487,17 @@ AddInspectorPlugin(m_NodePoolInspector);
 
 | 文件 | 职责 |
 |------|------|
-| `TheGame/GameScripts/ObjectPool/NodePool.cs` | 池管理器（SingletonNode）：Config 加载、池创建、Get/Release API、容器/追踪字典 |
-| `TheGame/GameScripts/ObjectPool/NodeObject.cs` | `ObjectBase` 子类：包装 `Node` 实例，`Release` 时 `QueueFree` |
-| `TheGame/GameScripts/ObjectPool/PoolContainer.cs` | 池容器节点：保管空闲 Node，按 `PoolName` 索引 |
-| `TheGame/GameScripts/Resources/NodePoolConfig.cs` | `[GlobalClass]` 全局配置资源：Entries 列表 + 全局默认值 |
-| `TheGame/GameScripts/Resources/PoolEntry.cs` | `[GlobalClass]` 单条目配置：Scene 路径 + 可选的 Capacity/ExpireTime/AutoReleaseInterval |
-| `TheGame/Resources/NodePoolConfigRes.tres` | 配置资源实例，由编辑器扫描生成 |
+| `TheGame/MainPack/Scripts/ObjectPool/NodePool.cs` | 池管理器（SingletonNode）：Config 加载、池创建、Get/Release API、容器/追踪字典 |
+| `TheGame/MainPack/Scripts/ObjectPool/NodeObject.cs` | `ObjectBase` 子类：包装 `Node` 实例，`Release` 时 `QueueFree` |
+| `TheGame/MainPack/Scripts/ObjectPool/PoolContainer.cs` | 池容器节点：保管空闲 Node，按 `PoolName` 索引 |
+| `TheGame/MainPack/Scripts/Resources/NodePoolConfig.cs` | `[GlobalClass]` 全局配置资源：Entries 列表 + 全局默认值 |
+| `TheGame/MainPack/Scripts/Resources/PoolEntry.cs` | `[GlobalClass]` 单条目配置：Scene 路径 + 可选的 Capacity/ExpireTime/AutoReleaseInterval |
+| `TheGame/MainPack/Resources/NodePoolConfigRes.tres` | 配置资源实例，由编辑器扫描生成 |
 | `addons/ComponentInsoector/NodePoolInspectorPlugin.cs` | 编辑器 Inspector 插件：扫描 IPoolable 场景、UI 按钮（Scan/Clear） |
 | `TheGame/GameScripts/UI/DamagePop.cs` | 使用示例：`Label : IPoolable`，500ms 后自动回池 |
 | `TheGame/GameScripts/Entity/DropItem.cs` | 使用示例：`Node2D : IPoolable`，GTween DOMove 动画结束后自动回池 |
 | `TheGame/GameScripts/Entity/GanTanEntity.Logic.cs` | 使用示例：子弹命中时 `NodePool.Get<DamagePop>(...)` |
-| `TheGame/GameScripts/Procedure/ProcedureLaunch.cs` | 启动入口：`NodePool.Instance.Active()` 初始化池 |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureLaunch.cs` | 启动入口：`NodePool.Instance.Active()` 初始化池 |
 
 ---
 

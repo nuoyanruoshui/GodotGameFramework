@@ -52,18 +52,25 @@ GodotProject/
       Templet/                      ← Script generation templates (UIForm/Entity, Ge/Logic)
       Utility/                      ← PhysicsCheck2D, NodeExtension, DefaultLogHelper, GTween, LayerMask
   TheGame/                          ← Active game project
+    MainPack/                       ← Main package (shared core infrastructure)
+      Scripts/
+        ObjectPool/                 ← NodePool, NodeObject, PoolContainer
+        Procedure/                  ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
+        Resources/                  ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig, ScriptGenerateRes, UpdateSettingRes
+        UI/                         ← LogInForm, QuestionTips (shared UI)
+      Fonts/                        ← simhei.ttf
+      Resources/                    ← .tres config resources (EntityGroupRes, UIGroupRes, etc.)
+      Themes/                       ← MainThemes.tres
+      UI/                           ← .tscn scene files (LogInForm, QuestionTips)
     GameScripts/
       Entity/                       ← ActorEntity, CatEntity, AngerEntity, GanTanEntity (Logic halves)
-      UI/                           ← MenuForm, MainForm, GameOverForm, PauseMenuForm, TestOverlayForm, LogInForm
-      Procedure/                    ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
+      UI/                           ← MenuForm, MainForm, GameOverForm, PauseMenuForm, TestOverlayForm
       Event/                        ← BlockClickedEventArgs, ScoreChangedEventArgs, TestPhaseChangedEventArgs
-      Resources/                    ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig definitions
       Archive/                      ← GameCatalogue, GameData (ArchiveCatalogue/ArchiveData extensions)
       Manager/                      ← LevelManager (SingletonNode, wave system)
-      ObjectPool/                   ← NodePool, NodeObject, PoolContainer
       GameProto/GameConfig/         ← Luban-generated C# (EntityConfig, TbEntityConfig, EntityId, etc.)
       GameProto/EntityGe/           ← Generated entity Ge halves
-      GameProto/UIGe/               ← Generated UI form Ge halves
+      GameProto/UIGe/               ← Generated UI form Ge halves (MenuForm, MainForm, GameOver, SettingForm)
   addons/                           ← Editor plugins
     ComponentInsoector/             ← Custom Godot Inspector for framework components
     ExportInspector/                ← AssetBundle visual export management panel (C# EditorPlugin)
@@ -232,7 +239,7 @@ Custom event args inherit `GameFrameworkEventArgs`. TheGame examples: `BlockClic
 
 ### NodePool
 
-`TheGame/GameScripts/ObjectPool/NodePool.cs` — `SingletonNode<NodePool>`, a general-purpose node instance pool built on `GF.ObjectPool`. Objects implement `IPoolable` (`OnGet`/`OnRelease`), config-driven via `NodePoolConfigRes.tres`, lazy-instantiate on first `Get`, and auto-recycle orphan nodes. Details: `docs/ObjectPoolSystem.md` §7, `docs/NodePoolSystem.md`.
+`TheGame/MainPack/Scripts/ObjectPool/NodePool.cs` — `SingletonNode<NodePool>`, a general-purpose node instance pool built on `GF.ObjectPool`. Objects implement `IPoolable` (`OnGet`/`OnRelease`), config-driven via `NodePoolConfigRes.tres`, lazy-instantiate on first `Get`, and auto-recycle orphan nodes. Details: `docs/ObjectPoolSystem.md` §7, `docs/NodePoolSystem.md`.
 
 ```csharp
 // 获取 → 使用 → 自动归还
@@ -262,7 +269,7 @@ UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand)
 
 Templates: `Framework/GodotGameFrameworkCore/Templet/` (`UIFormTemplet.txt` / `UIFormLogicTemplet.txt` + entity equivalents).
 
-**Config:** `TheGame/Resources/ScriptGenerateRes.tres` (`ScriptGenerateRes : Resource`):
+**Config:** `TheGame/MainPack/Resources/ScriptGenerateRes.tres` (`ScriptGenerateRes : Resource`):
 | Field | Purpose | Default |
 |-------|---------|---------|
 | `NameSpace` | 生成的命名空间 | `"GameLogic"` |

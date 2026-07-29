@@ -1,6 +1,6 @@
 # 实体系统 (Entity Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Entity/`、`Framework/GodotGameFrameworkCore/Entity/`、`TheGame/GameScripts/Entity/`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Entity/`、`Framework/GodotGameFrameworkCore/Entity/`、`TheGame/GameScripts/Entity/`、`TheGame/MainPack/Scripts/Resources/`
 > 本文档描述 GGF 的实体系统：生命周期、实体组与对象池、配置驱动的显示/隐藏 API、TheGame 实体继承树与新增实体步骤。
 
 ---
@@ -78,7 +78,7 @@ HideEntity：
 | `GodotGameFrameworkCore/Entity/EntityGroupHelperBase.cs` / `DefaultEntityGroupHelper.cs` | 实体组容器节点（每组一个 Node，挂在 EntityComponent 下） |
 | `TheGame/GameScripts/Entity/*.cs` | 游戏实体：ActorEntity / CatEntity / AngerEntity / GanTanEntity.Logic |
 | `TheGame/GameScripts/GameProto/EntityGe/*.cs` | 生成的实体 Ge 文件（会被覆盖，勿手改） |
-| `TheGame/GameScripts/Resources/EntityGroup(.Res).cs` | 实体组配置资源（`[GlobalClass]`） |
+| `TheGame/MainPack/Scripts/Resources/EntityGroup.cs` / `EntityGroupRes.cs` | 实体组配置资源（`[GlobalClass]`） |
 
 ---
 
@@ -110,7 +110,7 @@ void OnAttached/OnDetached/OnAttachTo/OnDetachFrom(IEntity other, object userDat
 组注册发生在 `ProcedurePrelode.LoadEntityGroup()`：读取 `EntityComponent` Inspector 上挂的 `EntityGroupRes`（`[GlobalClass]` 资源）：
 
 ```csharp
-public partial class EntityGroup : Resource {   // TheGame/GameScripts/Resources/EntityGroup.cs
+public partial class EntityGroup : Resource {   // TheGame/MainPack/Scripts/Resources/EntityGroup.cs
     [Export] public string Name;              // 组名
     [Export] public float ReleaseInterval;    // 池自动释放间隔（秒）
     [Export] public int Capacity;             // 池容量

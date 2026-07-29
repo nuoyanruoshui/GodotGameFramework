@@ -90,9 +90,9 @@ UIManager(C# 事件) → UIComponent(转发) → EventComponent(全局事件, �
 | `GodotGameFrameworkCore/UI/IStringKey.cs` | 本地化文本收集接口（`void SetLocalizationValue()`） |
 | `GodotGameFrameworkCore/Templet/UIFormTemplet.txt` / `UIFormLogicTemplet.txt` | 脚本生成模板（Ge / Logic） |
 | `addons/ComponentInsoector/ScriptGenerateInspector.cs` | 编辑器脚本生成器（Inspector 按钮） |
-| `TheGame/GameScripts/Resources/ScriptGenerateRes.cs` + `TheGame/Resources/ScriptGenerateRes.tres` | 生成器配置 |
-| `TheGame/GameScripts/GameProto/UIGe/*.cs` | 已生成的 Ge 文件（MenuForm/MainForm/LogInForm/QuestionTips/SettingForm） |
-| `TheGame/GameScripts/UI/*.Logic.cs` | 已生成的 Logic 文件（业务逻辑） |
+| `TheGame/MainPack/Scripts/Resources/ScriptGenerateRes.cs` + `TheGame/MainPack/Resources/ScriptGenerateRes.tres` | 生成器配置 |
+| `TheGame/GameScripts/GameProto/UIGe/*.cs` | 已生成的 Ge 文件（MenuForm/MainForm/GameOver/SettingForm；LogInForm/QuestionTips 的 Ge 已移至 `TheGame/MainPack/Scripts/UI/`） |
+| `TheGame/GameScripts/UI/*.Logic.cs` + `TheGame/MainPack/Scripts/UI/*.Logic.cs` | 已生成的 Logic 文件（业务逻辑；LogInForm/QuestionTips 在 MainPack，其余在 GameScripts） |
 
 ---
 
@@ -229,7 +229,7 @@ public void SetLocalizationValue()
 | `m_InstanceRoot` | null | UI 根节点；为空时查找/创建名为 `InstanceRoot` 的 CanvasLayer |
 | `m_UIFormHelperTypeName` | `GodotGameFramework.UI.DefaultUIFormHelper` | 界面辅助器类型名（反射创建） |
 | `m_UIGroupHelperTypeName` | `GodotGameFramework.UI.DefaultUIGroupHelper` | 界面组辅助器类型名 |
-| `UIGroupRes` | `TheGame/Resources/UIGroupRes.tres` | 界面组定义资源（`UIGroup[]{ Name, Depth }`，TheGame 仅 "Normal"） |
+| `UIGroupRes` | `TheGame/MainPack/Resources/UIGroupRes.tres` | 界面组定义资源（`UIGroup[]{ Name, Depth }`，TheGame 仅 "Normal"） |
 
 界面组由 `ProcedurePrelode.LoadUIGroup()` 在启动时遍历 `GF.UI.UIGroupRes.Groups` 调用 `GF.UI.AddUIGroup(name, depth)` 注册。
 
@@ -307,7 +307,7 @@ Inspector 底部三个按钮：**Bind UI Script**（生成+挂载）、**Delete 
 - Godot 要求**文件名与类名一致**才能在 Inspector 显示 `[Export]` 字段，因此 Ge 文件必须叫 `<类名>.cs`；Logic 文件带 `.Logic` 后缀放另一目录，两者互不冲突
 - 模板占位符：`_NAMESPACE_` / `_PARENT_` / `_CLASSNAME_` / `_CHILDNODES_`
 
-### 6.2 配置（`TheGame/Resources/ScriptGenerateRes.tres` → `ScriptGenerateRes : Resource`）
+### 6.2 配置（`TheGame/MainPack/Resources/ScriptGenerateRes.tres` → `ScriptGenerateRes : Resource`）
 
 | 字段 | 默认值 | 用途 |
 |------|--------|------|

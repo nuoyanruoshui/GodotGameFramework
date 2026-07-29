@@ -1,6 +1,6 @@
 # 流程系统 (Procedure Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Procedure/`、`Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs`、`TheGame/GameScripts/Procedure/`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Procedure/`、`Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs`、`TheGame/MainPack/Scripts/Procedure/`
 > 本文档描述 GGF 的流程系统：Procedure 即顶层 FSM 的设计、启动入口、状态切换、TheGame 现有流程链（Launch → Update → Prelode → Game）与新增流程的完整步骤。
 
 ---
@@ -70,10 +70,10 @@ ProcedureLaunch ──► ProcedureUpdate ──► ProcedurePrelode ──► P
 | `GameFramework/Procedure/IProcedureManager.cs` | 管理器接口 |
 | `GameFramework/Procedure/ProcedureManager.cs` | 持有流程 FSM；Initialize/StartProcedure/HasProcedure/GetProcedure |
 | `GodotGameFrameworkCore/Procedure/ProcedureComponent.cs` | Inspector 配置 + 反射装配 + `StartProcedure()` |
-| `TheGame/GameScripts/Procedure/ProcedureLaunch.cs` | 入口：框架组件自检 |
-| `TheGame/GameScripts/Procedure/ProcedureUpdate.cs` | 热更：版本比对、并发下载、子包加载（详见 DownloadSystem.md §5） |
-| `TheGame/GameScripts/Procedure/ProcedurePrelode.cs` | 预载：本地化 + UI/Entity/Sound 组注册 |
-| `TheGame/GameScripts/Procedure/ProcedureGame.cs` | 玩法：标记启动成功、打开主菜单 |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureLaunch.cs` | 入口：框架组件自检 |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs` | 热更：版本比对、并发下载、子包加载（详见 DownloadSystem.md §5） |
+| `TheGame/MainPack/Scripts/Procedure/ProcedurePrelode.cs` | 预载：本地化 + UI/Entity/Sound 组注册 |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureGame.cs` | 玩法：标记启动成功、打开主菜单 |
 
 ---
 
@@ -202,7 +202,7 @@ GF.Procedure.LoadProcedures()        // 按 Inspector 配置装配（OnInit 自�
 
 以新增 `ProcedureSettlement`（结算流程）为例：
 
-**1) 建类**（`TheGame/GameScripts/Procedure/ProcedureSettlement.cs`，与现有流程一致放全局命名空间）：
+**1) 建类**（`TheGame/MainPack/Scripts/Procedure/ProcedureSettlement.cs`，与现有流程一致放全局命名空间）：
 
 ```csharp
 using GameFramework.Procedure;
@@ -258,7 +258,7 @@ public class ProcedureSettlement : ProcedureBase
 慎用。流程 FSM 在 `ProcedureComponent.OnInit`（组件进树阶段）创建，此时**其余组件可能尚未注册**。组件依赖统一放 `OnEnter`（`ProcedureLaunch` 的组件自检就是为此存在）。
 
 **Q: Prelode 某个组注册失败卡住怎么排查？**
-看 `Add XX group ... failure.` 警告；该流程无重试，修复资源配置（`TheGame/Resources/` 下的 Group 定义）后重启。
+看 `Add XX group ... failure.` 警告；该流程无重试，修复资源配置（`TheGame/MainPack/Resources/` 下的 Group 定义）后重启。
 
 **Q: 与 CLAUDE.md 描述的差异？**
 CLAUDE.md 写 "ProcedureLaunch 加载实体/UI/声音组与本地化后切到 ProcedureGame"——实际该职责在 `ProcedurePrelode`；现行流程链为 Launch → Update → Prelode → Game（四段）。

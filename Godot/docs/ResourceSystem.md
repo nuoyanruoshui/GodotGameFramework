@@ -140,7 +140,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 `SubpackDir` 选择优先级（`ProcedureUpdate.GetOrCreateHotUpdateDir`）：
 
-1. `UpdateSettingRes.HotUpdatePath`（显式配置）
+1. `UpdateSettingRes.HotUpdatePath`（显式配置；资源文件位于 `TheGame/MainPack/Resources/UpdateSettingRes.tres`）
 2. 游戏安装目录 `subpackages/`（写测试通过时；编辑器下为 `res://../../Godot/subpackages`）
 3. `user://subpackages/`（兜底，一定可写）
 
@@ -260,6 +260,7 @@ byte[] bytes = GF.Resource.LoadBinary("res://TheGame/GameProto/GameConfig/tbenti
    - 仅产物模式（`export_only_imported`）：跳过源文件，仅 `.import` + 导入产物
 4. 生成 `GameFrameworkVersion.dat`：逐包填 `Name/Size/SHA256/Url`（`Url` = `UpdateSettingRes.RemoteUrl + "/{Name}.pck"`），`Version` 取面板输入（校验 `\d+.\d+.\d+` 格式）
 5. 导出目录与版本号持久化在 EditorSettings（`godot_asset_bundle/*`）
+6. 「打开」按钮：在导出目录行旁，点击调用 `OS.ShellOpen` 直接打开导出文件夹，方便检查产出或上传
 
 产出目录整体上传服务器即完成一次热更发布（客户端流程见 `DownloadSystem.md` §5）。
 

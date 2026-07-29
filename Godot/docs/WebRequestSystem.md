@@ -170,7 +170,7 @@ var resp = await GF.WebRequest.SendRequestAsync("https://api.example.com/login",
 
 ## 5. 热更版本清单请求实战（ProcedureUpdate）
 
-`TheGame/GameScripts/Procedure/ProcedureUpdate.cs` 是本模块的主要消费者：热更第 1 步用 WebRequest 拉取远端版本清单（小 JSON），后续大文件才交给 Download。
+`TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs` 是本模块的主要消费者：热更第 1 步用 WebRequest 拉取远端版本清单（小 JSON），后续大文件才交给 Download。
 
 ```csharp
 // versionUrl = "{RemoteUrl}/GameFrameworkVersion.dat"

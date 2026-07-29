@@ -1,6 +1,6 @@
 # NodePool 通用节点池系统
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/GameScripts/ObjectPool/`、`TheGame/GameScripts/Resources/`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/MainPack/Scripts/ObjectPool/`、`TheGame/MainPack/Scripts/Resources/`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
 > 本文档描述 GGF 的通用 Node 对象池：IPoolable 接口、配置驱动注册、懒加载 Instantiate、孤儿节点设计、归还流程与编辑器扫描工具。
 
 ---
@@ -46,12 +46,12 @@ PoolContainer (Node)                    ├── OnRelease()
 
 | 文件 | 职责 |
 |------|------|
-| `TheGame/GameScripts/ObjectPool/NodePool.cs` | 主池管理器：`OnLoad` 注册池、`Get<T>` 获取、`Release` 归还 |
-| `TheGame/GameScripts/ObjectPool/NodeObject.cs` | `ObjectBase` 子类，包装池中的 Node 实例 |
-| `TheGame/GameScripts/ObjectPool/PoolContainer.cs` | 场景树容器（轻量 Node，仅存 PoolName 元数据） |
-| `TheGame/GameScripts/Resources/NodePoolConfig.cs` | 配置资源：全局默认参数 + `Array<PoolEntry>` |
-| `TheGame/GameScripts/Resources/PoolEntry.cs` | 单个池条目：Scene 路径 + 容量/过期/释放间隔 |
-| `TheGame/Resources/NodePoolConfigRes.tres` | 配置文件实例（编辑器选中后显示扫描按钮） |
+| `TheGame/MainPack/Scripts/ObjectPool/NodePool.cs` | 主池管理器：`OnLoad` 注册池、`Get<T>` 获取、`Release` 归还 |
+| `TheGame/MainPack/Scripts/ObjectPool/NodeObject.cs` | `ObjectBase` 子类，包装池中的 Node 实例 |
+| `TheGame/MainPack/Scripts/ObjectPool/PoolContainer.cs` | 场景树容器（轻量 Node，仅存 PoolName 元数据） |
+| `TheGame/MainPack/Scripts/Resources/NodePoolConfig.cs` | 配置资源：全局默认参数 + `Array<PoolEntry>` |
+| `TheGame/MainPack/Scripts/Resources/PoolEntry.cs` | 单个池条目：Scene 路径 + 容量/过期/释放间隔 |
+| `TheGame/MainPack/Resources/NodePoolConfigRes.tres` | 配置文件实例（编辑器选中后显示扫描按钮） |
 | `addons/ComponentInsoector/NodePoolInspectorPlugin.cs` | 编辑器 Inspector 插件：扫描按钮 + 反射匹配 |
 
 ---
