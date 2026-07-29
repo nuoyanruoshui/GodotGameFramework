@@ -66,6 +66,7 @@ namespace GodotGameFramework.Editor
         private Tree _bundleTree;
         private Button _btnRefresh;
         private Button _btnExportFolder;
+        private Button _openExportFolder;
         private LineEdit _txtVersion;   // 版本号输入
         private Button _btnExportAll;
         private LineEdit _txtExportFolder;
@@ -145,6 +146,10 @@ namespace GodotGameFramework.Editor
             _btnExportFolder = new Button { Text = "浏览..." };
             _btnExportFolder.Pressed += OnSelectExportFolderPressed;
             folderRow.AddChild(_btnExportFolder);
+
+            _openExportFolder = new Button { Text = "打开" };
+            _openExportFolder.Pressed += OnOpenExportFolderPressed;
+            folderRow.AddChild(_openExportFolder);
 
             vbox.AddChild(folderRow);
 
@@ -726,6 +731,19 @@ namespace GodotGameFramework.Editor
 
             EditorInterface.Singleton.GetBaseControl().AddChild(dialog);
             dialog.PopupCenteredRatio(0.6f);
+        }
+        private void OnOpenExportFolderPressed()
+        {
+            if (string.IsNullOrEmpty(_exportFolder))
+            {
+                var dialog = new ConfirmationDialog();
+                dialog.Title = "警告";
+                dialog.DialogText = "导出文件夹为空";
+                dialog.Confirmed += () => dialog.QueueFree();
+                dialog.Canceled += () => dialog.QueueFree();
+                return;
+            }
+            OS.ShellOpen(_exportFolder);
         }
 
         // ═══════════════════════════════════════════════════════════
