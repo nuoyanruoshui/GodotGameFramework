@@ -14,25 +14,19 @@ namespace GameConfig
 public partial class Tables
 {
     public UI.TbUIFormConfig TbUIFormConfig {get; }
-    public Character.TbCharacterConfig TbCharacterConfig {get; }
     public Entity.TbEntityConfig TbEntityConfig {get; }
-    public Level.TbLevelConfig TbLevelConfig {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
         TbUIFormConfig = new UI.TbUIFormConfig(loader("ui_tbuiformconfig"));
-        TbCharacterConfig = new Character.TbCharacterConfig(loader("character_tbcharacterconfig"));
         TbEntityConfig = new Entity.TbEntityConfig(loader("entity_tbentityconfig"));
-        TbLevelConfig = new Level.TbLevelConfig(loader("level_tblevelconfig"));
         ResolveRef();
     }
     
     private void ResolveRef()
     {
         TbUIFormConfig.ResolveRef(this);
-        TbCharacterConfig.ResolveRef(this);
         TbEntityConfig.ResolveRef(this);
-        TbLevelConfig.ResolveRef(this);
     }
 }
 
