@@ -7,6 +7,7 @@ namespace GodotGameFramework.Web;
 /// Web 请求代理，封装 Godot HttpRequest 节点。
 /// 每个实例代表一个独立的 HTTP 请求。
 /// </summary>
+[GlobalClass]
 public partial class WebRequestAgent : HttpRequest
 {
     /// <summary>
