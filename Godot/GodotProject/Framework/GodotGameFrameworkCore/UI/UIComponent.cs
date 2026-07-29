@@ -691,6 +691,10 @@ namespace GodotGameFramework.UI
         {
             return OpenUIFormAsyncInternal(uiFormAssetName, uiGroupName, priority, pauseCoveredUIForm, userData);
         }
+        public Task<IUIForm> OpenUIFormAsync(string uiFormAssetName, string uiGroupName, bool pauseCoveredUIForm, object userData = null)
+        {
+            return OpenUIFormAsyncInternal(uiFormAssetName, uiGroupName, DefaultPriority, pauseCoveredUIForm, userData);
+        }
         public Task<IUIForm> OpenUIFormAsync(string uiFormAssetName, string uiGroupName, object userData = null)
         {
             return OpenUIFormAsyncInternal(uiFormAssetName, uiGroupName, DefaultPriority, false, userData);

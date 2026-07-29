@@ -100,7 +100,7 @@ UIManager(C# 事件) → UIComponent(转发) → EventComponent(全局事件, �
 
 ### 3.1 UIForm 生命周期
 
-`IUIForm` 定义 11 个生命周期回调，由 UIManager / UIGroup 驱动：
+`IUIForm` 定义 11 个生命周期回调，由 UIManager / UIGroup 驱动。中间态回调（`OnCover/OnReveal/OnPause/OnResume/OnRefocus`）的触发均由 `UIGroup.Refresh()` 算法决定，详见 §3.2。
 
 ```
 OnInit(serialId, assetName, uiGroup, pauseCovered, isNewInstance, userData)
@@ -108,11 +108,13 @@ OnInit(serialId, assetName, uiGroup, pauseCovered, isNewInstance, userData)
     ▼
 OnOpen(userData)          → 模板默认 Visible = true
     │
-    ├─ OnCover()/OnReveal()   ← 被上层界面遮挡 / 遮挡解除（Refresh 驱动）
-    ├─ OnPause()/OnResume()   ← 上层界面 PauseCoveredUIForm=true 时暂停 / 恢复
-    ├─ OnRefocus(userData)    ← RefocusUIForm 激活到组内最前
+    ├─ OnCover()              ← 上方有新界面打开 / 组暂停 / 界面被移除（§3.2）
+    ├─ OnReveal()             ← 上方遮挡界面被关闭 / 此界面成为最上层（§3.2）
+    ├─ OnPause()              ← 上方界面 PauseCoveredUIForm=true / 组暂停 / 界面被移除（§3.2）
+    ├─ OnResume()             ← 上方暂停界面被关闭 / 组恢复（§3.2）
+    ├─ OnRefocus(userData)    ← GF.UI.RefocusUIForm() 显式调用，移到链表头 + Refresh（§3.2.4）
     ├─ OnUpdate(elapse, real) ← 每帧轮询（组内自上而下，遇 Paused 即停）
-    ├─ OnDepthChanged(groupDepth, depthInGroup) ← 组内排序变化
+    ├─ OnDepthChanged(groupDepth, depthInGroup) ← 组内排序变化，每次 Refresh 都会触发
     ▼
 OnClose(isShutdown, userData) → 模板默认 Visible = false
     ▼
@@ -135,14 +137,126 @@ public void OnInit(int serialId, ..., bool isNewInstance, object userData)
 
 ### 3.2 界面组与 Refresh 算法（`UIManager.UIGroup.Refresh`）
 
-- 组内界面用**链表**管理，`AddUIForm` 永远 `AddFirst`——**链表头 = 最上层界面**
-- `Refresh` 从头遍历：
-  - 深度从 `UIFormCount` 递减分配（最上层深度最大），触发 `OnDepthChanged`
-  - 第一个未被遮挡的界面收到 `OnReveal`，其余全部 `OnCover`
-  - 某界面 `PauseCoveredUIForm == true` → 其下所有界面 `OnCover` + `OnPause`
-  - 组自身 `Pause = true` → 组内全部暂停
-- `RefocusUIForm` = 把节点移回链表头 + `Refresh` + `OnRefocus`
-- 渲染层级两级：组间靠 `CanvasLayer.Layer`（= 组 Depth），组内靠 Godot 子节点树顺序 + `OnDepthChanged` 通知（框架不主动 MoveChild，界面可在回调中自行处理）
+#### 3.2.0 数据结构
+
+组内界面用**双向链表**（`LinkedList<UIFormInfo>`）管理，`AddUIForm` 永远 `AddFirst`——**链表头 = 最上层界面**。
+
+每个 `UIFormInfo`（池化的 `IReference`）包装一个 `IUIForm`，并追踪两个**独立的**布尔状态：
+
+| 状态 | 含义 | 初始值（`Create`） |
+|------|------|-------------------|
+| `Covered` | 此界面是否在视觉上被遮挡（上方有其他界面） | `true`（刚创建时假设被遮挡，等 Refresh 纠正） |
+| `Paused` | 此界面是否被暂停（上方有 `PauseCoveredUIForm=true` 的界面，或组暂停） | `true`（同上） |
+
+> **关键设计**：Cover 和 Pause 是**独立的两个维度**。一个界面可以仅被遮挡（Covered=true, Paused=false），也可以同时被遮挡和暂停（Covered=true, Paused=true）。两者分别对应不同的回调——`OnCover/OnReveal` 和 `OnPause/OnResume`。
+
+#### 3.2.1 Refresh 算法（伪代码）
+
+`Refresh()` 是核心调度器——每次打开/关闭/Refocus 界面后都会调用。它从头到尾遍历链表，根据两个级联变量（`pause` 和 `cover`）决定每个界面的目标状态：
+
+```
+输入：链表 [最上层 A, B, C, ... 最下层]
+初始化：
+  pause = m_Pause          // 组级别的暂停标志（UIGroup.Pause() 设置）
+  cover = false            // 是否已有遮挡界面
+  depth = UIFormCount      // 界面总数
+
+遍历每个节点（从 A 到最下层）：
+  1. OnDepthChanged(Depth, depth--)
+     // 如果回调中界面被销毁，直接 return
+
+  ┌─ pause == true?（此界面应被暂停）
+  │   ├─ 尚未 Covered → 设为 Covered=true, 调用 OnCover()
+  │   └─ 尚未 Paused  → 设为 Paused=true,  调用 OnPause()
+  │
+  └─ pause == false?（此界面处于活跃状态）
+      ├─ 之前是 Paused → 设为 Paused=false, 调用 OnResume()
+      │
+      ├─ 此界面的 PauseCoveredUIForm == true?
+      │   └→ pause = true（级联：下方所有界面将被暂停+遮挡）
+      │
+      ├─ cover == true?（上方已有界面遮挡此界面）
+      │   └─ 尚未 Covered → 设为 Covered=true, 调用 OnCover()
+      │
+      └─ cover == false?（此界面是第一个不被遮挡的界面）
+          ├─ 之前是 Covered → 设为 Covered=false, 调用 OnReveal()
+          └─ cover = true（此界面开始遮挡下方界面）
+```
+
+#### 3.2.2 各回调的触发条件详解
+
+**`OnCover()`** — 从 Covered=false → Covered=true 时触发：
+
+| 场景 | 触发原因 |
+|------|----------|
+| 在此界面上方**打开新界面** | 新界面成为链表头，Refresh 遍历时新界面设置 `cover=true`，此界面检测到 `cover==true` |
+| 上方界面 `PauseCoveredUIForm=true` | 该界面将 `pause` 设为 true，级联到下方所有界面（`pause==true` 分支直接触发 OnCover） |
+| 组整体暂停（`UIGroup.Pause()`） | `m_Pause=true`，所有界面的 `pause` 变量初始即为 true |
+| **界面被移除**（`RemoveUIForm`） | 移除前**补偿性**调用 OnCover（即使界面即将销毁，也确保收到完整生命周期） |
+
+**`OnReveal()`** — 从 Covered=true → Covered=false 时触发：
+
+| 场景 | 触发原因 |
+|------|----------|
+| **上方遮挡界面被关闭** | Refresh 重新计算，此界面成为第一个 `cover==false` 的界面 |
+| Refocus 界面到最前 | 被 Refocus 的界面移到链表头，Refresh 计算后可能被 Reveal |
+
+**`OnPause()`** — 从 Paused=false → Paused=true 时触发：
+
+| 场景 | 触发原因 |
+|------|----------|
+| 上方界面 `PauseCoveredUIForm=true` 打开 | 该界面将 `pause` 级联变量设为 true，下方界面进入 `pause==true` 分支 |
+| 组整体暂停 | `m_Pause=true` |
+| **界面被移除**（`RemoveUIForm`） | 移除前**补偿性**调用 OnPause |
+
+> **注意**：`OnCover` 和 `OnPause` 是分开调用的。在 `pause==true` 分支中，OnCover 先于 OnPause 调用。在 `pause==false` + `cover==true` 分支中，只调用 OnCover（不调用 OnPause）。
+
+**`OnResume()`** — 从 Paused=true → Paused=false 时触发：
+
+| 场景 | 触发原因 |
+|------|----------|
+| 上方 `PauseCoveredUIForm=true` 的界面被关闭 | Refresh 重新计算，`pause` 不再级联到此界面 |
+| 组恢复（`UIGroup.Resume()`） | `m_Pause` 重新变为 false |
+
+**`OnRefocus(object userData)`** — **显式 API 调用**，不自动触发：
+
+调用 `GF.UI.RefocusUIForm(serialId)` 或 `RefocusUIForm(uiForm, userData)` 时：
+1. `UIGroup.RefocusUIForm()` 将该界面的 `UIFormInfo` 移到链表**最前面**
+2. `UIGroup.Refresh()` 重新计算所有界面的 Cover/Pause 状态
+3. `uiForm.OnRefocus(userData)` 在该界面上调用（Refresh 之后）
+
+#### 3.2.3 完整操作流程示例
+
+**示例：打开 A → 打开 B（PauseCovered）→ 关闭 B**
+
+```
+初始状态：空链表
+
+① OpenUIForm(A, pauseCovered=false)
+  AddFirst(A) → 链表: [A]
+  Refresh():
+    A: pause=false, cover=false → OnReveal(), cover=true
+  结果: A=Revealed, NotPaused
+
+② OpenUIForm(B, pauseCovered=true)
+  AddFirst(B) → 链表: [B, A]
+  Refresh():
+    B: pause=false, cover=false → OnReveal(), cover=true,
+       B.PauseCoveredUIForm=true → pause=true
+    A: pause=true → OnCover(), OnPause()
+  结果: B=Revealed+NotPaused, A=Covered+Paused
+
+③ CloseUIForm(B)
+  RemoveUIForm(B): B 补偿性 OnCover() + OnPause()
+  OnClose(B), 链表: [A]
+  Refresh():
+    A: pause=false, cover=false → OnResume(), OnReveal(), cover=true
+  结果: A=Revealed+NotPaused（回到①的状态）
+```
+
+#### 3.2.4 渲染层级
+
+组间靠 `CanvasLayer.Layer`（= 组 Depth），组内靠 Godot 子节点树顺序 + `OnDepthChanged` 通知（框架不主动 MoveChild，界面可在回调中自行处理）。
 
 ### 3.3 打开流程与实例池
 

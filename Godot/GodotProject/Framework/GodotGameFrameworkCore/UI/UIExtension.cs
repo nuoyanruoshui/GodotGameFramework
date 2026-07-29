@@ -92,7 +92,7 @@ namespace GodotGameFramework.UI
             {
                 throw new Exception($"找不到UIFormId:{formId}的配置");
             }
-            var uIForm = await uiComponent.OpenUIFormAsync(formConfig.AssetPath, formConfig.UIGroupName, userData);
+            var uIForm = await uiComponent.OpenUIFormAsync(formConfig.AssetPath, formConfig.UIGroupName, formConfig.PauseCoveredUIForm, userData);
             return uIForm as T;
         }
 

@@ -28,7 +28,7 @@
 | 文档 | 内容 |
 |------|------|
 | [EntitySystem.md](EntitySystem.md) | 实体生命周期、实体组+实例池、EntityId 配置驱动、TheGame 继承树（ActorEntity/Cat/Anger/GanTan/LightningBall/DropItem）、新增实体步骤 |
-| [UISystem.md](UISystem.md) | UIForm 生命周期、UI 组遮挡算法、OpenUIFormAsync、脚本生成器（Ge/Logic 双文件）工作流 |
+| [UISystem.md](UISystem.md) | UIForm 生命周期与触发条件（OnCover/Reveal/Pause/Resume/Refocus）、UI 组 Refresh 遮挡/暂停算法、OpenUIFormAsync、脚本生成器（Ge/Logic 双文件）工作流 |
 | [SoundSystem.md](SoundSystem.md) | 声音组与 Audio Bus 映射、代理抢占算法、PlaySoundParams、AudioStreamPlayer 桥接 |
 | [SceneSystem.md](SceneSystem.md) | 场景加载流程、实例挂载位置、LoadSceneAsync、与 ResourceComponent 的关系 |
 | [ObjectPoolSystem.md](ObjectPoolSystem.md) | ObjectBase/IObjectPool 设计、四参数语义、与 ReferencePool 对照、NodePool 系统（IPoolable + GF.ObjectPool 懒加载） |

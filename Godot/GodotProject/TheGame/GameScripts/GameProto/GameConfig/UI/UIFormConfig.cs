@@ -19,6 +19,7 @@ public sealed partial class UIFormConfig : Luban.BeanBase
         Id = _buf.ReadInt();
         UIFormId = (UIFormId)_buf.ReadInt();
         AssetPath = _buf.ReadString();
+        PauseCoveredUIForm = _buf.ReadBool();
         UIGroupName = _buf.ReadString();
     }
 
@@ -40,6 +41,10 @@ public sealed partial class UIFormConfig : Luban.BeanBase
     /// </summary>
     public readonly string AssetPath;
     /// <summary>
+    /// 遮挡是否暂停
+    /// </summary>
+    public readonly bool PauseCoveredUIForm;
+    /// <summary>
     /// 处于哪个组
     /// </summary>
     public readonly string UIGroupName;
@@ -57,6 +62,7 @@ public sealed partial class UIFormConfig : Luban.BeanBase
         + "id:" + Id + ","
         + "UIFormId:" + UIFormId + ","
         + "AssetPath:" + AssetPath + ","
+        + "pauseCoveredUIForm:" + PauseCoveredUIForm + ","
         + "UIGroupName:" + UIGroupName + ","
         + "}";
     }
