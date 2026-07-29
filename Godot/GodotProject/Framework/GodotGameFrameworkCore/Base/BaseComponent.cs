@@ -97,6 +97,8 @@ namespace GodotGameFramework
                 return m_GameSpeed == 1f;
             }
         }
+        [Export]
+        public bool EnableEditorResLoad { get; private set; }
 
         /// <summary>
         /// 暂停游戏。

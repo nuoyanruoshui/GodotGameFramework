@@ -131,7 +131,10 @@ public class ProcedureUpdate : ProcedureBase
         if (GF.Resource.ResourceMode == ResourceMode.Package)
         {
             Log.Info("[ProcedureUpdate] Package 模式，跳过更新检测。");
-            await TryLoadLocalSubpackagesAsync();
+            if (!GF.Base.EnableEditorResLoad)
+            {
+                await TryLoadLocalSubpackagesAsync();
+            }
             ChangeState<ProcedurePrelode>(procedureOwner);
             return;
         }

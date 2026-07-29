@@ -18,7 +18,7 @@ using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedure
 public class ProcedureLaunch : ProcedureBase
 {
     private static readonly ConcurrentDictionary<string, bool> m_Components = new ConcurrentDictionary<string, bool>();
-    private static readonly string[] m_NeedComponents = { "Base", "Event", "Fsm", "Setting", "DataNode", "Resource", "Entity", "UI", "Sound", "Localization", "WebRequest", "Download" };
+    private static readonly string[] m_NeedComponents = { "Base", "Event", "Fsm", "Setting", "DataNode", "Resource", "Entity", "UI", "Sound", "Localization", "WebRequest", "Download", "Scene", "ObjectPool" };
     /// <summary>
     /// 状态初始化。
     /// </summary>
@@ -53,7 +53,8 @@ public class ProcedureLaunch : ProcedureBase
         m_Components.TryUpdate(m_NeedComponents[9], GF.Localization != null, false);
         m_Components.TryUpdate(m_NeedComponents[10], GF.WebRequest != null, false);
         m_Components.TryUpdate(m_NeedComponents[11], GF.Download != null, false);
-
+        m_Components.TryUpdate(m_NeedComponents[12], GF.Scene != null, false);
+        m_Components.TryUpdate(m_NeedComponents[13], GF.ObjectPool != null, false);
         if (m_Components.All(x => x.Value))
         {
             Log.Info($"[LaunchProcedure] 框架组件验证通过");

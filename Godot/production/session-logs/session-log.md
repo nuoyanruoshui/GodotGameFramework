@@ -3829,3 +3829,17 @@ Godot/docs/UISystem.md
 Godot/production/session-logs/session-log.md
 ---
 
+## Session End: 20260730_004942
+### Commits
+eab4ce4 优化UI
+d0a295a 2
+1060432 更新文档
+1fc721f 1
+80653c8 添加快捷打开导出文件夹按钮
+ef9255f 主子包文件夹
+### Uncommitted Changes
+Godot/GodotProject/TheGame/GameScripts/GameProto/GameConfig/Tables.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureLaunch.cs
+Godot/GodotProject/TheGame/UIs/SettingForm.tscn
+---
+
