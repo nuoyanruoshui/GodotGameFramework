@@ -13,100 +13,21 @@ namespace GameConfig
 {
 public partial class Tables
 {
-    #region The Tables
-
-    private UI.TbUIFormConfig m_TbUIFormConfig;
-    public UI.TbUIFormConfig TbUIFormConfig 
-    {
-        get
-        {
-            if (m_TbUIFormConfig == null)
-            {
-                m_TbUIFormConfig = new UI.TbUIFormConfig(defaultLoader("ui_tbuiformconfig"));
-                m_TbUIFormConfig.ResolveRef(this);
-            }
-            return m_TbUIFormConfig;
-        }
-        set
-        {
-            m_TbUIFormConfig = value;
-            m_TbUIFormConfig.ResolveRef(this);
-        }
-    }
-    private Character.TbCharacterConfig m_TbCharacterConfig;
-    public Character.TbCharacterConfig TbCharacterConfig 
-    {
-        get
-        {
-            if (m_TbCharacterConfig == null)
-            {
-                m_TbCharacterConfig = new Character.TbCharacterConfig(defaultLoader("character_tbcharacterconfig"));
-                m_TbCharacterConfig.ResolveRef(this);
-            }
-            return m_TbCharacterConfig;
-        }
-        set
-        {
-            m_TbCharacterConfig = value;
-            m_TbCharacterConfig.ResolveRef(this);
-        }
-    }
-    private Entity.TbEntityConfig m_TbEntityConfig;
-    public Entity.TbEntityConfig TbEntityConfig 
-    {
-        get
-        {
-            if (m_TbEntityConfig == null)
-            {
-                m_TbEntityConfig = new Entity.TbEntityConfig(defaultLoader("entity_tbentityconfig"));
-                m_TbEntityConfig.ResolveRef(this);
-            }
-            return m_TbEntityConfig;
-        }
-        set
-        {
-            m_TbEntityConfig = value;
-            m_TbEntityConfig.ResolveRef(this);
-        }
-    }
-    private Level.TbLevelConfig m_TbLevelConfig;
-    public Level.TbLevelConfig TbLevelConfig 
-    {
-        get
-        {
-            if (m_TbLevelConfig == null)
-            {
-                m_TbLevelConfig = new Level.TbLevelConfig(defaultLoader("level_tblevelconfig"));
-                m_TbLevelConfig.ResolveRef(this);
-            }
-            return m_TbLevelConfig;
-        }
-        set
-        {
-            m_TbLevelConfig = value;
-            m_TbLevelConfig.ResolveRef(this);
-        }
-    }
-
-    #endregion
-
-    System.Func<string, ByteBuf> defaultLoader;
+    public UI.TbUIFormConfig TbUIFormConfig {get; }
+    public Entity.TbEntityConfig TbEntityConfig {get; }
 
     public Tables(System.Func<string, ByteBuf> loader)
     {
-        SetDefaultLoader(loader);
-        Init();
+        TbUIFormConfig = new UI.TbUIFormConfig(loader("ui_tbuiformconfig"));
+        TbEntityConfig = new Entity.TbEntityConfig(loader("entity_tbentityconfig"));
+        ResolveRef();
     }
     
-    public void SetDefaultLoader(System.Func<string, ByteBuf> loader)
+    private void ResolveRef()
     {
-        defaultLoader = null;
-        defaultLoader = loader;
+        TbUIFormConfig.ResolveRef(this);
+        TbEntityConfig.ResolveRef(this);
     }
-
-    //public partial void Init();
-
-    public void Init(){}
 }
 
 }

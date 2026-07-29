@@ -101,23 +101,23 @@ namespace GodotGameFramework.UI
         {
             if (GF.UI.AddUIGroup(MainPack))
             {
-                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_LogInForm, MainPack);
+                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_LogInForm, MainPack);
             }
             else
             {
-                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_LogInForm, MainPack);
+                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_LogInForm, MainPack);
             }
         }
         public static async void OpenQuestionTipsAsync(this UIComponent uiComponent, string contenttxt, string cancelTxt, string confirmTxt, Action cancel = null, Action confirm = null)
         {
             if (GF.UI.AddUIGroup(MainPack))
             {
-                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_QuestionTips, MainPack);
+                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_QuestionTips, MainPack);
                 tip.SetAction(contenttxt, cancelTxt, confirmTxt, cancel, confirm);
             }
             else
             {
-                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.Resources_QuestionTips, MainPack);
+                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_QuestionTips, MainPack);
                 tip.SetAction(contenttxt, cancelTxt, confirmTxt, cancel, confirm);
             }
         }

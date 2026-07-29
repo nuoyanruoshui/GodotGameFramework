@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dmushddd85ft5"]
 
 [ext_resource type="Script" uid="uid://bajp84ls5kgxu" path="res://TheGame/GameScripts/Entity/AngerEntity.cs" id="1_g4fl2"]
-[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/Themes/MainThemes.tres" id="3_6ydqo"]
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="3_6ydqo"]
 [ext_resource type="Texture2D" uid="uid://cjq76dpjlgnsn" path="res://TheGame/Sprites/Characters/enemy_bug.png" id="3_yiar1"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6ydqo"]

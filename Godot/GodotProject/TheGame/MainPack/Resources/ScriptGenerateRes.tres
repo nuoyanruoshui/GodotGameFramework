@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="ScriptGenerateRes" format=3 uid="uid://bvgaedx8yqqot"]
+
+[ext_resource type="Script" uid="uid://cb22vgk57goa5" path="res://TheGame/MainPack/Scripts/Resources/ScriptGenerateRes.cs" id="1_pysyp"]
+
+[resource]
+script = ExtResource("1_pysyp")

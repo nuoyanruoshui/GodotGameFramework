@@ -1,0 +1,50 @@
+[gd_scene format=3 uid="uid://deh62p265j7dw"]
+
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="1_7kksp"]
+[ext_resource type="Script" uid="uid://o72loh1qprtc" path="res://TheGame/MainPack/Scripts/UI/LogInForm.cs" id="2_0y1ir"]
+
+[node name="LogInForm" type="Control" unique_id=1234650829 node_paths=PackedStringArray("m_State", "m_HSlider")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_7kksp")
+script = ExtResource("2_0y1ir")
+m_State = NodePath("m_State")
+m_HSlider = NodePath("m_HSlider")
+
+[node name="Overlay" type="ColorRect" parent="." unique_id=180522928]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="m_State" type="Label" parent="." unique_id=952840317]
+layout_mode = 0
+offset_left = 436.0
+offset_top = 554.0
+offset_right = 716.0
+offset_bottom = 599.0
+theme_override_font_sizes/font_size = 20
+text = "检测更新中..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="m_HSlider" type="HSlider" parent="." unique_id=1425872652]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -42.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 0
+step = 0.1
+editable = false
+scrollable = false

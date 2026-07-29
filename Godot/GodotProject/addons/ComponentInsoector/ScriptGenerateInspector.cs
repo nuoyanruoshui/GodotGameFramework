@@ -12,7 +12,7 @@ namespace GodotGameFramework.Editor
         const string UI_LOGIC_TEMPLATE = "res://Framework/GodotGameFrameworkCore/Templet/UIFormLogicTemplet.txt";
         const string ENTITY_SCRIPT_TEMPLATE = "res://Framework/GodotGameFrameworkCore/Templet/EntityTemplet.txt";
         const string ENTITY_LOGIC_TEMPLATE = "res://Framework/GodotGameFrameworkCore/Templet/EntityLogicTemplet.txt";
-        const string Resc = "res://TheGame/Resources/ScriptGenerateRes.tres";
+        const string Resc = "res://TheGame/MainPack/Resources/ScriptGenerateRes.tres";
         const string NameSpaceReplace = "_NAMESPACE_";
         const string ParentClassReplace = "_PARENT_";
         const string ClassNameReplace = "_CLASSNAME_";

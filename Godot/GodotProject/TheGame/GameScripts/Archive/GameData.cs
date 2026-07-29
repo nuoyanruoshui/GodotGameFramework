@@ -6,11 +6,6 @@ using System.Collections.Generic;
 public class GameData : ArchiveData
 {
     public int Score;
-    public List<ActorData> Actors;
-    public GameData()
-    {
-        Actors = new List<ActorData>();
-    }
 }
 [Serializable]
 public class GameCatalogue : ArchiveCatalogue

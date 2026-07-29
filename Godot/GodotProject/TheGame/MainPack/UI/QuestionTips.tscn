@@ -1,0 +1,80 @@
+[gd_scene format=3 uid="uid://crcncc5xxpa8b"]
+
+[ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="1_7fjk1"]
+[ext_resource type="Script" uid="uid://bg1ajegc6pt2m" path="res://TheGame/MainPack/Scripts/UI/QuestionTips.cs" id="2_b8msi"]
+
+[node name="QuestionTips" type="Control" unique_id=1234650829 node_paths=PackedStringArray("m_Label", "m_Btn_Cancle", "m_Btn_Confirm")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_7fjk1")
+script = ExtResource("2_b8msi")
+m_Label = NodePath("Content/VBoxContainer/m_Label")
+m_Btn_Cancle = NodePath("Content/VBoxContainer/HBoxContainer/m_Btn_Cancle")
+m_Btn_Confirm = NodePath("Content/VBoxContainer/HBoxContainer/m_Btn_Confirm")
+
+[node name="BG" type="ColorRect" parent="." unique_id=180522928]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0)
+
+[node name="Content" type="ColorRect" parent="." unique_id=1081584060]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -227.49992
+offset_top = -169.0
+offset_right = 227.49992
+offset_bottom = 169.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Content" unique_id=2092045110]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+offset_transform_enabled = true
+
+[node name="m_Label" type="Label" parent="Content/VBoxContainer" unique_id=480506863]
+custom_minimum_size = Vector2(1, 1)
+layout_mode = 2
+size_flags_vertical = 1
+text = "GGF (Godot Game Framework) 是 Game Framework（Jiang Yin）的 Godot 4.6.2 + .NET 8 C# 移植版。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体GGF (Godot Game Framework) 是 Game Framework（Jiang Yin）的 Godot 4.6.2 + .NET 8 C# 移植版。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、设置、Web 请求等子系统。"
+vertical_alignment = 1
+autowrap_mode = 1
+
+[node name="Control" type="Control" parent="Content/VBoxContainer" unique_id=216641295]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Content/VBoxContainer" unique_id=830959218]
+layout_mode = 2
+
+[node name="m_Btn_Cancle" type="Button" parent="Content/VBoxContainer/HBoxContainer" unique_id=802482086]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "取消"
+
+[node name="Control" type="Control" parent="Content/VBoxContainer/HBoxContainer" unique_id=1182761146]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="m_Btn_Confirm" type="Button" parent="Content/VBoxContainer/HBoxContainer" unique_id=1044413534]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "确认"

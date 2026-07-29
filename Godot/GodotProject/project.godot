@@ -41,7 +41,8 @@ enabled=PackedStringArray("res://addons/ComponentInsoector/plugin.cfg", "res://a
 folder_colors={
 "res://Framework/GodotGameFrameworkCore/": "orange",
 "res://TheGame/": "green",
-"res://TheGame/GameScripts/GameProto/": "gray"
+"res://TheGame/GameScripts/GameProto/": "gray",
+"res://TheGame/MainPack/": "blue"
 }
 
 [input]

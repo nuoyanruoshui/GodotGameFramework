@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="NodePoolConfig" format=3 uid="uid://pumdstkerbev"]
+
+[ext_resource type="Script" uid="uid://yiewfnn1gx67" path="res://TheGame/MainPack/Scripts/Resources/NodePoolConfig.cs" id="1_8jdg"]
+[ext_resource type="Script" uid="uid://cyfjle46grtw4" path="res://TheGame/MainPack/Scripts/Resources/PoolEntry.cs" id="1_j1vs4"]
+
+[resource]
+script = ExtResource("1_8jdg")
+DefaultExpireTime = 300.0
+DefaultAutoReleaseInterval = 300.0
+metadata/_custom_type_script = "uid://yiewfnn1gx67"

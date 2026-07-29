@@ -1,8 +1,0 @@
-[gd_resource type="Resource" script_class="UpdateSettingRes" format=3 uid="uid://bcd8sxd8oxjqv"]
-
-[ext_resource type="Script" uid="uid://d66vh8d5e8ut" path="res://TheGame/GameScripts/Resources/UpdateSettingRes.cs" id="1_s3p2p"]
-
-[resource]
-script = ExtResource("1_s3p2p")
-RemoteUrl = "http://192.168.124.5:58696/subpackages"
-metadata/_custom_type_script = "uid://d66vh8d5e8ut"
