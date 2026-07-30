@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using GameConfig.Constant;
 using GameFramework;
+using GameFramework.Localization;
 using GameFramework.Procedure;
 using GodotGameFramework;
 using GodotGameFramework.NodePool;
@@ -74,6 +75,7 @@ public class ProcedurePrelode : ProcedureBase
         NodePool.Instance.Active(); // 启动节点池
         LayerMask.Instance.Active(); // 启动层级工具
         await GF.Archive.LoadAsync();
+
         if (IsLoadAll())
         {
             ChangeState<ProcedureGame>(procedureOwner);
@@ -87,7 +89,10 @@ public class ProcedurePrelode : ProcedureBase
     private void LoadLocalization()
     {
         m_LoadFlagDic.TryAdd(m_LoadFlagKeys[0], false);
-        GF.Localization.ReadData(Utility.Text.Format(GameFolderConstant.Localizations, GF.Localization.Language.ToString()));
+        if (!GF.Base.EnableEditorResLoad)
+        {
+            GF.Localization.Language = (Language)GF.Setting.GetInt("Language", (int)Language.English);
+        }
         m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[0], true, false);
     }
     private void LoadUIGroup()

@@ -1013,7 +1013,7 @@ namespace GodotGameFramework.Editor
                 GD.Print("[ExportInspector] 没有成功导出的包，跳过版本文件生成。");
                 return;
             }
-            var res = ResourceLoader.Load(string.Format(GameFolderConstant.Resources, "UpdateSettingRes"));
+            var res = ResourceLoader.Load(string.Format(GameFolderConstant.MainPackResources, "UpdateSettingRes"));
             var blist = _bundles.ToList();
             var packs = new Pack[num];
             int idx = 0;

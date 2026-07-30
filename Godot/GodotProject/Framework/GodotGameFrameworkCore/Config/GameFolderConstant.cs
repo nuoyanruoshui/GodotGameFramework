@@ -15,7 +15,7 @@ namespace GameConfig.Constant
 		public const string GameConfigs = "res://TheGame/DataTables/GameConfigs/{0}.bytes";
 		public const string Scenes = "res://TheGame/Scenes";
 		//Godot的资源脚本文件夹路径
-		public const string Resources = "res://TheGame/Resources/{0}.tres";
+		public const string MainPackResources = "res://TheGame/MainPack/Resources/{0}.tres";
 		public const string GameConfigsPath = "res://TheGame/DataTables/GameConfigs";
 	}
 }

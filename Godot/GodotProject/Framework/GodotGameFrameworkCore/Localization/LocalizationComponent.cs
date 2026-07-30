@@ -1,3 +1,4 @@
+using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Localization;
 using Godot;
@@ -34,10 +35,18 @@ namespace GodotGameFramework.Localization
             get { return m_LocalizationManager.Language; }
             set
             {
-                m_LocalizationManager.Language = value;
-                // 同步到 Godot TranslationServer
-                string locale = LocalizationHelperBase.GetLocaleByLanguage(value);
-                TranslationServer.SetLocale(locale);
+                if (m_LocalizationManager.Language != value)
+                {
+                    m_LocalizationManager.Language = value;
+                    string locale = LocalizationHelperBase.GetLocaleByLanguage(value);
+                    TranslationServer.SetLocale(locale);
+                    RemoveAllRawStrings();
+                    ReadData(Utility.Text.Format(GameFolderConstant.Localizations, value.ToString()));
+                    GF.Event.Fire(OnLanagueChangeEventArgs.EventId, OnLanagueChangeEventArgs.Create(value));
+                    GF.Setting.SetInt("Language", (int)value);
+                    GF.Setting.Save();
+                }
+
             }
         }
 
@@ -84,7 +93,10 @@ namespace GodotGameFramework.Localization
             m_LocalizationHelper = localizationHelper;
             m_LocalizationManager.SetDataProviderHelper(localizationHelper);
             m_LocalizationManager.SetLocalizationHelper(localizationHelper);
-            m_LocalizationManager.Language = GF.Base.EditorLanguage != Language.Unspecified ? GF.Base.EditorLanguage : m_LocalizationManager.SystemLanguage;
+            if (GF.Base.EnableEditorResLoad)
+            {
+                m_LocalizationManager.Language = GF.Base.EditorLanguage != Language.Unspecified ? GF.Base.EditorLanguage : m_LocalizationManager.SystemLanguage;
+            }
         }
 
         /// <summary>

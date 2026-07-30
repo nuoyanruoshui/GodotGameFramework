@@ -846,7 +846,7 @@ public class ProcedureUpdate : ProcedureBase
     /// </summary>
     private async Task TryLoadLocalSubpackagesAsync()
     {
-        string manifestPath = Path.Combine(ProjectSettings.GlobalizePath("user://"), ResourceManager.GameFrameworkVersionData);
+        string manifestPath = Path.Combine(SubpackDir, ResourceManager.GameFrameworkVersionData);
         if (!File.Exists(manifestPath))
         {
             Log.Info("[ProcedureUpdate] 本地子包清单不存在，跳过: {0}", manifestPath);

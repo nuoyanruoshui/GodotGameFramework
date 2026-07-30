@@ -3843,3 +3843,20 @@ Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureLaunch.cs
 Godot/GodotProject/TheGame/UIs/SettingForm.tscn
 ---
 
+## Session End: 20260730_203149
+### Commits
+94701c3 单机包模式下需要将包和版本文件放入到Subpack文件夹中
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/Framework/GameFramework.tscn
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Config/GameFolderConstant.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Localization/ButtonTr.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Localization/LabelTr.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Localization/LocalizationComponent.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedurePrelode.cs
+Godot/GodotProject/project.godot
+Godot/subpackages/DataTableBundle.pck
+Godot/subpackages/UIsBundle.pck
+---
+

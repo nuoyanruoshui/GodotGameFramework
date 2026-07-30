@@ -25,6 +25,8 @@ UpdateDriver="*uid://d1724h61rw1bg"
 
 [display]
 
+window/size/viewport_width=1920
+window/size/viewport_height=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
