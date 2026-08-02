@@ -3860,3 +3860,12 @@ Godot/subpackages/DataTableBundle.pck
 Godot/subpackages/UIsBundle.pck
 ---
 
+## Session End: 20260803_001304
+### Uncommitted Changes
+Godot/.codegraph/daemon.pid
+Godot/GodotProject/TheGame/Entitys/CatEntity.tscn
+Godot/GodotProject/TheGame/GameScripts/Entity/ActorEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/AngerEntity.cs
+Godot/GodotProject/TheGame/GameScripts/Entity/CatEntity.cs
+---
+

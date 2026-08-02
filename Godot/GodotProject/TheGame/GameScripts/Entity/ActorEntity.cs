@@ -3,6 +3,7 @@ using GameConfig.Character;
 using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Entity;
+using GameFramework.Fsm;
 using Godot;
 using GodotGameFramework;
 using GodotGameFramework.Entity;
@@ -42,6 +43,7 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     /// </summary>
     public IEntityGroup EntityGroup { get; private set; }
     #endregion
+    public AnimatedSprite2D Anim { get; private set; }
     public ActorData ActorData;
     public bool IsDead => ActorData.Hp <= 0;
     protected CharacterConfig m_Config;
@@ -53,6 +55,7 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     public EntityTeam Team { get; set; } = EntityTeam.Player;
 
     public Action<float> HpChanged;
+
     /// <summary>
     /// 实体初始化。
     /// </summary>
@@ -70,6 +73,8 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
 
         if (isNewInstance)
         {
+            Anim = this.GetChild<AnimatedSprite2D>();
+
             ActorData = new ActorData()
             {
                 MaxHp = 100,

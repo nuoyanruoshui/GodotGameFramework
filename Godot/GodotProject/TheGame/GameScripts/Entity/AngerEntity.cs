@@ -22,7 +22,6 @@ public partial class AngerEntity : ActorEntity
 
     private float m_AttackTimer = 0f;
     private ActorEntity m_TargetPlayer = null;
-    private AnimatedSprite2D m_Anim;
 
     public override void OnInit(int entityId, string entityAssetName, IEntityGroup entityGroup, bool isNewInstance, object userData)
     {
@@ -30,7 +29,7 @@ public partial class AngerEntity : ActorEntity
         if (isNewInstance)
         {
             m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Anger);
-            m_Anim = this.GetChild<AnimatedSprite2D>();
+
         }
         Team = EntityTeam.Enemy;
         m_HSlider.MaxValue = ActorData.MaxHp;
@@ -43,7 +42,7 @@ public partial class AngerEntity : ActorEntity
 
         m_AttackTimer = 0f;
         m_HSlider.Value = ActorData.Hp;
-        m_Anim.Play("Idle");
+        Anim.Play("Idle");
     }
     public void SetTarget(ActorEntity target)
     {
@@ -87,9 +86,9 @@ public partial class AngerEntity : ActorEntity
     {
         if (Mathf.Abs(dir.X) > 0.01f)
         {
-            if (m_Anim != null)
+            if (Anim != null)
             {
-                m_Anim.FlipH = dir.X < 0;
+                Anim.FlipH = dir.X < 0;
             }
         }
     }

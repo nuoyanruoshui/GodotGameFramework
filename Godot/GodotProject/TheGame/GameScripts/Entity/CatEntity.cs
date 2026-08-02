@@ -4,6 +4,7 @@ using GameConfig.Constant;
 using GameConfig.Entity;
 using GameFramework;
 using GameFramework.Entity;
+using GameFramework.Fsm;
 using GameLogic;
 using Godot;
 using GodotGameFramework;
@@ -13,7 +14,38 @@ using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using System;
 using System.Linq;
+public class IdleState : FsmState<CatEntity>
+{
+	protected internal override void OnEnter(IFsm<CatEntity> fsm)
+	{
+		fsm.Owner.Anim.Play("Idle");
+		Log.Info("IdleState");
+	}
+	protected internal override void OnUpdate(IFsm<CatEntity> fsm, float elapseSeconds, float realElapseSeconds)
+	{
+		if (fsm.Owner.m_IsMoving)
+		{
+			ChangeState<MoveState>(fsm);
+			Log.Info("m_IsMoving:");
+		}
+	}
 
+}
+public class MoveState : FsmState<CatEntity>
+{
+	protected internal override void OnEnter(IFsm<CatEntity> fsm)
+	{
+		fsm.Owner.Anim.Play("Walk");
+		Log.Info("MoveState");
+	}
+	protected internal override void OnUpdate(IFsm<CatEntity> fsm, float elapseSeconds, float realElapseSeconds)
+	{
+		if (!fsm.Owner.m_IsMoving)
+		{
+			ChangeState<IdleState>(fsm);
+		}
+	}
+}
 public interface IActor
 {
 	void Heal(int heal);
@@ -29,13 +61,12 @@ public struct ActorData
 public partial class CatEntity : ActorEntity
 {
 	[Export]
-	private AnimatedSprite2D m_Anim;
-	[Export]
 	private Area2D m_HitBox;
-	private bool m_IsMoving;
+	public bool m_IsMoving;
 	float m_LastAtkTime;
 	private CircleShape2D m_AimShape;
 	private Node2D m_ShotPos;
+	private Fsm<CatEntity> m_Fsm;
 
 
 
@@ -44,10 +75,11 @@ public partial class CatEntity : ActorEntity
 		base.OnInit(entityId, entityAssetName, entityGroup, isNewInstance, userData);
 		if (isNewInstance)
 		{
+			m_Fsm = (Fsm<CatEntity>)GF.Fsm.CreateFsm(Name, this, new IdleState(), new MoveState());
 			m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
 			m_ShotPos = GetNode<Node2D>("ShotPos");
 			m_HitBox.BodyEntered += OnBodyEntered;
-			GF.Localization.Language = GameFramework.Localization.Language.English;
+
 		}
 		if (m_Check != null)
 		{
@@ -68,7 +100,7 @@ public partial class CatEntity : ActorEntity
 	public override void OnShow(object userData)
 	{
 		base.OnShow(userData);
-		m_Anim.Play("Idle");
+		m_Fsm.Start<IdleState>();
 	}
 	public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
 	{
@@ -152,15 +184,9 @@ public partial class CatEntity : ActorEntity
 		Velocity = new Vector2(hor, ver) * m_Config.Speed;
 		MoveAndSlide();
 
-		bool isMoving = hor != 0 || ver != 0;
-		if (hor != 0) m_Anim.FlipH = hor < 0;
+		m_IsMoving = hor != 0 || ver != 0;
+		if (hor != 0) Anim.FlipH = hor < 0;
 
-		// 仅在移动状态发生变化时切换动画
-		if (isMoving != m_IsMoving)
-		{
-			m_IsMoving = isMoving;
-			m_Anim.Play(m_IsMoving ? "Walk" : "Idle");
-		}
 	}
 
 	protected override void Die()
