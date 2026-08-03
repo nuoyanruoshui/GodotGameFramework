@@ -1,8 +1,6 @@
 using GameFramework.UI;
 using Godot;
-using GodotGameFramework.UI;
 using GodotGameFramework;
-using System;
 using System.Collections.Generic;
 using GodotGameFramework.Localization;
 namespace GameLogic
@@ -83,7 +81,13 @@ namespace GameLogic
 		#endregion
 
 		[Export]
+		private HSlider m_MusicHSlider;
+		[Export]
+		private HSlider m_EffectHSlider;
+		[Export]
 		private Button m_CloseButton;
+		[Export]
+		private OptionButton m_OptionButton;
 
 	}
 }

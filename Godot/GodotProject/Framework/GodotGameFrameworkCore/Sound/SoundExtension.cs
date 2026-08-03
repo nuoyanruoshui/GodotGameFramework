@@ -127,7 +127,7 @@ namespace GodotGameFramework.Sound
         /// </summary>
         /// <param name="soundComponent"></param>
         /// <param name="bus"></param>
-        /// <param name="volume"></param>
+        /// <param name="volume">0~1的音量值</param>
         public static void SetVolume(this SoundComponent soundComponent, string bus, float volume)
         {
             ISoundGroup group = soundComponent.GetSoundGroup(bus);

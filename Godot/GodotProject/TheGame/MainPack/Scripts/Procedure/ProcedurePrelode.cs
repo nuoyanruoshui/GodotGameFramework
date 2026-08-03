@@ -93,6 +93,11 @@ public class ProcedurePrelode : ProcedureBase
         {
             GF.Localization.Language = (Language)GF.Setting.GetInt("Language", (int)Language.English);
         }
+        else
+        {
+            GF.Localization.Language = GF.Base.EditorLanguage != Language.Unspecified ? GF.Base.EditorLanguage : GF.Localization.SystemLanguage;
+            Log.Info("[ProcedurePrelode] Editor res load enabled, set language to SystemLanguage: {0}.", GF.Localization.Language);
+        }
         m_LoadFlagDic.TryUpdate(m_LoadFlagKeys[0], true, false);
     }
     private void LoadUIGroup()

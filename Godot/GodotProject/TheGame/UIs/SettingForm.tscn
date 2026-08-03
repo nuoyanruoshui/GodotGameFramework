@@ -4,12 +4,13 @@
 [ext_resource type="Script" uid="uid://cxkmx8m0u72rx" path="res://TheGame/GameScripts/GameProto/UIGe/SettingForm.cs" id="1_h3k5r"]
 [ext_resource type="FontFile" uid="uid://b7jmi5cjng5l" path="res://TheGame/MainPack/Fonts/simhei.ttf" id="2_h3k5r"]
 [ext_resource type="Texture2D" uid="uid://by0r8h0k6ic3e" path="res://TheGame/Sprites/UI/ui_stage_background.png" id="3_bo7kd"]
+[ext_resource type="Script" uid="uid://d0nyqjnt1rbkv" path="res://Framework/GodotGameFrameworkCore/Localization/LabelTr.cs" id="5_3prn7"]
 [ext_resource type="Texture2D" uid="uid://dphasocyrj2j4" path="res://TheGame/Sprites/UI/ui_button_blue.png" id="5_sqeo7"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_62wwx"]
 texture = ExtResource("5_sqeo7")
 
-[node name="SettingForm" type="Control" unique_id=1915523127 node_paths=PackedStringArray("m_CloseButton")]
+[node name="SettingForm" type="Control" unique_id=1915523127 node_paths=PackedStringArray("m_MusicHSlider", "m_EffectHSlider", "m_CloseButton", "m_OptionButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -18,7 +19,10 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_bo7kd")
 script = ExtResource("1_h3k5r")
+m_MusicHSlider = NodePath("Content/Music/m_MusicHSlider")
+m_EffectHSlider = NodePath("Content/Effect/m_EffectHSlider")
 m_CloseButton = NodePath("Content/m_CloseButton")
+m_OptionButton = NodePath("Content/m_OptionButton")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1653091560]
 layout_mode = 1
@@ -62,8 +66,48 @@ theme_override_font_sizes/font_size = 37
 text = "设置"
 horizontal_alignment = 1
 vertical_alignment = 1
+script = ExtResource("5_3prn7")
+StringKey = "SettingForm.Setting"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Content" unique_id=1876448322]
+[node name="Music" type="HBoxContainer" parent="Content" unique_id=1876448322]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 8.0
+offset_top = -110.0
+offset_right = -65.0
+offset_bottom = -51.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="SP2" type="Control" parent="Content/Music" unique_id=945584056]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.12
+
+[node name="Label" type="Label" parent="Content/Music" unique_id=1342561575]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "声音"
+script = ExtResource("5_3prn7")
+StringKey = "SettingForm.Music"
+
+[node name="SP1" type="Control" parent="Content/Music" unique_id=346551705]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.0
+
+[node name="m_MusicHSlider" type="HSlider" parent="Content/Music" unique_id=734270589]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 2.03
+value = 12.0
+scrollable = false
+
+[node name="Effect" type="HBoxContainer" parent="Content" unique_id=1761096420]
 layout_mode = 1
 anchors_preset = 14
 anchor_top = 0.5
@@ -76,22 +120,24 @@ offset_bottom = 11.5
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="SP2" type="Control" parent="Content/HBoxContainer" unique_id=945584056]
+[node name="SP2" type="Control" parent="Content/Effect" unique_id=1753818894]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.12
 
-[node name="Label" type="Label" parent="Content/HBoxContainer" unique_id=1342561575]
+[node name="Label" type="Label" parent="Content/Effect" unique_id=1531246944]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
-text = "声音"
+text = "音效"
+script = ExtResource("5_3prn7")
+StringKey = "SettingForm.Effect"
 
-[node name="SP1" type="Control" parent="Content/HBoxContainer" unique_id=346551705]
+[node name="SP1" type="Control" parent="Content/Effect" unique_id=614591137]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 0.0
 
-[node name="HSlider" type="HSlider" parent="Content/HBoxContainer" unique_id=734270589]
+[node name="m_EffectHSlider" type="HSlider" parent="Content/Effect" unique_id=1039862038]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 1
@@ -114,7 +160,7 @@ theme_override_font_sizes/font_size = 27
 theme_override_styles/normal = SubResource("StyleBoxTexture_62wwx")
 text = "关闭"
 
-[node name="OptionButton" type="OptionButton" parent="Content" unique_id=120128511]
+[node name="m_OptionButton" type="OptionButton" parent="Content" unique_id=120128511]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -127,8 +173,3 @@ offset_right = 61.0
 offset_bottom = 81.0
 grow_horizontal = 2
 grow_vertical = 2
-item_count = 2
-popup/item_0/text = "中文"
-popup/item_0/id = 0
-popup/item_1/text = "English"
-popup/item_1/id = 1

@@ -10,7 +10,8 @@ namespace GameConfig.Constant
 		public const string GameFrameworkVersionData = "GameFrameworkVersion.dat";
 		public const string Main = "res://TheGame/";
 		public const string Audios = "res://TheGame/Audios/{0}.{1}";
-		public const string Localizations = "res://TheGame/DataTables/Localizations/{0}.txt";
+		public const string LocalizationPath = "res://TheGame/DataTables/Localizations/";
+		public const string LocalizationFiles = "res://TheGame/DataTables/Localizations/{0}.txt";
 		public const string Entities = "res://TheGame/DataTables/Entitiys/{0}.tscn";
 		public const string GameConfigs = "res://TheGame/DataTables/GameConfigs/{0}.bytes";
 		public const string Scenes = "res://TheGame/Scenes";

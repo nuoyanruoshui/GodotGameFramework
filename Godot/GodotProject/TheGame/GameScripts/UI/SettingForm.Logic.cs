@@ -1,6 +1,8 @@
+using GameFramework.Localization;
 using GameFramework.UI;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using System;
 namespace GameLogic
@@ -33,6 +35,59 @@ namespace GameLogic
 			if (isNewInstance)
 			{
 				m_CloseButton.Pressed += OnCloseButtonPressed;
+				for (int i = 0; i < GF.Localization.GetLocalizationFileNames().Length; i++)
+				{
+					string localizationFileName = GF.Localization.GetLocalizationFileNames()[i];
+					switch (localizationFileName)
+					{
+						case "ChineseSimplified":
+							localizationFileName = "简体中文";
+							break;
+						case "English":
+							localizationFileName = "English";
+							break;
+						case "French":
+							localizationFileName = "Français";
+							break;
+						case "German":
+							localizationFileName = "Deutsch";
+							break;
+						case "Italian":
+							localizationFileName = "Italiano";
+							break;
+						case "Japanese":
+							localizationFileName = "日本語";
+							break;
+						case "Korean":
+							localizationFileName = "한국어";
+							break;
+						case "Portuguese":
+							localizationFileName = "Português";
+							break;
+						case "Russian":
+							localizationFileName = "Русский";
+							break;
+						case "Spanish":
+							localizationFileName = "Español";
+							break;
+					}
+					m_OptionButton.AddItem(localizationFileName, i);
+				}
+				m_OptionButton.ItemSelected += (index) =>
+				{
+					string selectedFileName = GF.Localization.GetLocalizationFileNames()[index];
+					GF.Localization.Language = Enum.TryParse<Language>(selectedFileName, out var lang) ? lang : Language.English;
+				};
+
+				m_MusicHSlider.ValueChanged += (value) =>
+				{
+					GF.Sound.SetVolume(SoundComponent.DefaultMusicGroup, (float)value / 100);
+				};
+				m_EffectHSlider.ValueChanged += (value) =>
+				{
+					GF.Sound.SetVolume(SoundComponent.DefaultSfxGroup, (float)value / 100);
+					GF.Sound.SetVolume(SoundComponent.DefaultUiGroup, (float)value / 100);
+				};
 			}
 		}
 
