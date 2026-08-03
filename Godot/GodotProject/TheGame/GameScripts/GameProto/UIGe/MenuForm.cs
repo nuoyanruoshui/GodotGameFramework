@@ -1,8 +1,6 @@
 using GameFramework.UI;
 using Godot;
-using GodotGameFramework.UI;
 using GodotGameFramework;
-using System;
 using System.Collections.Generic;
 using GodotGameFramework.Localization;
 namespace GameLogic
