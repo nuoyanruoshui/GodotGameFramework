@@ -8,9 +8,9 @@
 	3	StartGame	开始游戏
 	4	MainForm.Score	分数:
 	5	MainForm.Timer	计时:
-
-		
-
+	6	SettingForm.Setting	设置
+	7	SettingForm.Music	音乐
+	8	SettingForm.Effect	音效
 			
 			
 			

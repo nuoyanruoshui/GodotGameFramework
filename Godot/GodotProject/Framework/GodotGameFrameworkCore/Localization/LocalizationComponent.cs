@@ -5,6 +5,7 @@ using Godot;
 using GodotGameFramework.Extensions;
 using GodotGameFramework.Resource;
 using System;
+using System.IO;
 
 namespace GodotGameFramework.Localization
 {
@@ -41,7 +42,7 @@ namespace GodotGameFramework.Localization
                     string locale = LocalizationHelperBase.GetLocaleByLanguage(value);
                     TranslationServer.SetLocale(locale);
                     RemoveAllRawStrings();
-                    ReadData(Utility.Text.Format(GameFolderConstant.Localizations, value.ToString()));
+                    ReadData(Utility.Text.Format(GameFolderConstant.LocalizationFiles, value.ToString()));
                     GF.Event.Fire(OnLanagueChangeEventArgs.EventId, OnLanagueChangeEventArgs.Create(value));
                     GF.Setting.SetInt("Language", (int)value);
                     GF.Setting.Save();
@@ -93,10 +94,6 @@ namespace GodotGameFramework.Localization
             m_LocalizationHelper = localizationHelper;
             m_LocalizationManager.SetDataProviderHelper(localizationHelper);
             m_LocalizationManager.SetLocalizationHelper(localizationHelper);
-            if (GF.Base.EnableEditorResLoad)
-            {
-                m_LocalizationManager.Language = GF.Base.EditorLanguage != Language.Unspecified ? GF.Base.EditorLanguage : m_LocalizationManager.SystemLanguage;
-            }
         }
 
         /// <summary>
@@ -550,6 +547,31 @@ namespace GodotGameFramework.Localization
                 TranslationServer.RemoveTranslation(m_OptimizedTranslation);
                 m_OptimizedTranslation = null;
             }
+        }
+        /// <summary>
+        /// 获取本地化文件夹下的所有本地化文件名（不含扩展名）。
+        /// 例如：如果文件夹下有 ChineseSimplified.txt、English.txt、French.txt，则返回 ["ChineseSimplified", "English", "French"]。
+        /// 该方法不区分大小写，返回的文件名与实际文件名一致。
+        /// </summary>
+        public string[] GetLocalizationFileNames()
+        {
+            string folder = ProjectSettings.GlobalizePath(GameFolderConstant.LocalizationPath);
+            if (!Directory.Exists(folder))
+            {
+                Log.Warning("Localization folder '{0}' does not exist.", folder);
+                return new string[0];
+            }
+            // 获取所有 .txt 文件
+            string[] files = Directory.GetFiles(folder, "*.txt", SearchOption.TopDirectoryOnly);
+            for (int i = 0; i < files.Length; i++)
+            {
+                files[i] = Path.GetFileNameWithoutExtension(files[i]);
+            }
+            if (files.Length == 0)
+            {
+                Log.Warning("No localization files found in folder '{0}'.", folder);
+            }
+            return files;
         }
     }
 }

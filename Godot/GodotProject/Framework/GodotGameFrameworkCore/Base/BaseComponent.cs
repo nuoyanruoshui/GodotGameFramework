@@ -98,6 +98,11 @@ namespace GodotGameFramework
             }
         }
         [Export]
+        /// <summary>
+        /// 此模式下，框架会从 res://TheGame/ 目录下直接加载资源，而不是从 .pck 包中加载。
+        /// 仅在编辑器中有效。
+        /// </summary>
+        /// <value></value>
         public bool EnableEditorResLoad { get; private set; }
 
         /// <summary>
@@ -147,7 +152,7 @@ namespace GodotGameFramework
             InitTextHelper();
             InitJsonHelper();
             Log.Info("Godot Engine Version: {0}", Engine.GetVersionInfo()["string"].AsString());
-
+            EnableEditorResLoad &= OS.HasFeature("editor");
             // 设置帧率和游戏速度
             Engine.MaxFps = m_FrameRate;
             Engine.TimeScale = m_GameSpeed;

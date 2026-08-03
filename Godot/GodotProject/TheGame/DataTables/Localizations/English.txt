@@ -8,3 +8,6 @@
 	3	StartGame	Start
 	4	MainForm.Score	Score:
 	5	MainForm.Timer	Timer:
+	6	SettingForm.Setting	Setting
+	7	SettingForm.Music	Music
+	8	SettingForm.Effect	Effect
