@@ -632,3 +632,5 @@ TheGame/DataTables/GameConfigs/*.bytes          ← 二进制数据（运行时�
 | **CodeGraph** | 代码知识图谱 MCP 工具 | [GitHub](https://github.com/colbymchenry/codegraph) |
 | **leanclr-godot** | 与 leanclr-unity 类似，在 Godot 发布管线中集成 LeanCLR 运行时与 LeanAOT，使 GDScript / C# 游戏逻辑能以更小体积与更低内存发布到多平台（含 Web）。 | [GitHub](https://github.com/focus-creative-games/leanclr-godot.git) |
 ---
+
+交流Q群：1098113249
