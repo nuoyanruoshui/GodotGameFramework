@@ -291,9 +291,14 @@ namespace GodotGameFramework.Editor
 
         private static bool WriteText(string path, string content)
         {
-            //检测文件夹是否存在，不存在创建
-            string dir = ProjectSettings.GlobalizePath(path);
-            if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+            // 检测目标文件所在文件夹是否存在，不存在创建。
+            // 注意：GlobalizePath 返回的是文件完整路径，必须取目录部分，
+            string globalPath = ProjectSettings.GlobalizePath(path);
+            string dir = System.IO.Path.GetDirectoryName(globalPath);
+            if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
+            {
+                System.IO.Directory.CreateDirectory(dir);
+            }
             using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
             if (file == null)
             {
