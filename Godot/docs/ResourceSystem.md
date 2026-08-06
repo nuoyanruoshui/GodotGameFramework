@@ -102,7 +102,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 2. `LoadAssetTask.Create(...)`（从 `ReferencePool` 取）入 `TaskPool<LoadAssetTask>`
 3. 等待队列按 **`Priority` 降序**插入
 4. 有闲 Agent 时，`TaskPool` 取出任务 → Agent.Start 调用 `ResourceLoader.LoadThreadedRequest(assetName)` 提交加载
-5. 每帧 `Update()` **遍历所有 WorkingAgent** 的 `LoadThreadedGetStatus`，独立交付完成回调
+5. 每帧 `Update()` **遍历所有 WorkingAgent** 的 `LoadThreadedGetStatus`，独立交付完成回调；`InProgress` 状态下通过 `LoadThreadedGetStatus(path, progressArray)` 读取**真实加载进度**（`progressArray[0].AsSingle()`，0.0~1.0）并回调 `LoadAssetUpdateCallback`，替换了早期基于时间的模拟进度。
 
 要点：
 

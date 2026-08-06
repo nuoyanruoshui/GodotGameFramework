@@ -67,6 +67,7 @@ EventManager : GameFrameworkModule, IEventManager (纯 C# 层, Priority = 7)
 | `GameFramework/Event/GameEventArgs.cs` | 游戏逻辑事件基类（空派生，作类型隔离） |
 | `GameFramework/Event/IEventManager.cs`、`EventManager.cs` | 管理器接口与实现 |
 | `GodotGameFrameworkCore/Event/EventComponent.cs` | 组件封装（`GF.Event`） |
+| `GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs` | Godot 层事件：语言切换时由 LocalizationComponent 经 `GF.Event.Fire` 发出 |
 
 > `EventPool<T>` 是 internal 泛型；除全局 EventManager 外，UIManager/EntityManager 等模块内部也各自持有 EventPool 实例分发自己的事件。
 

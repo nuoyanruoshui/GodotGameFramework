@@ -57,11 +57,11 @@ GodotProject/
         ObjectPool/                 ← NodePool, NodeObject, PoolContainer
         Procedure/                  ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
         Resources/                  ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig, ScriptGenerateRes, UpdateSettingRes
-        UI/                         ← LogInForm, QuestionTips (shared UI)
+        UI/                         ← LoadingForm, QuestionTips (shared UI)
       Fonts/                        ← simhei.ttf
       Resources/                    ← .tres config resources (EntityGroupRes, UIGroupRes, etc.)
       Themes/                       ← MainThemes.tres
-      UI/                           ← .tscn scene files (LogInForm, QuestionTips)
+      UI/                           ← .tscn scene files (LoadingForm, QuestionTips)
     GameScripts/
       Entity/                       ← ActorEntity, CatEntity, AngerEntity, GanTanEntity (Logic halves)
       UI/                           ← MenuForm, MainForm, GameOverForm, PauseMenuForm, TestOverlayForm
@@ -154,6 +154,8 @@ CharacterBody2D (Godot)                  Area2D (Godot)                    Node2
 
 Entity spawning via `GF.Entity.ShowEntity<T>(EntityId.Xxx)` or `ShowEntityAsync<T>(EntityId.Xxx, userData)` — config-driven from `TbEntityConfig`.
 
+**CatEntity FSM example:** `CatEntity` creates a nested `Fsm<CatEntity>` in `OnInit` with `IdleState`/`MoveState : FsmState<CatEntity>` classes. `m_Fsm.Start<IdleState>()` in `OnShow`. States switch based on the public `m_IsMoving` flag. `Anim` (`AnimatedSprite2D`) is declared in the `ActorEntity` base class, shared by `CatEntity` and `AngerEntity`.
+
 ### UI System
 
 UI forms are **generated** partial classes: `partial class XxxForm : Control, IUIForm` (no shared `ControlUIForm` base class). Localization text nodes implement `IStringKey` and are auto-collected from descendants (see `docs/UISystem.md`).
@@ -162,7 +164,7 @@ UI lifecycle: `OnInit` → `OnOpen` → `OnCover`/`OnReveal` → `OnUpdate` → 
 
 Opening: `GF.UI.OpenUIForm(UIFormId.MenuForm)` or `await GF.UI.OpenUIFormAsync<T>(UIFormId.MenuForm)`.
 
-TheGame UIs: `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`, `LogInForm`.
+TheGame UIs: `LoadingForm`, `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`, `SettingForm`, `QuestionTips`. `LoadingForm` subscribes to `OpenUIFormUpdateEventArgs`/`LoadSceneUpdateEventArgs` (progress bar + Tween smoothing) and `OpenUIFormSuccessEventArgs`/`LoadSceneSuccessEventArgs` (auto-close with re-entry guard `m_IsCloseRequested`). `QuestionTips` implements `ITips` for confirmation dialogs.
 
 `UIItemBase : Control` for reusable UI widgets. Pooled via `UIItemInstanceObject` (infrastructure present; the sample `ScorePopupItem` is currently commented out).
 
@@ -248,11 +250,23 @@ d?.SetText(pos, 20);
 // DamagePop 内部延迟后调用 NodePool.Release(this)
 ```
 
-Pooled types: `DamagePop` (floating damage numbers), `DropItem` (collectibles with GTween DOMove animation).
+Pooled types: `DamagePop` (floating damage numbers), `DropItem` (collectibles with GTween DOMove animation), `QuestionTips` (confirmation dialog).
 
 ### Debugger
 
 UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand) + full window with `Console | Information | Profiler | Other` tab groups, rendered as BBCode into a RichTextLabel (IMGUI-style, `[url]` links route interactions). Console captures framework logs via `DefaultLogHelper.LogMessageReceived`. Custom windows: `GF.Debugger.RegisterDebuggerWindow("Game/Cheat", window)`. Details: `docs/DebuggerSystem.md`.
+
+### Scene System
+
+`SceneComponent` wraps `ISceneManager`. New `enum LoadSceneMode { Single, Additive }`. `LoadScene`/`LoadSceneAsync` now have overloads taking `LoadSceneMode`. `Single` mode calls `UnloadAllScenes()` first; `Additive` stacks scenes. `LoadSceneUpdateEventArgs` provides real-time progress (0.0--1.0), fired via the `m_EnableLoadSceneUpdate` toggle. `SceneEventArgs` (Godot layer) exposes `SceneAssetName`, `Duration`, `Progress`, `UserData`.
+
+`LoadAssetAgent` now reports REAL progress via `ResourceLoader.LoadThreadedGetStatus(path, m_ProgressArray)` (0.0--1.0), consumed by the loading UI and scene update events.
+
+### Localization
+
+`LocalizationComponent.Language` setter now (on change): sets manager language, sets `TranslationServer.Locale`, calls `RemoveAllRawStrings()`, reloads data, fires `OnLanagueChangeEventArgs`, persists via `GF.Setting.SetInt("Language", ...)` + `GF.Setting.Save()`. New `GetLocalizationFileNames()` returns `.txt` file names from `GameFolderConstant.LocalizationPath`.
+
+`LabelTr`/`ButtonTr` implement `IStringKey` and auto-subscribe to `OnLanagueChangeEventArgs` in `_Ready` / `_ExitTree` for live text updates on language switch.
 
 ## Component Inspector Addon
 
@@ -260,7 +274,7 @@ UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand)
 
 ### UIForm / Entity Script Generation
 
-`ScriptGenerateInspector` (an `EditorInspectorPlugin`) — shows a **"Generate Script"** button in the inspector for **`CanvasItem` or `Node3D` nodes** (`Control` → UIForm templates, other 2D/3D nodes → Entity templates). It scaffolds a **split partial class** across two files:
+`ScriptGenerateInspector` (an `EditorInspectorPlugin`) — shows **"Generate Script"** / **"Delete Gen"** / **"Delete Logic"** buttons in the inspector for **`CanvasItem` or `Node3D` nodes** (`Control` → UIForm templates, other 2D/3D nodes → Entity templates). Delete buttons are styled red via `.Modulate = Colors.Red`. `WriteText` auto-creates the target directory if missing. It scaffolds a **split partial class** across two files:
 
 - Ge half `<ClassName>.cs` (output: `UIOutPutPathGe` / `EntityOutPutPathGe`) — regenerated boilerplate: `[Export]` child-node fields, interface properties, localization collector. **Always overwritten.**
 - Logic half `<ClassName>.Logic.cs` (output: `UIOutPutPathLogic` / `EntityOutPutPathLogic`) — user lifecycle code (`OnInit`/`OnOpen`/`OnClose`/…). **Only created if absent** (never clobbers edits).
@@ -359,7 +373,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 | Mode | Status |
 |------|--------|
-| `ResourceMode.Package` | ✅ Active (Godot.ResourceLoader; no subpackage loading in this mode) |
+| `ResourceMode.Package` | ✅ Active (Godot.ResourceLoader; no subpackage loading in this mode. When `BaseComponent.EnableEditorResLoad` is true, this mode also skips local subpackage detection — resources load directly from `res://TheGame/`) |
 | `Updatable` | ✅ Hot-update pipeline live (`ProcedureUpdate` downloads + loads `.pck` subpackages) |
 | `UpdatableWhilePlaying` | 📅 Not implemented |
 
@@ -369,7 +383,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ### Subpackage System (Updatable mode)
 
-`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Audit trail: `docs/ResourceHotUpdateAudit.md`. C# 程序集热更（`docs/CodeHotUpdateDesign.md`）已搁置等待华佗团队 Godot 适配。
+`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Patch files are stored in `SubpackDir` (game-exe `subpackages/` folder or `user://subpackages/` fallback; formerly always `user://`). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Package mode skips local subpackage detection when `BaseComponent.EnableEditorResLoad` is true. Audit trail: `docs/ResourceHotUpdateAudit.md`. C# 程序集热更（`docs/CodeHotUpdateDesign.md`）已搁置等待华佗团队 Godot 适配。
 
 `PackVersionList` structure (`PackVersionList.cs`):
 ```csharp

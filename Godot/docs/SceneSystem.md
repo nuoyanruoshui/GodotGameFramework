@@ -21,9 +21,10 @@
 - ✅ 异步加载（经 `IResourceManager.LoadAsset` 的任务池，支持优先级）
 - ✅ 加载状态查询（已加载 / 加载中 / 卸载中）与重复加载防护（抛异常）
 - ✅ `LoadScene`（事件驱动）与 `LoadSceneAsync`（TCS 可 await）两种消费方式
+- ✅ `LoadSceneMode.Single`（先卸载所有已加载场景）与 `Additive`（叠加加载）双模式
 - ✅ 实例登记：`GetLoadedScene<T>(assetPath)` 直接取回已挂树的场景根节点
-- ✅ Godot 层全局事件：`LoadSceneSuccessEventArgs` / `LoadSceneFailureEventArgs`（经 EventComponent 分发）
-- ⚠️ 卸载流程当前不完整（见 §5 已知边界）
+- ✅ Godot 层全局事件：`LoadSceneSuccessEventArgs` / `LoadSceneFailureEventArgs` / `UnloadSceneSuccessEventArgs`（经 EventComponent 分发）
+- ✅ 加载进度转发：`LoadSceneUpdateEventArgs`（Progress 0.0~1.0，经 EventComponent 分发）
 
 ---
 
@@ -69,6 +70,19 @@ SceneComponent.OnLoadSceneSuccess
 ---
 
 ## 3. 核心机制
+
+### 3.0 加载模式（LoadSceneMode）
+
+`SceneComponent` 定义了 `enum LoadSceneMode { Single, Additive }`：
+
+| 模式 | 行为 |
+|------|------|
+| `Single` | 加载前调用 `UnloadAllScenes()` 卸载所有已加载场景，确保 GameFramework/Scene 下仅有一个场景实例 |
+| `Additive` | 保留已加载场景，新场景叠加挂载到 GameFramework/Scene 下 |
+
+**默认模式**：不带 `LoadSceneMode` 参数的重载均默认走 `Single`（向后兼容）。需要多场景叠加（如关卡分块流式加载）时显式传 `Additive`。
+
+`LoadSceneMode` 定义在 Godot 桥接层（`GodotGameFramework.Scene` 命名空间），纯 C# 层 `ISceneManager` 不感知此概念。
 
 ### 3.1 加载流程与状态防护
 
@@ -122,12 +136,13 @@ Node2D map = GF.Scene.GetLoadedScene<Node2D>("res://TheGame/Scenes/Map.tscn");
 
 | 事件 | 层 | 触发时机 |
 |------|----|---------|
-| `LoadSceneSuccess/Failure/Update` | 纯 C#（`ISceneManager` C# 事件） | 加载各阶段（Update 组件未订阅；Godot 自动管理依赖，无 DependencyAsset） |
-| `GodotGameFramework.Scene.LoadSceneSuccessEventArgs` | Godot 全局（EventComponent） | 挂树完成后，携带 `SceneAssetPath` + `SceneInstance` |
-| `GodotGameFramework.Scene.LoadSceneFailureEventArgs` | Godot 全局 | 加载失败，携带 `ErrorMessage` |
-| `GodotGameFramework.Scene.UnloadSceneSuccessEventArgs` | Godot 全局 | ✅ 2026-07 已触发：`UnloadScene` 完成时 |
+| `LoadSceneSuccess/Failure/Update` | 纯 C#（`ISceneManager` C# 事件） | 加载各阶段（Godot 自动管理依赖，无 DependencyAsset） |
+| `GodotGameFramework.Scene.LoadSceneSuccessEventArgs` | Godot 全局（EventComponent） | 挂树完成后，携带 `SceneAssetName` + `SceneInstance` + `Duration` + `UserData` |
+| `GodotGameFramework.Scene.LoadSceneFailureEventArgs` | Godot 全局 | 加载失败，携带 `SceneAssetName` + `ErrorMessage` + `UserData` |
+| `GodotGameFramework.Scene.UnloadSceneSuccessEventArgs` | Godot 全局 | ✅ 2026-07 已触发：`UnloadScene` 完成时，携带 `SceneAssetName` + `UserData` |
+| `GodotGameFramework.Scene.LoadSceneUpdateEventArgs` | Godot 全局 | ✅ 2026-07 已接线：加载进度更新，携带 `SceneAssetName` + `Progress` + `UserData` |
 
-由 Inspector 开关 `m_EnableLoadSceneSuccessEvent` / `m_EnableLoadSceneFailureEvent`（默认均 true）控制转发。事件参数池化，回调返回后即回收，不可持有。
+由 Inspector 开关 `m_EnableLoadSceneSuccessEvent` / `m_EnableLoadSceneUpdate` / `m_EnableLoadSceneFailureEvent` / `m_EnableUnloadSceneSuccessEvent`（默认均 true）控制转发。事件参数池化，回调返回后即回收，不可持有。
 
 ---
 
@@ -140,6 +155,7 @@ Node2D map = GF.Scene.GetLoadedScene<Node2D>("res://TheGame/Scenes/Map.tscn");
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `m_EnableLoadSceneSuccessEvent` | true | 转发加载成功全局事件 |
+| `m_EnableLoadSceneUpdate` | true | 转发加载进度更新事件 |
 | `m_EnableLoadSceneFailureEvent` | true | 转发加载失败全局事件 |
 | `m_EnableUnloadSceneSuccessEvent` | true | 转发卸载成功全局事件 |
 | `m_SceneHelperTypeName` | `GodotGameFramework.Scene.DefaultSceneHelper` | 场景辅助器类型名（反射创建，可替换） |
@@ -148,21 +164,27 @@ Node2D map = GF.Scene.GetLoadedScene<Node2D>("res://TheGame/Scenes/Map.tscn");
 
 ```csharp
 // 加载（事件驱动）
-GF.Scene.LoadScene(sceneAssetName);
+GF.Scene.LoadScene(sceneAssetName);                                        // Single，默认优先级
 GF.Scene.LoadScene(sceneAssetName, priority);
 GF.Scene.LoadScene(sceneAssetName, priority, userData);
+GF.Scene.LoadScene(sceneAssetName, LoadSceneMode.Single);                  // 显式 Single / Additive
+GF.Scene.LoadScene(sceneAssetName, LoadSceneMode mode, priority);
+GF.Scene.LoadScene(sceneAssetName, LoadSceneMode mode, priority, userData);
 
 // 加载（可 await，推荐）
-Node scene = await GF.Scene.LoadSceneAsync(sceneAssetName);
+Node scene = await GF.Scene.LoadSceneAsync(sceneAssetName);                // Single，默认优先级
 Node scene = await GF.Scene.LoadSceneAsync(sceneAssetName, priority);
 Node scene = await GF.Scene.LoadSceneAsync(sceneAssetName, priority, userData);
+Node scene = await GF.Scene.LoadSceneAsync(sceneAssetName, LoadSceneMode mode);
+Node scene = await GF.Scene.LoadSceneAsync(sceneAssetName, LoadSceneMode mode, priority);
+Node scene = await GF.Scene.LoadSceneAsync(sceneAssetName, LoadSceneMode mode, priority, userData);
 
 // 查询
 GF.Scene.IsSceneLoaded(assetPath);
 GF.Scene.IsSceneLoading(assetPath);
 T instance = GF.Scene.GetLoadedScene<T>(assetPath);   // T : Node，未加载返回 null
 
-// 卸载（当前流程不完整，见 §5）
+// 卸载
 GF.Scene.UnloadScene(assetPath);
 GF.Scene.UnloadAllScenes();
 ```
@@ -229,5 +251,6 @@ await 处抛异常（TCS.TrySetException）。空路径除外（返回 null）�
 ### 后续计划
 
 - [x] 补全卸载链路（触发 `UnloadSceneSuccessCallback` → `ReleaseScene`/`QueueFree` → 事件）✅ 2026-07
+- [x] `LoadSceneUpdate` 进度转发（`OnLoadSceneUpdate` 订阅纯 C# 层事件，经 `m_EnableLoadSceneUpdate` 开关转发 Godot 全局事件，配合 loading 界面）✅ 2026-07
+- [x] `LoadSceneMode` 双模式（`Single` 卸载全部 + `Additive` 叠加加载）✅ 2026-07
 - [ ] `UnloadSceneAsync` 可 await 封装
-- [ ] `LoadSceneUpdate` 进度转发（配合 loading 界面）

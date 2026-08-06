@@ -331,6 +331,7 @@ uint mask3D = LayerMask.LayerToMask3D("Player", "Ground");
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `EditorLanguage` | — | 编辑器语言（本地化系统用） |
+| `EnableEditorResLoad` | `false` | 为 `true` 时框架直接从 `res://TheGame/` 加载资源而非 .pck 包；`OnInit` 中自动 `&= OS.HasFeature("editor")`，**仅在编辑器中生效** |
 | `m_TextHelper` | `GodotGameFramework.DefaultTextHelper` | 文本格式化辅助器类型名 |
 | `m_LogHelper` | `GodotGameFramework.DefaultLogHelper` | 日志辅助器类型名 |
 | `m_JsonHelper` | `GodotGameFramework.DefaultJsonHelper` | JSON 辅助器类型名 |

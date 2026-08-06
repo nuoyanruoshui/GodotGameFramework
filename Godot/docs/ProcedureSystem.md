@@ -136,35 +136,43 @@ procedureOwner.RemoveData("NextSceneId");                 // 用完移除（自�
 
 ### 4.1 ProcedureLaunch（入口）
 
-`OnEnter` 检查 12 个框架组件（`Base / Event / Fsm / Setting / DataNode / Resource / Entity / UI / Sound / Localization / WebRequest / Download`）是否都已注册（`GF.Xxx != null`）。全部通过后调用 `NodePool.Instance.Active()` 和 `LayerMask.Instance.Active()` 初始化节点池与物理层工具，然后 `ChangeState<ProcedureUpdate>`；否则 `Log.Fatal` 列出缺失组件并停留。
+`OnEnter` 检查 14 个框架组件（`Base / Event / Fsm / Setting / DataNode / Resource / Entity / UI / Sound / Localization / WebRequest / Download / Scene / ObjectPool`）是否都已注册（`GF.Xxx != null`）。全部通过后 `ChangeState<ProcedureUpdate>`；否则 `Log.Fatal` 列出缺失组件并停留。
 
 ### 4.2 ProcedureUpdate（热更）
 
 完整逻辑见 `DownloadSystem.md` §5，摘要：
 
-- Package 模式 / 上次启动崩溃（`HotUpdateSafetyGuard` 安全模式）→ 直接 `ChangeState<ProcedurePrelode>`；
+- Package 模式 + `EnableEditorResLoad` → 直接 `ChangeState<ProcedurePrelode>`（跳过子包加载）；
+- Package 模式（非 EditorResLoad）→ 调用 `TryLoadLocalSubpackagesAsync()` 读取 `SubpackDir` 下的 `GameFrameworkVersion.dat` 清单加载本地子包，然后进入下一流程；
+- 上次启动崩溃（`HotUpdateSafetyGuard` 安全模式）→ 直接 `ChangeState<ProcedurePrelode>`；
 - 未配置 `RemoteUrl` → 校验并加载本地已下载子包后进入下一流程；
 - 正常路径：拉取远端 `GameFrameworkVersion.dat` → `MinAppVersion` 检查 → 本地完整性自检 → 差量比对 → 磁盘空间预检 → `GF.Download` 并发下载（每包重试 3 次、指数退避）→ `LoadResourcePack` 加载子包 → 保存新清单；
 - 热更目录 `SubpackDir` 优先级：`UpdateSettingRes.HotUpdatePath` → 安装目录 `subpackages/`（可写时）→ `user://subpackages/`；
+- 字段 `LoadingForm m_loadingForm`（打开后经 `SetLogState(message, progress)` 更新进度条与状态文本）；异步加载流程在 `finally` 块中关闭 LoadingForm；
 - 任何异常都降级 `SkipToNext` → `ProcedurePrelode`（保证能进游戏）。
 
 ### 4.3 ProcedurePrelode（预载）
 
-`OnEnter` 同步完成 5 项：
+`OnEnter` 按顺序完成 8 步（`async void`，前 4 个 Load 方法各自包在 try/catch 中，单个失败不中断流程）：
 
-| 项 | 动作 |
-|----|------|
-| Localization | `GF.Localization.ReadData(...)` 按当前语言读字典 |
-| UIGroup | 遍历 `GF.UI.UIGroupRes.Groups` → `AddUIGroup(name, depth)` |
-| EntityGroup | 遍历 `GF.Entity.EntityGroupRes.EntityGroups` → `AddEntityGroup(...)` |
-| SoundGroup | 遍历 `GF.Sound.SoundGroupRes.SoundGroups` → `AddSoundGroup(...)` |
-| Archive | `await GF.Archive.LoadAsync()` 加载存档数据 |
+| 顺序 | 项 | 动作 |
+|------|----|------|
+| 1 | EntityGroup | 遍历 `GF.Entity.EntityGroupRes.EntityGroups` → `AddEntityGroup(...)` |
+| 2 | Localization | `EnableEditorResLoad` 分支：非编辑器路径 `GF.Localization.Language = (Language)GF.Setting.GetInt("Language", ...)`（从 Setting 持久化读取）；编辑器路径使用 `GF.Base.EditorLanguage` 或 `SystemLanguage` |
+| 3 | UIGroup | 遍历 `GF.UI.UIGroupRes.Groups` → `AddUIGroup(name, depth)` |
+| 4 | SoundGroup | 遍历 `GF.Sound.SoundGroupRes.SoundGroups` → `AddSoundGroup(...)`，并从 Setting 恢复音量（`SetVolume(DefaultMusicGroup/SfxGroup/UiGroup, GetFloat(..., 1))`） |
+| 5 | NodePool | `NodePool.Instance.Active()` 启动节点池 |
+| 6 | LayerMask | `LayerMask.Instance.Active()` 启动层级工具 |
+| 7 | LoadingForm | `await GF.UI.OpenLoadingUIFormAsync()` 打开加载界面 |
+| 8 | Archive | `await GF.Archive.LoadAsync()` 加载存档数据 |
 
-任一组注册失败会 `Log.Warning` 记录日志，但**流程总是继续进入 `ProcedureGame`**（`finally` 块确保 `ChangeState<ProcedureGame>` 一定执行），带 `"部分模块加载失败，继续进入游戏。"` 警告。
+错误语义分层：① 单个组 `Add*Group` 返回 false 时，Load 方法内 `Log.Warning`（如 `"Add UI group '{0}' failure."`）并 return，对应 `m_LoadFlagDic` 项保持 false；② 四个 Load 方法抛异常时被各自 try/catch 捕获 → `Log.Fatal`；③ 最后 `IsLoadAll()` 检查 `m_LoadFlagDic` 四项 —— 任一为 false 则 `Log.Warning("部分模块加载失败，继续进入游戏。")`，但**无论成败都 `ChangeState<ProcedureGame>` 继续进入游戏**。
 
 ### 4.4 ProcedureGame（玩法）
 
 `OnEnter`：`HotUpdateSafetyGuard.MarkStartupSuccess()`（标记本次启动成功，后续崩溃不再归因热更）→ `await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm)` 打开主菜单。玩法内的具体状态（菜单/对局等）由 UI 与实体逻辑驱动。
+
+> **LoadingForm 复用**：`LevelManager.StartLevel(level)`（`TheGame/GameScripts/Manager/LevelManager.cs`）也会调用 `await GF.UI.OpenLoadingUIFormAsync()` 打开 LoadingForm 展示关卡加载进度，随后异步加载场景、生成实体、打开 MainForm。
 
 ---
 

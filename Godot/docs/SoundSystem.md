@@ -241,9 +241,15 @@ int id = GF.Sound.PlaySound("res://TheGame/Audio/boss_theme.ogg", "Music", p);
 // 稍后淡出停止
 GF.Sound.StopSound(id, fadeOutSeconds: 1.5f);
 
-// 设置页：全局音量控制
-GF.Sound.SetSoundGroupVolume("Music", musicSlider.Value);
-GF.Sound.SetSoundGroupMute("SFX", sfxMuteCheck.ButtonPressed);
+// 设置页（SettingForm.Logic.cs 实际用法）：音量滑杆 0~100 → SetVolume 0~1
+// 组名常量：SoundComponent.DefaultMusicGroup = "Music" / DefaultSfxGroup = "SFX" / DefaultUiGroup = "UI"
+m_MusicHSlider.ValueChanged += (v) => GF.Sound.SetVolume(SoundComponent.DefaultMusicGroup, (float)v / 100);
+m_EffectHSlider.ValueChanged += (v) =>
+{
+    GF.Sound.SetVolume(SoundComponent.DefaultSfxGroup, (float)v / 100);
+    GF.Sound.SetVolume(SoundComponent.DefaultUiGroup, (float)v / 100);
+};
+// ProcedurePrelode.LoadSoundGroup 从 Setting 恢复音量：SetVolume(组, GF.Setting.GetFloat(组, 1))
 ```
 
 ---

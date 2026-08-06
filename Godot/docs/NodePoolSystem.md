@@ -140,6 +140,8 @@ NodePoolInspectorPlugin (EditorInspectorPlugin)
 
 ## 6. 使用示例
 
+> 当前 `NodePoolConfigRes.tres` 注册了 **3 个池化场景**：`DamagePop`（伤害数字）、`QuestionTips`（确认对话框）、`DropItem`（拾取物）。
+
 ### DamagePop（伤害数字）
 
 ```csharp

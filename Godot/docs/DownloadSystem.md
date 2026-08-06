@@ -281,7 +281,15 @@ public struct Pack {
 
 ### 5.3 热更目录选择（SubpackDir）
 
-优先级：`UpdateSettingRes.HotUpdatePath`（显式配置）→ 游戏安装目录 `subpackages/`（可写时）→ `user://subpackages/`（兜底）。
+`SubpackDir` 是 `ProcedureUpdate` 的一个只读属性，每次访问调用 `GetOrCreateHotUpdateDir()` 自动选择可写目录：
+
+1. `UpdateSettingRes.HotUpdatePath`（显式配置）
+2. 游戏安装目录 `subpackages/`（通过 `IsDirectoryWritable` 写测试探测可写性；编辑器下解析为 `res://../../Godot/subpackages`）
+3. `user://subpackages/`（兜底，一定可写）
+
+**版本清单位置**：Updatable 模式下远程清单经 `GF.WebRequest` 拉取，加载子包成功后保存新清单到**`user://GameFrameworkVersion.dat`**（旧版备份为 `.bak`）。Package 模式下本地清单从 `{SubpackDir}/GameFrameworkVersion.dat` 读取（`TryLoadLocalSubpackagesAsync`）。
+
+> 注意：`.pck` 本体可能在游戏安装目录，而**版本清单固定存于 `user://`**——两者路径策略不同，属有意设计。下载写入路径使用 `SubpackDir`，由 `GetOrCreateHotUpdateDir()` 保证可写。
 
 ---
 

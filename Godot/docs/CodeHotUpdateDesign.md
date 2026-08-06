@@ -727,7 +727,7 @@ EOF
 
 - [ ] 回滚机制（备份/恢复）——资源热更侧已实现（2026-07：版本 `.bak` + 加载失败自动回退 + `HotUpdateSafetyGuard` 崩溃安全模式）；DLL 侧待实施
 - [ ] 强制更新弹窗（`ForceUpdate` 字段已在 `ProcedureUpdate` 读取，强制拦截逻辑待完善）
-- [ ] 下载进度 UI——资源热更侧已实现（2026-07：`LogInForm` 字节加权进度）；DLL 侧待实施
+- [ ] 下载进度 UI——资源热更侧已实现（2026-07：`LoadingForm` 进度 + `LoadSceneUpdate` 真实进度转发）；DLL 侧待实施
 - [ ] 完整性校验（SHA256）——下载通道已内置（2026-07：`GF.Download.DownloadFileAsync`）
 - [ ] 错误日志收集
 

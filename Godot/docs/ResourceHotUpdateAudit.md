@@ -23,7 +23,7 @@
 |---|:---:|------|------|---------|
 | 1.1 | 🟡 | ✅ **已修复 (2026-07)** — RemoteUrl 为空时仍加载已下载的本地补丁（加载前先做逐包完整性校验）。原问题：不加载本地补丁，断网启动补丁全失效。 | 断网启动 → 本地补丁正常生效 | `ProcedureUpdate:131-147` |
 | 1.2 | 🟡 | ✅ **已修复 (2026-07)** — `VersionFetchTimeoutSeconds` 为每次版本清单请求设置 10s 独立超时（原全局 30s）。原问题：单次请求没有独立超时，3 次重试 × 30s = 90s 才失败，对用户来说像卡死。 | 弱网下 10s 超时，3 次重试共 30s | `ProcedureUpdate.cs` |
-| 1.3 | 🟢 | ✅ **已修复 (2026-07)** — `LoginForm` 打开失败路径加入 `try-catch`，异常时显示错误提示并通过 userData 传递错误上下文。原问题：LoginForm 打开失败时用户看到黑屏无任何提示。 | LoginForm 失败 → 用户看到错误提示 | `ProcedureUpdate:151` |
+| 1.3 | 🟢 | ✅ **已修复 (2026-07)** — `LoadingForm` 打开失败路径加入 `try-catch`，异常时显示错误提示并通过 userData 传递错误上下文。原问题：LoadingForm 打开失败时用户看到黑屏无任何提示。 | LoadingForm 失败 → 用户看到错误提示 | `ProcedureUpdate:151` |
 | 1.4 | 🟢 | 🔶 **部分修复 (2026-07)** — `Pack.IsValid()` 已校验 `Name` 非空 + `Size > 0`，比对/下载/加载全链路过滤无效包；✅ `Pack.IsValid()` 已校验 Hash 非空 + 64 字符（2026-07）。空 Hash / 无效 Hash 的包在全链路被过滤。 | 服务器配无效 Hash → 被过滤 | `PackVersionList:83-84` |
 
 ---
@@ -136,5 +136,5 @@
 | 编号 | 内容 | 说明 |
 |------|------|------|
 | 5.3 | 子包加载半成功回滚 | Godot LoadResourcePack 无 Unload API，下次启动回退兜底 |
-| 3.8 | 下载取消 UI | CancellationToken 已支持，LoginForm 缺取消按钮 |
+| 3.8 | 下载取消 UI | CancellationToken 已支持，LoadingForm 缺取消按钮 |
 | 1.4 | 无效 Hash 包过滤 | Pack.IsValid 已校验，全链路已有过滤 |
