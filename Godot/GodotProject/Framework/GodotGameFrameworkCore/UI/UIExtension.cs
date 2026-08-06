@@ -97,28 +97,15 @@ namespace GodotGameFramework.UI
         }
 
         const string MainPack = "MainPack";
-        public static async Task<LogInForm> OpenLogInUIFormAsync(this UIComponent uiComponent)
+        public static async Task<LoadingForm> OpenLoadingUIFormAsync(this UIComponent uiComponent)
         {
             if (GF.UI.AddUIGroup(MainPack))
             {
-                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_LogInForm, MainPack);
+                return (LoadingForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_LoadingForm, MainPack);
             }
             else
             {
-                return (LogInForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_LogInForm, MainPack);
-            }
-        }
-        public static async void OpenQuestionTipsAsync(this UIComponent uiComponent, string contenttxt, string cancelTxt, string confirmTxt, Action cancel = null, Action confirm = null)
-        {
-            if (GF.UI.AddUIGroup(MainPack))
-            {
-                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_QuestionTips, MainPack);
-                tip.SetAction(contenttxt, cancelTxt, confirmTxt, cancel, confirm);
-            }
-            else
-            {
-                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_QuestionTips, MainPack);
-                tip.SetAction(contenttxt, cancelTxt, confirmTxt, cancel, confirm);
+                return (LoadingForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_LoadingForm, MainPack);
             }
         }
         public static bool HasUIForm(this UIComponent uiComponent, UIFormId formId)

@@ -95,9 +95,8 @@ m_HitBox = NodePath("m_HitBox")
 position = Vector2(0, -34)
 scale = Vector2(0.15, 0.15)
 sprite_frames = SubResource("SpriteFrames_wvhbo")
-animation = &"Walk"
-frame = 4
-frame_progress = 1.0
+animation = &"Idle"
+autoplay = "Idle"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=738050605]
 position = Vector2(-1, -35.5)

@@ -25,6 +25,7 @@ public partial class LevelManager : SingletonNode<LevelManager>
     public int Timer => 15 * Mathf.Min(m_LevelConfig.Waves.Length, 1);
     public async Task StartLevel(string level)
     {
+        await GF.UI.OpenLoadingUIFormAsync();
         m_LevelConfig = ConfigSystem.Instance.Tables.TbLevelConfig.DataList.FirstOrDefault(x => x.Level == level);
         m_Scene = (Node2D)await GF.Scene.LoadSceneAsync(m_LevelConfig.Map);
         Node2D spawnPoint = m_Scene.GetNode<Node2D>("SpawnPoint");

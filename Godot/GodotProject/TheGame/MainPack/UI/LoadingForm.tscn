@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://deh62p265j7dw"]
 
 [ext_resource type="Theme" uid="uid://2gwbh6otun6r" path="res://TheGame/MainPack/Themes/MainThemes.tres" id="1_7kksp"]
-[ext_resource type="Script" uid="uid://o72loh1qprtc" path="res://TheGame/MainPack/Scripts/UI/LogInForm.cs" id="2_0y1ir"]
+[ext_resource type="Script" uid="uid://dvplgi4pg45a5" path="res://TheGame/MainPack/Scripts/UI/LoadingForm.cs" id="2_e876v"]
 
-[node name="LogInForm" type="Control" unique_id=1234650829 node_paths=PackedStringArray("m_State", "m_HSlider")]
+[node name="LoadingForm" type="Control" unique_id=1234650829 node_paths=PackedStringArray("m_State", "m_HSlider")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_7kksp")
-script = ExtResource("2_0y1ir")
+script = ExtResource("2_e876v")
 m_State = NodePath("m_State")
 m_HSlider = NodePath("m_HSlider")
 
@@ -22,14 +22,21 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.5)
+color = Color(0, 0, 0, 1)
 
 [node name="m_State" type="Label" parent="." unique_id=952840317]
-layout_mode = 0
-offset_left = 436.0
-offset_top = 554.0
-offset_right = 716.0
-offset_bottom = 599.0
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -140.0
+offset_top = -77.0
+offset_right = 140.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
 theme_override_font_sizes/font_size = 20
 text = "检测更新中..."
 horizontal_alignment = 1

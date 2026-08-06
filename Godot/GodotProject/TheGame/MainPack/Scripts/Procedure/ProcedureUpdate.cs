@@ -34,7 +34,7 @@ public class ProcedureUpdate : ProcedureBase
     private const int MaxRetries = 3;
     private const float RetryBaseDelaySeconds = 1.5f;
     private const float VersionFetchTimeoutSeconds = 10f;    // 单次版本清单请求超时（秒），不依赖全局 30s
-    LogInForm m_loginForm;
+    LoadingForm m_loadingForm;
 
     /// <summary>
     /// 热更补丁存储目录。
@@ -167,7 +167,7 @@ public class ProcedureUpdate : ProcedureBase
             return;
         }
 
-        m_loginForm = await GF.UI.OpenLogInUIFormAsync();
+        m_loadingForm = await GF.UI.OpenLoadingUIFormAsync();
 
         try
         {
@@ -177,7 +177,7 @@ public class ProcedureUpdate : ProcedureBase
             // ── 1. 请求服务器版本文件 ──
             string versionUrl = $"{remoteUrl.TrimEnd('/')}/{ResourceManager.GameFrameworkVersionData}";
             Log.Info("[ProcedureUpdate] 请求版本文件: {0}", versionUrl);
-            m_loginForm?.SetLogState("检测更新...", 0);
+            m_loadingForm?.SetLogState("检测更新...", 0);
 
             // 先加载本地版本，用于 ForceUpdate 回退判断（带完整性校验）
             var localVersionPre = ResourceManager.LocalPackVersionList
@@ -199,7 +199,7 @@ public class ProcedureUpdate : ProcedureBase
                     if (retry)
                     {
                         // 重试整个更新流程
-                        GF.UI.CloseUIForm(m_loginForm);
+                        GF.UI.CloseUIForm(m_loadingForm);
                         await RunUpdateFlowAsync(procedureOwner);
                         return;
                     }
@@ -207,7 +207,7 @@ public class ProcedureUpdate : ProcedureBase
                     return;
                 }
 
-                m_loginForm?.SetLogState("版本检测失败", 100);
+                m_loadingForm?.SetLogState("版本检测失败", 100);
                 await Task.Delay(1500);
                 await SkipToNextAsync(procedureOwner);
                 return;
@@ -223,7 +223,7 @@ public class ProcedureUpdate : ProcedureBase
             {
                 Log.Warning("[ProcedureUpdate] App 版本过低 ({0} < {1})，需要去商店更新。",
                     appVersion, serverVersion.MinAppVersion);
-                m_loginForm?.SetLogState("请更新App版本", 100);
+                m_loadingForm?.SetLogState("请更新App版本", 100);
                 await Task.Delay(3000);
                 await ShowForceUpdateDialogAsync("客户端版本过低，请升级客户端后再试。");
                 HotUpdateSafetyGuard.MarkStartupSuccess();
@@ -234,13 +234,13 @@ public class ProcedureUpdate : ProcedureBase
             // ── 3. 加载本地版本并校验完整性 ──
             var localVersion = ResourceManager.LocalPackVersionList
                 ?? NodeUtility.LoadAndValidateVersionList(ResourceManager.GameFrameworkVersionData);
-            m_loginForm?.SetLogState("校验本地数据...", 5);
+            m_loadingForm?.SetLogState("校验本地数据...", 5);
 
             int damagedCount = await VerifyLocalPackIntegrityAsync(localVersion);
             if (damagedCount > 0)
             {
                 Log.Warning("[ProcedureUpdate] 本地客户端不完整！{0} 个包已损坏或丢失，将重新下载。", damagedCount);
-                m_loginForm?.SetLogState($"检测到 {damagedCount} 个文件损坏,即将修复", 8);
+                m_loadingForm?.SetLogState($"检测到 {damagedCount} 个文件损坏,即将修复", 8);
             }
 
             // ── 4. 与服务器版本比对 ──
@@ -261,7 +261,7 @@ public class ProcedureUpdate : ProcedureBase
                 {
                     Log.Warning("[ProcedureUpdate] 磁盘空间不足: 需要 {0}, 可用 {1}",
                         StringExtension.FormatBytes(totalSize * 2), StringExtension.FormatBytes(freeSpace));
-                    m_loginForm?.SetLogState("磁盘空间不足", 100);
+                    m_loadingForm?.SetLogState("磁盘空间不足", 100);
 
                     if (isForceUpdate)
                     {
@@ -270,7 +270,7 @@ public class ProcedureUpdate : ProcedureBase
                             $"磁盘空间不足（需要 {StringExtension.FormatBytes(totalSize * 2)}），请清理后重试。");
                         if (retry)
                         {
-                            GF.UI.CloseUIForm(m_loginForm);
+                            GF.UI.CloseUIForm(m_loadingForm);
                             await RunUpdateFlowAsync(procedureOwner);
                             return;
                         }
@@ -296,7 +296,7 @@ public class ProcedureUpdate : ProcedureBase
                             "更新下载失败，请检查网络后重试。");
                         if (retry)
                         {
-                            GF.UI.CloseUIForm(m_loginForm);
+                            GF.UI.CloseUIForm(m_loadingForm);
                             await RunUpdateFlowAsync(procedureOwner);
                             return;
                         }
@@ -304,14 +304,14 @@ public class ProcedureUpdate : ProcedureBase
                         return;
                     }
 
-                    m_loginForm?.SetLogState("下载失败，请检查网络", 100);
+                    m_loadingForm?.SetLogState("下载失败，请检查网络", 100);
                     await Task.Delay(2000);
                     await SkipToNextAsync(procedureOwner);
                     return;
                 }
 
                 // ── 4. 先加载子包（验证可用） ──
-                m_loginForm?.SetLogState("加载资源...", 95);
+                m_loadingForm?.SetLogState("加载资源...", 95);
                 HotUpdateSafetyGuard.MarkStartupBegin();
 
                 await LoadDownloadedPacksAsync(serverVersion);
@@ -330,10 +330,10 @@ public class ProcedureUpdate : ProcedureBase
                     Log.Info("[ProcedureUpdate] 版本文件已保存。");
                 }
 
-                m_loginForm?.SetLogState("更新完成", 100);
+                m_loadingForm?.SetLogState("更新完成", 100);
                 await Task.Delay(500);
 
-                GF.UI.OpenQuestionTipsAsync("更新完成，是否重启？", "退出", "确认", () =>
+                TipsManager.Instance.ShowTips<QuestionTips>("更新完成，是否重启？", "退出", "确认", () =>
                 {
                     HotUpdateSafetyGuard.MarkStartupSuccess();
                     GameEntry.Shutdown(ShutdownType.Quit);
@@ -352,7 +352,7 @@ public class ProcedureUpdate : ProcedureBase
         }
         finally
         {
-            GF.UI.CloseUIForm(m_loginForm);
+            GF.UI.CloseUIForm(m_loadingForm);
         }
 
     }
@@ -366,9 +366,9 @@ public class ProcedureUpdate : ProcedureBase
     {
         var tcs = new TaskCompletionSource<bool>();
 
-        m_loginForm?.SetLogState(message, 100);
+        m_loadingForm?.SetLogState(message, 100);
 
-        GF.UI.OpenQuestionTipsAsync(message, "退出", "重试", () =>
+        TipsManager.Instance.ShowTips<QuestionTips>(message, "退出", "重试", () =>
         {
             tcs.TrySetResult(false); // 退出
         }, () =>
@@ -550,7 +550,7 @@ public class ProcedureUpdate : ProcedureBase
             int pct = totalBytes > 0
                 ? 10 + (int)(80.0 * sum / totalBytes)
                 : 10 + (int)(80.0 * completedCount / packs.Count);
-            m_loginForm?.SetLogState(
+            m_loadingForm?.SetLogState(
                 $"下载中 {completedCount}/{packs.Count} ({StringExtension.FormatBytes(sum)}/{StringExtension.FormatBytes(totalBytes)})",
                 Math.Min(pct, 90));
         }
@@ -569,7 +569,7 @@ public class ProcedureUpdate : ProcedureBase
             return ok;
         }
 
-        m_loginForm?.SetLogState($"下载中 0/{packs.Count}", 10);
+        m_loadingForm?.SetLogState($"下载中 0/{packs.Count}", 10);
 
         var tasks = new List<Task<bool>>(packs.Count);
         for (int i = 0; i < packs.Count; i++)
@@ -662,7 +662,7 @@ public class ProcedureUpdate : ProcedureBase
                 var result = await GF.WebRequest.SendRequestAsync(versionUrl, VersionFetchTimeoutSeconds);
                 if (!IsHttpSuccess(result))
                 {
-                    m_loginForm.SetLogState($"版本文件请求失败(再次尝试:{attempt + 1}/{MaxRetries})", 0);
+                    m_loadingForm.SetLogState($"版本文件请求失败(再次尝试:{attempt + 1}/{MaxRetries})", 0);
                     Log.Warning("[ProcedureUpdate] 版本文件请求失败 (attempt {0}/{1}, HTTP {2})",
                         attempt + 1, MaxRetries, result?.ResponseCode);
                     continue;

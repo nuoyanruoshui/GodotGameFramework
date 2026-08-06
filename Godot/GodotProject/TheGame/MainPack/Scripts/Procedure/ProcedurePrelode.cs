@@ -3,15 +3,18 @@
 // 游戏的入口流程，完成框架初始化、加载配置和数据表、创建实体组
 //------------------------------------------------------------
 
+using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using GameConfig.Constant;
 using GameFramework;
+using GameFramework.Event;
 using GameFramework.Localization;
 using GameFramework.Procedure;
 using GodotGameFramework;
 using GodotGameFramework.NodePool;
 using GodotGameFramework.Sound;
+using GodotGameFramework.UI;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
 /// <summary>
@@ -73,7 +76,8 @@ public class ProcedurePrelode : ProcedureBase
             Log.Fatal("[ProcedurePrelode] 加载声音组失败（.pck 可能缺失依赖资源）: {0}", ex);
         }
         NodePool.Instance.Active(); // 启动节点池
-        LayerMask.Instance.Active(); // 启动层级工具
+        LayerMask.Instance.Active(); // 启动层级工具\
+        await GF.UI.OpenLoadingUIFormAsync();
         await GF.Archive.LoadAsync();
 
         if (IsLoadAll())

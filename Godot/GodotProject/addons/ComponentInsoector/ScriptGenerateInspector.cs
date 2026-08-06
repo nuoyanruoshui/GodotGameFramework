@@ -67,15 +67,15 @@ namespace GodotGameFramework.Editor
             }
             VBoxContainer vbox = new VBoxContainer();
             Button m_GenerateButton = new Button();
-            m_GenerateButton.Text = "Bind UI Script";
+            m_GenerateButton.Text = "Generate Script";
             vbox.AddChild(m_GenerateButton);
             Button m_DeleteGeButton = new Button();
             m_DeleteGeButton.Text = "Delete Gen";
-            m_DeleteGeButton.AddThemeColorOverride("font_color", Colors.Red);
+            m_DeleteGeButton.Modulate = Colors.Red;
             vbox.AddChild(m_DeleteGeButton);
             Button m_DeleteLogicButton = new Button();
             m_DeleteLogicButton.Text = "Delete Logic";
-            m_DeleteLogicButton.AddThemeColorOverride("font_color", Colors.Red);
+            m_DeleteLogicButton.Modulate = Colors.Red;
             vbox.AddChild(m_DeleteLogicButton);
             m_GenerateButton.Pressed += () => OnGeneratePressed(@object);
             m_DeleteGeButton.Pressed += () => OnDeleteGenPressed(@object);

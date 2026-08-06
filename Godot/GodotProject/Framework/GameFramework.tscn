@@ -29,7 +29,6 @@ script = ExtResource("1_781av")
 [node name="Base" type="Node" parent="." unique_id=611780270]
 script = ExtResource("2_781av")
 m_JsonHelper = "GodotGameFramework.NewtonsoftJsonHelper"
-EnableEditorResLoad = true
 
 [node name="Event" type="Node" parent="." unique_id=355543369]
 script = ExtResource("3_353g6")
