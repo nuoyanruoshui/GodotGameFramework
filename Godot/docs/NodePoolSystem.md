@@ -188,7 +188,6 @@ public void OnRelease()
 ## 7. 已知边界与后续计划
 
 - [x] 懒加载 Instantiate（不预实例化）✅ 2026-07
-- [x] 孤儿节点设计（解决 AddChild 冲突）✅ 2026-07
 - [x] Get<T> 类型安全 + 自动归还 ✅ 2026-07
 - [x] 编辑器一键扫描 IPoolable 场景 ✅ 2026-07
 - [x] .tres 原子保存（tmp + rename）✅ 2026-07

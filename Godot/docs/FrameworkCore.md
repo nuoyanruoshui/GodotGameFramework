@@ -378,4 +378,3 @@ TopMenu 只改 csproj，需要重新 `dotnet build`；编辑器内已加载的�
 - ✅（2026-07 已修复）GF 门面静态缓存问题 — `GameEntry.OnInit` 中 `GF.ClearCache()` 自动清空缓存，`ShutdownType.Restart` 后新场景重新获取。
 - `GameEntry.OnUpdate` 的 realElapseSeconds 在 `TimeScale = 0` 时为 0（原版 Unity GF 使用 `Time.unscaledDeltaTime`，此处语义有差异）。
 - `SingletonNode<T>.Instance` 通过 `CallDeferred` 将节点加入根场景树，`OnLoad` 在 `_Ready` 确认非重复实例后触发。
-- CLAUDE.md 中提到的 `Base/Node/2D` 抽象实体基类（`AbstractNode2DEntity` 等）当前代码中不存在，游戏实体（如 `ActorEntity`）直接继承 Godot 类型并实现 `IEntity`。
