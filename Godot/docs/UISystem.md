@@ -24,7 +24,6 @@ UI 系统是 [Game Framework](https://gameframework.cn/) UI 模块的 Godot 移�
 - ✅ `OpenUIForm`（serialId 事件驱动）与 `OpenUIFormAsync`（TCS 可 await）两种消费方式
 - ✅ Luban 配置驱动：`OpenUIForm(UIFormId.MenuForm)` 由 `TbUIFormConfig` 解析资源路径与组名
 - ✅ `IStringKey` 本地化文本自动收集（`OnInit` 时统一 `SetLocalizationValue()`）
-- ✅ UIItem 池化基础设施（`UIItemBase` + `UIItemInstanceObject`）
 - ✅ 编辑器一键生成 UIForm 脚本 + `m_` 前缀子节点自动收集与 `[Export]` 赋值
 
 ---
@@ -91,8 +90,8 @@ UIManager(C# 事件) → UIComponent(转发) → EventComponent(全局事件, �
 | `GodotGameFrameworkCore/Templet/UIFormTemplet.txt` / `UIFormLogicTemplet.txt` | 脚本生成模板（Ge / Logic） |
 | `addons/ComponentInsoector/ScriptGenerateInspector.cs` | 编辑器脚本生成器（Inspector 按钮） |
 | `TheGame/MainPack/Scripts/Resources/ScriptGenerateRes.cs` + `TheGame/MainPack/Resources/ScriptGenerateRes.tres` | 生成器配置 |
-| `TheGame/GameScripts/GameProto/UIGe/*.cs` | 已生成的 Ge 文件（MenuForm/MainForm/GameOver/SettingForm；LogInForm/QuestionTips 的 Ge 已移至 `TheGame/MainPack/Scripts/UI/`） |
-| `TheGame/GameScripts/UI/*.Logic.cs` + `TheGame/MainPack/Scripts/UI/*.Logic.cs` | 已生成的 Logic 文件（业务逻辑；LogInForm/QuestionTips 在 MainPack，其余在 GameScripts） |
+| `TheGame/GameScripts/GameProto/UIGe/*.cs` | 已生成的 Ge 文件（MenuForm/MainForm/GameOver/SettingForm；LoadingForm/QuestionTips 的 Ge 在 `TheGame/MainPack/Scripts/UI/`） |
+| `TheGame/GameScripts/UI/*.Logic.cs` + `TheGame/MainPack/Scripts/UI/*.Logic.cs` | 已生成的 Logic 文件（业务逻辑；LoadingForm/QuestionTips 在 MainPack，其余在 GameScripts） |
 
 ---
 
@@ -315,16 +314,6 @@ public void SetLocalizationValue()
 
 > 注意：由于收集只扫子树，界面自身的 `SetLocalizationValue()` 不会被 `UIStringKeys` 收到，需要在别处（如切换语言事件）手动调用，或者使用实现了 `IStringKey` 的内置 `LabelTr` / `ButtonTr` 组件挂在树里（`GodotGameFrameworkCore/Localization/ButtonTr.cs` / `LabelTr.cs`）。
 
-### 3.6 UIItem 池化（基础设施）
-
-`UIItemBase`（纯 C# 逻辑基类，`OnInit`/`OnRecycle` + `CachedNode`）与 `UIItemInstanceObject`（`ObjectBase` 池对象）用于界面内部子元素（列表项等）的复用：
-
-- `OnSpawn`：位置归零 + `Visible = true`
-- `OnUnspawn`：`Visible = false`（隐藏不销毁）
-- `Release`：`ItemLogic.OnRecycle()` → `QueueFree()`
-
-> ⚠️ **当前状态**：框架**尚未提供** `SpawnItem<TLogic>/UnspawnItem` 之类的封装 API（注释中提及但代码不存在）。使用需自行通过 `GF.ObjectPool` 创建 `IObjectPool<UIItemInstanceObject>` 并调用 `UIItemInstanceObject.Create(...)` 注册。TheGame 当前仅通过 NodePool 管理池化 UI 元素（如 `DamagePop`），未使用 UIItem 池化路径。
-
 ---
 
 ## 4. UIComponent 与 API
@@ -394,6 +383,38 @@ private void OnStartButtonPressed()
 // MainForm.Logic.cs：OnInit 中异步组织游戏场景
 Node2D scene = (Node2D)await GF.Scene.LoadSceneAsync(ResourcesCollectionConstant.Scenes_Map);
 CatEntity cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
+```
+
+**LoadingForm（加载进度界面）**——共享 UI，位于 `TheGame/MainPack/Scripts/UI/LoadingForm.Logic.cs`（原 `LogInForm` 改名而来，2026-08）。由 `GF.UI.OpenLoadingUIFormAsync()` 打开（`UIExtension` 扩展方法，注册 `MainPack` UI 组）：
+
+```csharp
+// ProcedurePrelode / ProcedureUpdate / LevelManager.StartLevel 中复用
+await GF.UI.OpenLoadingUIFormAsync();
+```
+
+- `OnOpen` 订阅 4 个事件：`OpenUIFormUpdateEventArgs` + `LoadSceneUpdateEventArgs`（进度，0.0~1.0 × 100 显示）、`OpenUIFormSuccessEventArgs` + `LoadSceneSuccessEventArgs`（成功后自动关闭）
+- `SetLogState(logState, progress)`：`HSlider` 进度条 Tween 平滑过渡（0.25s Quad.Out）+ 状态文本
+- 自动关闭带 `m_IsCloseRequested` 防重入标记 + `await Task.Delay(100)` 延迟一帧，避免加载完成立即关闭导致闪烁/重复关闭
+- 关闭时（`OnClose`）统一 `Unsubscribe` 4 个事件
+
+**SettingForm（设置界面，语言 + 音量示例）**——`TheGame/GameScripts/UI/SettingForm.Logic.cs`，Ge 侧新增 `[Export]`：`m_MusicHSlider` / `m_EffectHSlider` / `m_OptionButton`：
+
+```csharp
+// 语言下拉框：从本地化文件夹扫描可用语言（GetLocalizationFileNames）
+string[] names = GF.Localization.GetLocalizationFileNames();  // ["ChineseSimplified","English",...]
+m_OptionButton.AddItem(displayName, i);                       // 文件名 → 显示名（简体中文/English/...）
+m_OptionButton.ItemSelected += (index) =>
+{
+    string fileName = GF.Localization.GetLocalizationFileNames()[index];
+    GF.Localization.Language = Enum.TryParse<Language>(fileName, out var lang) ? lang : Language.English;
+};
+
+// 音量滑杆：0~100 映射到 0~1（SoundExtension.SetVolume）
+m_MusicHSlider.ValueChanged += (v) => GF.Sound.SetVolume(SoundComponent.DefaultMusicGroup, (float)v / 100);
+m_EffectHSlider.ValueChanged += (v) => {
+    GF.Sound.SetVolume(SoundComponent.DefaultSfxGroup, (float)v / 100);
+    GF.Sound.SetVolume(SoundComponent.DefaultUiGroup, (float)v / 100);
+};
 ```
 
 ---
@@ -478,9 +499,3 @@ Inspector 底部三个按钮：**Bind UI Script**（生成+挂载）、**Delete 
 **Q: 修改了 Ge 文件里的代码，下次生成没了？**
 Ge 文件头部注明"生成时会被覆盖，请勿手动修改"，业务代码一律写在 `.Logic.cs`。
 
-### 与 CLAUDE.md 描述的差异（以本文/代码为准）
-
-- 不存在 `ControlUIForm` 基类与 `Base/Node/UI/` 目录；生成的界面类直接继承 `Control`（或节点实际类型）
-- 本地化收集接口是 `IStringKey`（非 `UIStringLabelKey`）
-- Logic 文件名为 `<类名>.Logic.cs`（非与 Ge 同名的 `<类名>.cs`）；配置字段为 `UIOutPutPathGe/UIOutPutPathLogic/EntityOutPutPathGe/EntityOutPutPathLogic`（非 `OutPutPathGe/OutPutPathLogic`）
-- 生成按钮同样对 Node2D/Node3D 生效（生成 Entity 脚本），不仅限 Control

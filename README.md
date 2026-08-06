@@ -14,7 +14,7 @@
 ## 📖 简介
 
 **GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 + .NET 8 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、数据结点、设置、Web 请求、下载、调试器、存档等子系统。
-
+交流Q群：1098113249
 ### ✨ 核心特性
 
 - 🧩 **模块化架构** — 16 个独立组件 + 1 个存档管理器，高内聚低耦合，可按需替换
@@ -50,7 +50,7 @@
 
 ### 环境要求
 
-- **Godot**: 4.6.2+（.NET 版本，Godot .NET SDK 4.7.0）
+- **Godot**: 4.7+（.NET 版本，Godot .NET SDK 4.7.0）
 - **.NET SDK**: 8.0+
 - **渲染器**: D3D12（Forward Plus，默认）
 - **物理引擎**: Jolt Physics（3D 默认）
@@ -156,7 +156,7 @@ CharacterBody2D + IEntity + IActor
 - ✅ Ge partial 提供 `Control, IUIForm` 框架样板，Logic partial 编写生命周期逻辑
 - ✅ 自动收集 `IStringKey` 子节点并刷新本地化文本
 
-当前 TheGame UI：`MenuForm`、`MainForm`、`GameOver`、`PauseMenuForm`、`TestOverlayForm`、`LogInForm`、`SettingForm`、`QuestionTips`、`DamagePop`（`IPoolable` 池化控件）。
+当前 TheGame UI：`LoadingForm`、`MenuForm`、`MainForm`、`GameOverForm`、`PauseMenuForm`、`TestOverlayForm`、`SettingForm`、`QuestionTips`、`DamagePop`（`IPoolable` 池化控件）。`LoadingForm` 显示加载进度（Tween 平滑过渡），监听 `OpenUIFormSuccessEventArgs`/`LoadSceneSuccessEventArgs` 自动关闭。`QuestionTips` 实现 `ITips` 接口，用于确认对话框。
 
 ### 音频模块 (SoundComponent)
 
@@ -325,11 +325,11 @@ GodotProject/                    ← Godot 项目根
 │   │   │   ├── ObjectPool/       ← NodePool, NodeObject, PoolContainer
 │   │   │   ├── Procedure/        ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
 │   │   │   ├── Resources/        ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig, ScriptGenerateRes, UpdateSettingRes
-│   │   │   └── UI/               ← LogInForm, QuestionTips（共享 UI）
+│   │   │   └── UI/               ← LoadingForm, QuestionTips（共享 UI）
 │   │   ├── Fonts/                ← simhei.ttf
 │   │   ├── Resources/            ← .tres 配置资源（EntityGroupRes, UIGroupRes, SoundGroupRes 等）
 │   │   ├── Themes/               ← MainThemes.tres
-│   │   └── UI/                   ← .tscn 场景文件（LogInForm, QuestionTips）
+│   │   └── UI/                   ← .tscn 场景文件（LoadingForm, QuestionTips）
 │   ├── GameScripts/
 │   │   ├── Entity/               ← ActorEntity, CatEntity, AngerEntity, GanTanEntity.Logic, DropItem
 │   │   ├── UI/                   ← MenuForm.Logic, MainForm.Logic, GameOver.Logic, DamagePop 等
@@ -633,4 +633,4 @@ TheGame/DataTables/GameConfigs/*.bytes          ← 二进制数据（运行时�
 | **leanclr-godot** | 与 leanclr-unity 类似，在 Godot 发布管线中集成 LeanCLR 运行时与 LeanAOT，使 GDScript / C# 游戏逻辑能以更小体积与更低内存发布到多平台（含 Web）。 | [GitHub](https://github.com/focus-creative-games/leanclr-godot.git) |
 ---
 
-交流Q群：1098113249
+

@@ -14,7 +14,7 @@
 | 纯 C# 层 | `GameFramework/Setting/` | `ISettingManager`/`SettingManager`：API 定义、参数校验、委托辅助器、关闭时自动保存 | ❌ |
 | Godot 桥接层 | `GodotGameFrameworkCore/Setting/` | `SettingComponent`（组件封装）+ `DefaultSettingHelper`（**Godot ConfigFile** 实现） | ✅ |
 
-**存储介质（默认辅助器）**：Godot `ConfigFile`（INI 风格文本），固定写入 **`user://settings.cfg`**，所有键放在固定 Section `[Settings]` 下。
+**存储介质（默认辅助器）**：Godot `ConfigFile`（INI 风格文本），固定写入 **`user://Settings.cfg`**，所有键放在固定 Section `[Settings]` 下。
 
 `user://` 实际磁盘位置（Godot 约定）：
 
@@ -49,7 +49,7 @@ SettingManager : GameFrameworkModule (纯 C# 层)
 ISettingHelper（存储抽象）
     ▲ 实现
 DefaultSettingHelper (Godot 桥接层)
-    └── Godot ConfigFile ──读写──► user://settings.cfg
+    └── Godot ConfigFile ──读写──► user://Settings.cfg
             [Settings]
             Score=100
             MusicVolume=0.8
@@ -65,7 +65,7 @@ DefaultSettingHelper (Godot 桥接层)
 | `GameFramework/Setting/ISettingHelper.cs` | 存储辅助器抽象（Load/Save/GetXxx/SetXxx/Remove…） |
 | `GameFramework/Setting/SettingManager.cs` | 校验 + 委托辅助器；`Shutdown()` 自动 `Save()` |
 | `GodotGameFrameworkCore/Setting/SettingComponent.cs` | 组件封装（`GF.Setting`），反射创建辅助器并 `Load()` |
-| `GodotGameFrameworkCore/Setting/DefaultSettingHelper.cs` | ConfigFile 实现：`user://settings.cfg`、Section `Settings`、对象走 JSON |
+| `GodotGameFrameworkCore/Setting/DefaultSettingHelper.cs` | ConfigFile 实现：`user://Settings.cfg`、Section `Settings`、对象走 JSON |
 
 ---
 
@@ -75,7 +75,7 @@ DefaultSettingHelper (Godot 桥接层)
 
 | 时机 | 行为 |
 |------|------|
-| 组件 `OnInit`（启动） | 反射创建辅助器 → `Load()` 读入 `user://settings.cfg`；**文件不存在返回成功（空配置）**，其他错误仅 `Log.Warning` |
+| 组件 `OnInit`（启动） | 反射创建辅助器 → `Load()` 读入 `user://Settings.cfg`；**文件不存在返回成功（空配置）**，其他错误仅 `Log.Warning` |
 | 运行期 `SetXxx` | 只写内存，**不落盘** |
 | 手动 `Save()` | 立即写盘（Godot 自动创建目录） |
 | 模块 `Shutdown`（正常退出） | `SettingManager.Shutdown()` 自动调用一次 `Save()` |
@@ -95,7 +95,7 @@ GF.Setting.SetObject("PlayerProfile", new PlayerProfile { Level = 3 });
 PlayerProfile p = GF.Setting.GetObject<PlayerProfile>("PlayerProfile", new PlayerProfile());
 ```
 
-对象最终以 JSON 字符串形式存在 `settings.cfg` 的对应键下。
+对象最终以 JSON 字符串形式存在 `Settings.cfg` 的对应键下。
 
 ### 3.3 辅助器替换
 

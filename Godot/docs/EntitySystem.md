@@ -1,6 +1,6 @@
 # 实体系统 (Entity Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Entity/`、`Framework/GodotGameFrameworkCore/Entity/`、`TheGame/GameScripts/Entity/`、`TheGame/MainPack/Scripts/Resources/`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Entity/`、`Framework/GodotGameFrameworkCore/Entity/`、`TheGame/GameScripts/Entity/`（含 CatEntity FSM 状态机示例）、`TheGame/MainPack/Scripts/Resources/`
 > 本文档描述 GGF 的实体系统：生命周期、实体组与对象池、配置驱动的显示/隐藏 API、TheGame 实体继承树与新增实体步骤。
 
 ---
@@ -217,6 +217,7 @@ Godot CharacterBody2D                     Godot Area2D                          
     └── ActorEntity (IEntity, IActor)         ├── GanTanEntity (IEntity)  ← 子弹     └── DropItem (IPoolable) ← 掉落物
          ├── CatEntity    ← 玩家猫            └── LightningBall (IEntity) ← 电球
          └── AngerEntity  ← 敌人
+                （CatEntity 内置 Fsm<CatEntity>：IdleState/MoveState）
 ```
 
 ### ActorEntity（角色基类，手写）
@@ -224,18 +225,20 @@ Godot CharacterBody2D                     Godot Area2D                          
 `TheGame/GameScripts/Entity/ActorEntity.cs` —— 战斗角色的公共职责：
 
 - **IEntity 样板**：Id/EntityAssetName/Handle/EntityGroup + 全部生命周期虚方法（`OnRecycle` 重置 Id/位置/速度并隐藏）
+- **Anim 属性**：`public AnimatedSprite2D Anim { get; private set; }`，在 `OnInit(isNewInstance)` 中通过 `this.GetChild<AnimatedSprite2D>()` 自动查找子节点；子类直接使用 `Anim.Play("Idle")` 等，无需各自声明 `[Export]` 字段
 - **ActorData**（struct）：`Hp / MaxHp`，`IsDead => Hp <= 0`；`Hurt(attackerId, damage)` / `Heal(heal)`
 - **EntityTeam**：`Player / Enemy` 阵营，子弹据此判定敌我
 - **CharacterConfig m_Config**：Luban `TbCharacterConfig`（移速/攻速/索敌半径），子类在 `isNewInstance` 时按自身 `EntityId` 查表
 - **PhysicsCheck2D m_Check**：池化的物理区域检测（`ReferencePool`），`_ExitTree` 时归还；`_Draw` 画调试圈（仅 TOOLS）
 - **`Die()`**：默认 `GF.Entity.HideEntity(this)`，子类扩展（AngerEntity 死亡加积分）
+- 引入了 `GameFramework.Fsm` 命名空间（供子类 CatEntity 的 FSM 使用）
 
 ### 各实体职责
 
 | 实体 | 基类 | 要点 |
 |------|------|------|
-| `CatEntity` | ActorEntity | 键盘移动（`ui_left/right/up/down`）、`PhysicsCheck2D` 圆形索敌取最近敌人方向、按 `AtkSpeed` 冷却发射子弹（`GanTan` / `LightningBall`）、`OnShow` 启动缩放呼吸 Tween |
-| `AngerEntity` | ActorEntity | 追击目标玩家（范围外靠近/范围内射击）、`HSlider` 血条、`Die()` 经 `GF.Setting` 加 100 分 |
+| `CatEntity` | ActorEntity | 键盘移动（`ui_left/right/up/down`）、`m_IsMoving`（`public bool`）驱动 FSM 状态切换（`IdleState` ↔ `MoveState`，OnEnter 播放 Idle/Walk 动画并 FlipH）；`PhysicsCheck2D` 圆形索敌取最近敌人方向、按 `AtkSpeed` 冷却发射子弹（`GanTan` / `LightningBall`）；`IActor` 接口定义于此文件 |
+| `AngerEntity` | ActorEntity | 追击目标玩家（范围外靠近/范围内射击）、`HSlider` 血条；不再持有私有 `m_Anim` 字段，改用基类 `Anim` 属性；`OnShow` 中 `Anim.Play("Idle")`；`Die()` 经 `GF.Archive` 加 100 分 + 掉落 `DropItem`（NodePool） |
 | `GanTanEntity` | Area2D | `BulletData`（方向/速度/敌我）经 userData 注入；`BodyEntered` 命中 `ActorEntity` 按阵营伤害后自隐藏；8 秒超时自毁；`m_IsDead` 防复用期重复触发 |
 | `LightningBall` | Area2D | 电球子弹（与 GanTanEntity 并行，不同外观/速度），BodyEntered 命中后自销毁、穿透多个目标 |
 | `DropItem` | Node2D | 掉落物（实现 `IPoolable`），经 NodePool 管理；`DOMove` + GTween 完成回调自动归还池 |

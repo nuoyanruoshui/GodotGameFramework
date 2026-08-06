@@ -30,7 +30,7 @@
 | [EntitySystem.md](EntitySystem.md) | 实体生命周期、实体组+实例池、EntityId 配置驱动、TheGame 继承树（ActorEntity/Cat/Anger/GanTan/LightningBall/DropItem）、新增实体步骤 |
 | [UISystem.md](UISystem.md) | UIForm 生命周期与触发条件（OnCover/Reveal/Pause/Resume/Refocus）、UI 组 Refresh 遮挡/暂停算法、OpenUIFormAsync、脚本生成器（Ge/Logic 双文件）工作流 |
 | [SoundSystem.md](SoundSystem.md) | 声音组与 Audio Bus 映射、代理抢占算法、PlaySoundParams、AudioStreamPlayer 桥接 |
-| [SceneSystem.md](SceneSystem.md) | 场景加载流程、实例挂载位置、LoadSceneAsync、与 ResourceComponent 的关系 |
+| [SceneSystem.md](SceneSystem.md) | 场景加载流程、实例挂载位置、LoadSceneMode（Single/Additive 双模式）、LoadSceneAsync、LoadSceneUpdate 进度事件、与 ResourceComponent 的关系 |
 | [ObjectPoolSystem.md](ObjectPoolSystem.md) | ObjectBase/IObjectPool 设计、四参数语义、与 ReferencePool 对照、NodePool 系统（IPoolable + GF.ObjectPool 懒加载） |
 | [NodePoolSystem.md](NodePoolSystem.md) | NodePool 通用节点池：IPoolable 接口、配置驱动注册、懒加载 Instantiate、孤儿节点设计、NodePoolInspectorPlugin 编辑器扫描 |
 | [ArchiveSystem.md](ArchiveSystem.md) | 通用存档系统：ArchiveSystem\<T,U\> 泛型设计、Catalogue/Data 分离模式、CRUD API、EasySave JSON 持久化、GameData 游戏侧定制 |
@@ -47,4 +47,4 @@
 ## 其他
 
 - `engine-reference/` — 引擎版本参考资料
-- 文档风格约定：中文；开头引用块标注适用版本与代码路径；章节顺序为 概述 → 架构与数据流 → 文件清单 → 核心机制 → 组件与 API → FAQ → 已知边界；**所有断言以实际代码为准**，与 CLAUDE.md 冲突时以系统文档为准（CLAUDE.md 已于 2026-07 同步修订）
+- 文档风格约定：中文；开头引用块标注适用版本与代码路径；章节顺序为 概述 → 架构与数据流 → 文件清单 → 核心机制 → 组件与 API → FAQ → 已知边界；**所有断言以实际代码为准**，与 CLAUDE.md 冲突时以系统文档为准（CLAUDE.md 与本文档已于 2026-08 同步修订）

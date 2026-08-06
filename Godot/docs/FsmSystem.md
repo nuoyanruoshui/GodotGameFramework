@@ -94,19 +94,26 @@ Fsm<T>       : FsmBase, IReference, IFsm<T>   // internal 实现
 ### 3.3 创建与启动
 
 ```csharp
-public class Hero { /* 任意持有者 */ }
-public class IdleState : FsmState<Hero>
+// 示例：CatEntity 的状态机（见 TheGame/GameScripts/Entity/CatEntity.cs）
+public class IdleState : FsmState<CatEntity>
 {
-    protected internal override void OnUpdate(IFsm<Hero> fsm, float e, float r)
+    protected internal override void OnUpdate(IFsm<CatEntity> fsm, float e, float r)
     {
-        if (/* 条件 */) ChangeState<RunState>(fsm);     // 切换只能在状态内部
+        if (fsm.Owner.m_IsMoving) ChangeState<MoveState>(fsm);     // 切换只能在状态内部
+    }
+}
+public class MoveState : FsmState<CatEntity>
+{
+    protected internal override void OnUpdate(IFsm<CatEntity> fsm, float e, float r)
+    {
+        if (!fsm.Owner.m_IsMoving) ChangeState<IdleState>(fsm);
     }
 }
 
 // 创建（未启动，IsRunning = false）
-IFsm<Hero> fsm = GF.Fsm.CreateFsm(hero, new IdleState(), new RunState());
-// 或命名版本（同一持有者类型多个状态机时必须命名）
-IFsm<Hero> fsm2 = GF.Fsm.CreateFsm("battle", hero, statesList);
+IFsm<CatEntity> fsm = GF.Fsm.CreateFsm(Name, this, new IdleState(), new MoveState());
+// 或简单版本（不命名；同一持有者类型多个状态机时必须命名）
+IFsm<CatEntity> fsm2 = GF.Fsm.CreateFsm(this, statesList);
 
 // 启动：指定初始状态（重复 Start 抛异常）
 fsm.Start<IdleState>();
@@ -211,7 +218,20 @@ m_ProcedureFsm = m_FsmManager.CreateFsm(this, procedures);   // this = IProcedur
 
 ---
 
-## 6. 注意事项 / FAQ
+## 6. 游戏侧使用示例
+
+CatEntity（`TheGame/GameScripts/Entity/CatEntity.cs`）是当前项目中最完整的 FSM 使用案例：
+
+- **持有者**：`CatEntity : ActorEntity`（`partial class`，`CharacterBody2D` 派生，实现 `IEntity` 和 `IActor`），详见 `EntitySystem.md`
+- **状态**：`IdleState` / `MoveState` 两个 `FsmState<CatEntity>` 类，定义在 `CatEntity.cs` 文件中
+- **创建**：`OnInit(isNewInstance)` 中 `m_Fsm = (Fsm<CatEntity>)GF.Fsm.CreateFsm(Name, this, new IdleState(), new MoveState())`
+- **启动**：`OnShow()` 中 `m_Fsm.Start<IdleState>()`
+- **切换**：`IdleState.OnUpdate` 检测 `fsm.Owner.m_IsMoving` → `ChangeState<MoveState>`；`MoveState.OnUpdate` 反之切回 `IdleState`
+- `m_IsMoving` 由 `CatEntity.KeybordMove()`（在 `OnUpdate` 中调用）读取键盘输入后设置
+
+---
+
+## 7. 注意事项 / FAQ
 
 **Q: 为什么不能从外部切换状态？**
 `ChangeState` 是 `FsmState<T>` 的 protected 方法，原版 GF 设计如此 —— 外部只能经 `fsm.Start`（首次）或让持有者置数据/发事件，由状态在 `OnUpdate` 里自行决定切换。

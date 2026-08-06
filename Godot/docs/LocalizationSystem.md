@@ -1,6 +1,6 @@
 # 本地化系统 (Localization Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Localization/`、`Framework/GodotGameFrameworkCore/Localization/`、`addons/LocalizationEditor/`、`Framework/GodotGameFrameworkCore/UI/IStringKey.cs` ｜ 翻译源：仓库根 `Configs/Localization/*.xlsx`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Localization/`、`Framework/GodotGameFrameworkCore/Localization/`、`Framework/GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs`、`addons/LocalizationEditor/`、`Framework/GodotGameFrameworkCore/UI/IStringKey.cs` ｜ 翻译源：仓库根 `Configs/Localization/*.xlsx`
 > 本文档描述 GGF 的本地化系统：语言枚举与切换、字典文件格式、GetString 用法、TranslationServer 桥接、UI 文案刷新机制（IStringKey）与 Excel 翻译工作流。
 
 ---
@@ -45,20 +45,29 @@ res://TheGame/DataTables/Localizations/
 
 ```
 ProcedurePrelode.LoadLocalization()
-    │  GF.Localization.ReadData("res://TheGame/DataTables/Localizations/{Language}.txt")
-    │                            ← GameFolderConstant.Localizations 模板
+    │  if (!GF.Base.EnableEditorResLoad)
+    │      GF.Localization.Language = (Language)GF.Setting.GetInt("Language", (int)Language.English);
+    │  else
+    │      GF.Localization.Language = EditorLanguage != Unspecified ? EditorLanguage : SystemLanguage;
+    │  说明：赋值 Language 属性即触发全部加载流程（见 §3.2），无需手动 ReadData
     ▼
 LocalizationComponent (Godot 桥接层，场景节点 "Localization")
-    │  ResourceComponent.LoadText 读文件 → ParseData(text)
-    │      1. UnregisterTranslation()            ← 清旧 OptimizedTranslation
-    │      2. m_LocalizationManager.ParseData()  ← 经 DefaultLocalizationHelper 填充字典
-    │      3. BridgeToTranslationServer(text)    ← 重新解析文本填充 OptimizedTranslation
-    │             TranslationServer.AddTranslation + SetLocale
+    │  Language setter 自动完成：
+    │      1. m_LocalizationManager.Language = value
+    │      2. TranslationServer.SetLocale(GetLocaleByLanguage(value))
+    │      3. RemoveAllRawStrings()  ← 清旧字典 + 注销旧 Translation
+    │      4. ReadData(Utility.Text.Format(GameFolderConstant.LocalizationFiles, value.ToString()))
+    │             ├── ResourceComponent.LoadText 读文件 → ParseData(text)
+    │             │        ├── UnregisterTranslation() ← 清旧 OptimizedTranslation
+    │             │        ├── m_LocalizationManager.ParseData() ← 填充字典
+    │             │        └── BridgeToTranslationServer(text) ← 填充 OptimizedTranslation，AddTranslation + SetLocale
+    │        5. GF.Event.Fire(OnLanagueChangeEventArgs.EventId, OnLanagueChangeEventArgs.Create(value))
+    │        6. GF.Setting.SetInt("Language", (int)value) + GF.Setting.Save()  ← 持久化
     ▼
 LocalizationManager (纯 C# 层)  m_Dictionary<key, value>
     ▲
     │  GF.Localization.GetString("BulletShoot")
-UI（MenuForm.SetValue 等）
+UI（MenuForm.SetLocalizationValue 等 + LabelTr/ButtonTr 自动刷新）
 ```
 
 ### 文件清单
@@ -75,7 +84,8 @@ UI（MenuForm.SetValue 等）
 | `GodotGameFrameworkCore/UI/IStringKey.cs` | UI 文案刷新接口（唯一成员 `void SetLocalizationValue()`） |
 | `GodotGameFrameworkCore/Localization/ButtonTr.cs` | Button 实现（`Button : IStringKey`，运行时自动刷新 Text） |
 | `GodotGameFrameworkCore/Localization/LabelTr.cs` | Label 实现（`Label : IStringKey`，运行时自动刷新 Text） |
-| `GodotGameFrameworkCore/Config/GameFolderConstant.cs` | `Localizations = "res://TheGame/DataTables/Localizations/{0}.txt"` |
+| `GodotGameFrameworkCore/Config/GameFolderConstant.cs` | `LocalizationPath = "res://TheGame/DataTables/Localizations/"`、`LocalizationFiles = "res://TheGame/DataTables/Localizations/{0}.txt"` |
+| `GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs` | 语言变更事件参数（`OnLanagueChangeEventArgs : GameEventArgs`，`Language Language` 属性） |
 | `addons/LocalizationEditor/LocalizationEditorPlugin.cs` | Excel → TSV 导出（Tool 菜单项） |
 
 ---
@@ -99,18 +109,32 @@ UI（MenuForm.SetValue 等）
 
 ### 3.2 语言决定与切换
 
-- **启动时**（`LocalizationComponent.OnInit`）：`Language = GF.Base.EditorLanguage != Unspecified ? EditorLanguage : SystemLanguage`。`EditorLanguage` 是 Base 组件（场景 `Base` 节点）上的 `[Export]` 字段，便于编辑器内强制语言调试；`SystemLanguage` 由 `OS.GetLocale()` 反查 Language 枚举。
-- **加载时机**：`ProcedurePrelode.OnEnter → LoadLocalization()`，按当前 `Language.ToString()` 拼文件名读取——即字典文件名必须与 Language 枚举名一致（`ChineseSimplified.txt`、`English.txt`）。
-- **Language setter** 同步 `TranslationServer.SetLocale(locale)`；Language↔locale 映射硬编码在 `LocalizationHelperBase.GetLocaleByLanguage`（`ChineseSimplified→zh_CN`、`English→en`、`Japanese→ja` …）。
-- **运行时切换语言**（框架未内置一键流程，按 API 组合）：
+**决定链（在 `ProcedurePrelode.LoadLocalization()` 中执行）：**
 
-```csharp
-GF.Localization.Language = Language.English;      // 同时切 TranslationServer locale
-GF.Localization.RemoveAllRawStrings();            // 清字典 + 注销旧 Translation
-GF.Localization.ReadData(Utility.Text.Format(
-    GameFolderConstant.Localizations, GF.Localization.Language.ToString()));
-// 已打开界面的文案需要手动刷新（见 §3.4）
 ```
+GF.Base.EnableEditorResLoad
+    ├── false（正式运行）→ GF.Setting.GetInt("Language", (int)Language.English)
+    │                      读取上次持久化的语言，首次启动默认为 English
+    └── true（编辑器调试）→ GF.Base.EditorLanguage != Unspecified
+                                 ├── true → EditorLanguage（Inspector 指定）
+                                 └── false → SystemLanguage（OS.GetLocale() 反查）
+```
+
+- **初始化位置**（注意）：语言在 `ProcedurePrelode.OnEnter → LoadLocalization()` 中设置，**不在 `LocalizationComponent.OnInit()`**。`OnInit` 仅完成管理器初始化与辅助器装配，不设置语言（旧版本的启动自动决定语言逻辑已移除）。
+- **`Language` setter 是完整流程入口**：给 `GF.Localization.Language` 赋值即触发以下全部操作（顺序固定）：
+  1. `m_LocalizationManager.Language = value` —— 更新纯 C# 层当前语言
+  2. `TranslationServer.SetLocale(GetLocaleByLanguage(value))` —— 更新 Godot locale
+  3. `RemoveAllRawStrings()` —— 清空旧字典 + 注销旧 `OptimizedTranslation`
+  4. `ReadData(LocalizationFiles 模板格式化)` —— 加载新语言字典文件（文本 TSV），桥接 TranslationServer
+  5. `GF.Event.Fire(OnLanagueChangeEventArgs.EventId, OnLanagueChangeEventArgs.Create(value))` —— **广播语言变更事件**（`LabelTr`/`ButtonTr` 订阅此事件自动刷新文案）
+  6. `GF.Setting.SetInt("Language", (int)value)` + `GF.Setting.Save()` —— 持久化语言选择到 `user://Settings.cfg`
+
+- **字典文件名要求**：`GameFolderConstant.LocalizationPath` 指定文件夹（`res://TheGame/DataTables/Localizations/`），`LocalizationFiles` 为模板 `"res://TheGame/DataTables/Localizations/{0}.txt"`，其中 `{0}` = `value.ToString()`，即字典文件名必须与 Language 枚举名一致（`ChineseSimplified.txt`、`English.txt` 等）。
+- **`GetLocalizationFileNames()` 方法**：扫描 `LocalizationPath` 文件夹下所有 `.txt` 文件，返回不含扩展名的文件名数组（大小写与磁盘实际一致）。用于 UI（如 SettingForm）动态生成语言下拉列表。
+- **Language<->locale 映射**：硬编码在 `LocalizationHelperBase.GetLocaleByLanguage()` / `GetLanguageByLocale()` 中（覆盖 GF 全量 51 种语言，未命中回退 `en`）。
+- **运行时切换语言**：只需一行 `GF.Localization.Language = Language.English;` —— setter 自动完成清理旧字典、加载新字典、广播事件、持久化等全部操作。**无需手动调用 `RemoveAllRawStrings` / `ReadData` / `Save`**。
+
+> ⚠️ **旧版手动切换代码已废弃**。之前文档描述的三步操作（`Language =`、`RemoveAllRawStrings`、`ReadData`）已全部收敛到 `Language` setter 内部，外部只需赋值 `Language` 属性即可。文档中先前的"运行时切换语言"示例代码仅作历史说明，请勿在新代码中使用。
 
 ### 3.3 TranslationServer 桥接
 
@@ -125,7 +149,11 @@ GF.Localization.ReadData(Utility.Text.Format(
 > 注：即 CLAUDE.md 早期描述的 "UIStringLabelKey 机制"，实际接口名为 **`IStringKey`**。
 
 - 接口：`GodotGameFramework.UI.IStringKey`，唯一成员 `void SetLocalizationValue()`——约定"把自己的文案从 `GF.Localization.GetString` 刷一遍"。
-- 内置实现：`LabelTr : Label, IStringKey` 和 `ButtonTr : Button, IStringKey`（`GodotGameFrameworkCore/Localization/`），运行时自动从 `GF.Localization` 刷新 Text 属性，**无需手写刷新逻辑**。
+- 内置实现：`LabelTr : Label, IStringKey` 和 `ButtonTr : Button, IStringKey`（`GodotGameFrameworkCore/Localization/`）：
+  - 声明 `[Export] public string StringKey` 属性，Inspector 中指定翻译键
+  - **自动刷新**：在 `_Ready()` 订阅 `OnLanagueChangeEventArgs` → 调用参数化重载 `SetLocalizationValue(object, GameEventArgs)` 刷新 Text；`_ExitTree()` 取消订阅
+  - 同时提供无参 `SetLocalizationValue()`（用于界面 `UIStringKeys` 批量刷新）和参数化 `SetLocalizationValue(object, GameEventArgs)`（事件驱动刷新）
+  - **运行时切换语言后，所有场景中的 LabelTr / ButtonTr 自动更新文案，无需手动干预**
 - UIForm 生成模板（`UIFormTemplet.txt`）为每个界面生成属性 `List<IStringKey> UIStringKeys`：懒加载调用 `FindChildrenOfType<IStringKey>()`**递归收集所有实现 IStringKey 的子孙节点**（不含界面自身）。
 - Logic 模板在 `OnInit` 中调用 `UIStringKeys.ForEach(key => key.SetLocalizationValue())`，界面初始化即完成子部件文案本地化。
 - TheGame 惯例（见 `MenuForm.Logic.cs`）：界面类自身也实现 `IStringKey`，把所有文案赋值集中写进 `SetLocalizationValue()`：
@@ -160,9 +188,15 @@ public partial class MenuForm : IStringKey
 
 ```csharp
 // 语言
-GF.Localization.Language            // get/set；set 同步 TranslationServer.SetLocale
+GF.Localization.Language            // get/set；set 触发完整流程：更新管理器语言 → 设置 locale
+                                    //       → 清旧字典 → 加载新字典文件（桥接 TS）
+                                    //       → 广播 OnLanagueChangeEventArgs 事件（LabelTr/ButtonTr 自动刷新）
+                                    //       → 持久化到 GF.Setting("Language") 并 Save()
 GF.Localization.SystemLanguage      // OS 语言（OS.GetLocale 反查）
 GF.Localization.DictionaryCount     // 字典条目数
+
+// 获取可用语言列表
+string[] names = GF.Localization.GetLocalizationFileNames();  // 扫描 LocalizationPath 下所有 .txt 文件名（无扩展名）
 
 // 加载与解析
 bool ok = GF.Localization.ReadData("res://.../English.txt");   // LoadText + ParseData（桥接 TS）
@@ -212,12 +246,13 @@ void GF.Localization.RemoveAllRawStrings();      // 清字典 + 注销 Translati
 那是历史遗留副本，插件**只读取仓库根 `Configs/Localization/`**（源码中 `res://` 上溯两级拼接），以该目录为唯一翻译源。
 
 **Q: 运行时切换语言后已打开的界面没变？**
-框架不自动刷新已实例化的控件。按 §3.2 重载字典后，需对每个打开的界面调用其 `SetLocalizationValue()`（及 `UIStringKeys.ForEach(k => k.SetLocalizationValue())`）。
+`LabelTr` 和 `ButtonTr` 会自动刷新（它们订阅了 `OnLanagueChangeEventArgs`）。但界面自身的 `SetLocalizationValue()`（如 `MenuForm` 直接给非 Tr 节点赋值）不会自动触发——需在监听到语言变更事件后手动调用每个打开界面的 `SetLocalizationValue()`（及 `UIStringKeys.ForEach(k => k.SetLocalizationValue())`）。
 
 ---
 
 ## 6. 已知边界与后续计划
 
-- [ ] 语言切换的一键封装（重载字典 + 广播刷新事件）
-- [ ] 界面自身 `SetValue()` 纳入 `UIStringKeys` 统一调度（当前需手动调用）
+- [x] 语言切换的一键封装（`Language` setter 已完成：重载字典 + 广播刷新事件 + 持久化）
+- [x] 广播刷新事件（`OnLanagueChangeEventArgs`，`LabelTr`/`ButtonTr` 自动订阅刷新）
+- [ ] 界面自身 `SetLocalizationValue()` 纳入 `UIStringKeys` 统一调度（当前需手动调用）
 - [ ] 二进制字典格式的生成工具链（当前仅文本 TSV 有 Excel 导出）
