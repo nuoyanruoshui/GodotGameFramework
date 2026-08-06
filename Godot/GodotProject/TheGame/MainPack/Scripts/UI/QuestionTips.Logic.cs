@@ -5,11 +5,14 @@ using GodotGameFramework.UI;
 using System;
 namespace GameLogic
 {
-
+	public interface ITips
+	{
+		void SetAction(string content, string cancelTxt, string confirmTxt, Action cancel, Action confirm);
+	}
 	/// <summary>
 	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
 	/// </summary>
-	public partial class QuestionTips
+	public partial class QuestionTips : ITips
 	{
 		private Action m_Cancel;
 		private Action m_Confirm;

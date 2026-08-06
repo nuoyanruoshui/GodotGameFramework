@@ -15,7 +15,7 @@ namespace GameFramework.Resource
         private Phase m_Phase = Phase.Idle;
         private string m_AssetPath;
         private float m_Duration;
-        private float m_ProgressDelta;
+        private readonly Godot.Collections.Array m_ProgressArray = new();
 
         public void Initialize()
         {
@@ -61,32 +61,36 @@ namespace GameFramework.Resource
             switch (state)
             {
                 case ResourceLoader.ThreadLoadStatus.Loaded:
-                {
-                    var result = ResourceLoader.LoadThreadedGet(m_AssetPath);
-                    Task.Duration = m_Duration;
-                    Task.Callbacks.LoadAssetSuccessCallback?.Invoke(
-                        m_AssetPath, result, m_Duration, Task.UserData);
-                    Task.Done = true;
-                    m_Phase = Phase.Idle;
-                    break;
-                }
+                    {
+                        var result = ResourceLoader.LoadThreadedGet(m_AssetPath);
+                        Task.Duration = m_Duration;
+                        Task.Callbacks.LoadAssetSuccessCallback?.Invoke(
+                            m_AssetPath, result, m_Duration, Task.UserData);
+                        Task.Done = true;
+                        m_Phase = Phase.Idle;
+                        break;
+                    }
                 case ResourceLoader.ThreadLoadStatus.InProgress:
-                {
-                    Task.Duration = m_Duration;
-                    Task.Callbacks.LoadAssetUpdateCallback?.Invoke(
-                        m_AssetPath, m_Duration, Task.UserData);
-                    break;
-                }
+                    {
+                        Task.Duration = m_Duration;
+                        m_ProgressArray.Clear();
+                        // 读取真实加载进度（0.0 ~ 1.0）若出现[0] 卡住 / 直接跳 [1] ： (https://github.com/godotengine/godot/issues/65380)
+                        ResourceLoader.LoadThreadedGetStatus(m_AssetPath, m_ProgressArray);
+                        float progress = m_ProgressArray.Count > 0 ? m_ProgressArray[0].AsSingle() : 0f;
+                        Task.Callbacks.LoadAssetUpdateCallback?.Invoke(
+                            m_AssetPath, progress, Task.UserData);
+                        break;
+                    }
                 case ResourceLoader.ThreadLoadStatus.Failed:
                 case ResourceLoader.ThreadLoadStatus.InvalidResource:
-                {
-                    Task.Callbacks.LoadAssetFailureCallback?.Invoke(
-                        m_AssetPath, LoadResourceStatus.AssetError,
-                        Utility.Text.Format("Failed to load '{0}'.", m_AssetPath), Task.UserData);
-                    Task.Done = true;
-                    m_Phase = Phase.Idle;
-                    break;
-                }
+                    {
+                        Task.Callbacks.LoadAssetFailureCallback?.Invoke(
+                            m_AssetPath, LoadResourceStatus.AssetError,
+                            Utility.Text.Format("Failed to load '{0}'.", m_AssetPath), Task.UserData);
+                        Task.Done = true;
+                        m_Phase = Phase.Idle;
+                        break;
+                    }
             }
         }
     }

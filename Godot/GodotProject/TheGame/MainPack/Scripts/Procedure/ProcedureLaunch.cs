@@ -55,6 +55,7 @@ public class ProcedureLaunch : ProcedureBase
         m_Components.TryUpdate(m_NeedComponents[11], GF.Download != null, false);
         m_Components.TryUpdate(m_NeedComponents[12], GF.Scene != null, false);
         m_Components.TryUpdate(m_NeedComponents[13], GF.ObjectPool != null, false);
+
         if (m_Components.All(x => x.Value))
         {
             Log.Info($"[LaunchProcedure] 框架组件验证通过");

@@ -9,6 +9,17 @@ using System.Threading.Tasks;
 namespace GodotGameFramework.Scene
 {
     /// <summary>
+    /// 场景加载模式。
+    /// </summary>
+    public enum LoadSceneMode
+    {
+        /// <summary>单场景模式：先卸载所有已加载场景，再加载新场景。</summary>
+        Single,
+
+        /// <summary>叠加模式：保留已加载场景，新场景叠加加载。</summary>
+        Additive,
+    }
+    /// <summary>
     /// 场景组件。管理场景（PackedScene）的加载、实例化、卸载。
     /// </summary>
     public partial class SceneComponent : GameFrameworkComponent
@@ -25,6 +36,7 @@ namespace GodotGameFramework.Scene
         private readonly Dictionary<string, TaskCompletionSource<Node>> m_LoadingTasks = new();
 
         [Export] private bool m_EnableLoadSceneSuccessEvent = true;
+        [Export] private bool m_EnableLoadSceneUpdate = true;
         [Export] private bool m_EnableLoadSceneFailureEvent = true;
         [Export] private bool m_EnableUnloadSceneSuccessEvent = true;
 
@@ -51,7 +63,11 @@ namespace GodotGameFramework.Scene
             m_SceneManager.LoadSceneSuccess += OnLoadSceneSuccess;
             m_SceneManager.LoadSceneFailure += OnLoadSceneFailure;
             m_SceneManager.UnloadSceneSuccess += OnUnloadSceneSuccess;
+            m_SceneManager.LoadSceneUpdate += OnLoadSceneUpdate;
         }
+
+
+
 
         public override void OnEnter()
         {
@@ -78,6 +94,7 @@ namespace GodotGameFramework.Scene
                 m_SceneManager.LoadSceneSuccess -= OnLoadSceneSuccess;
                 m_SceneManager.LoadSceneFailure -= OnLoadSceneFailure;
                 m_SceneManager.UnloadSceneSuccess -= OnUnloadSceneSuccess;
+                m_SceneManager.LoadSceneUpdate -= OnLoadSceneUpdate;
             }
             base.OnExitTree();
         }
@@ -104,20 +121,42 @@ namespace GodotGameFramework.Scene
         }
 
 
-        public void LoadScene(string sceneAssetName, int priority, object userData) => m_SceneManager.LoadScene(sceneAssetName, priority, userData);
+        public void LoadScene(string sceneAssetName, int priority, object userData) => LoadSceneInternal(sceneAssetName, LoadSceneMode.Single, priority, userData);
 
-        public void LoadScene(string sceneAssetName, int priority) => m_SceneManager.LoadScene(sceneAssetName, priority, null);
-        public void LoadScene(string sceneAssetName) => m_SceneManager.LoadScene(sceneAssetName, DefaultPriority, null);
+        public void LoadScene(string sceneAssetName, LoadSceneMode mode, int priority, object userData) => LoadSceneInternal(sceneAssetName, mode, priority, userData);
+
+        public void LoadScene(string sceneAssetName, int priority) => LoadSceneInternal(sceneAssetName, LoadSceneMode.Single, priority, null);
+
+        public void LoadScene(string sceneAssetName, LoadSceneMode mode, int priority) => LoadSceneInternal(sceneAssetName, mode, priority, null);
+
+        public void LoadScene(string sceneAssetName) => LoadSceneInternal(sceneAssetName, LoadSceneMode.Single, DefaultPriority, null);
+
+        public void LoadScene(string sceneAssetName, LoadSceneMode mode) => LoadSceneInternal(sceneAssetName, mode, DefaultPriority, null);
+
         /// <summary>
-        /// 异步加载场景
+        /// 场景加载核心逻辑。Single 模式先卸载所有已加载场景再加载新场景；Active 模式叠加加载。
         /// </summary>
-        private Task<Node> LoadSceneAsyncInternal(string sceneAssetName, int priority, object userData)
+        private void LoadSceneInternal(string sceneAssetName, LoadSceneMode mode, int priority, object userData)
+        {
+            if (mode == LoadSceneMode.Single)
+                UnloadAllScenes();
+
+            m_SceneManager.LoadScene(sceneAssetName, priority, userData);
+        }
+
+        /// <summary>
+        /// 异步加载场景。
+        /// </summary>
+        private Task<Node> LoadSceneAsyncInternal(string sceneAssetName, LoadSceneMode mode, int priority, object userData)
         {
             if (string.IsNullOrEmpty(sceneAssetName))
             {
                 Log.Error("Scene asset path is invalid.");
                 return Task.FromResult<Node>(null);
             }
+
+            if (mode == LoadSceneMode.Single)
+                UnloadAllScenes();
 
             var tcs = new TaskCompletionSource<Node>();
             m_SceneManager.LoadScene(sceneAssetName, priority, userData);
@@ -130,17 +169,32 @@ namespace GodotGameFramework.Scene
         /// </summary>
         public Task<Node> LoadSceneAsync(string sceneAssetName, int priority, object userData)
         {
-            return LoadSceneAsyncInternal(sceneAssetName, priority, userData);
+            return LoadSceneAsyncInternal(sceneAssetName, LoadSceneMode.Single, priority, userData);
+        }
+
+        public Task<Node> LoadSceneAsync(string sceneAssetName, LoadSceneMode mode, int priority, object userData)
+        {
+            return LoadSceneAsyncInternal(sceneAssetName, mode, priority, userData);
         }
 
         public Task<Node> LoadSceneAsync(string sceneAssetName, int priority)
         {
-            return LoadSceneAsyncInternal(sceneAssetName, priority, null);
+            return LoadSceneAsyncInternal(sceneAssetName, LoadSceneMode.Single, priority, null);
+        }
+
+        public Task<Node> LoadSceneAsync(string sceneAssetName, LoadSceneMode mode, int priority)
+        {
+            return LoadSceneAsyncInternal(sceneAssetName, mode, priority, null);
         }
 
         public Task<Node> LoadSceneAsync(string sceneAssetName)
         {
-            return LoadSceneAsyncInternal(sceneAssetName, DefaultPriority, null);
+            return LoadSceneAsyncInternal(sceneAssetName, LoadSceneMode.Single, DefaultPriority, null);
+        }
+
+        public Task<Node> LoadSceneAsync(string sceneAssetName, LoadSceneMode mode)
+        {
+            return LoadSceneAsyncInternal(sceneAssetName, mode, DefaultPriority, null);
         }
 
         /// <summary>
@@ -188,7 +242,7 @@ namespace GodotGameFramework.Scene
 
             // 触发 Godot 层事件
             if (m_EnableLoadSceneSuccessEvent && instance != null)
-                m_EventComponent.Fire(this, Scene.LoadSceneSuccessEventArgs.Create(assetPath, instance));
+                m_EventComponent.Fire(this, Scene.LoadSceneSuccessEventArgs.Create(e));
         }
 
         private void OnLoadSceneFailure(object sender, GameFramework.Scene.LoadSceneFailureEventArgs e)
@@ -202,13 +256,18 @@ namespace GodotGameFramework.Scene
                 m_LoadingTasks.Remove(e.SceneAssetName);
             }
             if (m_EnableLoadSceneFailureEvent)
-                m_EventComponent.Fire(this, Scene.LoadSceneFailureEventArgs.Create(e.SceneAssetName, e.ErrorMessage));
+                m_EventComponent.Fire(this, Scene.LoadSceneFailureEventArgs.Create(e));
         }
 
         private void OnUnloadSceneSuccess(object sender, GameFramework.Scene.UnloadSceneSuccessEventArgs e)
         {
             if (m_EnableUnloadSceneSuccessEvent)
-                m_EventComponent.Fire(this, Scene.UnloadSceneSuccessEventArgs.Create(e.SceneAssetName));
+                m_EventComponent.Fire(this, Scene.UnloadSceneSuccessEventArgs.Create(e));
+        }
+        private void OnLoadSceneUpdate(object sender, GameFramework.Scene.LoadSceneUpdateEventArgs e)
+        {
+            if (m_EnableLoadSceneUpdate)
+                m_EventComponent.Fire(this, Scene.LoadSceneUpdateEventArgs.Create(e));
         }
 
         /// <summary>

@@ -10,7 +10,7 @@ namespace GameLogic
 	/// <summary>
 	/// 界面,生成时会被覆盖，请勿手动修改
 	/// </summary>
-	public partial class LogInForm : Control, IUIForm
+	public partial class LoadingForm : Control, IUIForm
 	{
 		#region 框架属性
 		/// <summary>

@@ -1,15 +1,23 @@
-using GameFramework.UI;
+using GameFramework.Event;
 using Godot;
+using GodotGameFramework;
+using GodotGameFramework.Scene;
 using GodotGameFramework.UI;
 using System;
+using System.Threading.Tasks;
 namespace GameLogic
 {
 	/// <summary>
 	/// 界面逻辑（此文件仅在首次生成时创建，之后不会被覆盖）。
 	/// </summary>
-	public partial class LogInForm
+	public partial class LoadingForm
 	{
 		private Tween m_ProgressTween;
+		/// <summary>
+		/// 关闭防重入标记
+		/// 场景加载成功与后续界面打开成功可能先后触发多次，避免重复关闭已回收的表单。
+		/// </summary>
+		private bool m_IsCloseRequested;
 		/// <summary>
 		/// 初始化界面。
 		/// </summary>
@@ -19,7 +27,7 @@ namespace GameLogic
 		/// <param name="pauseCoveredUIForm">是否暂停被覆盖的界面。</param>
 		/// <param name="isNewInstance">是否是新实例。</param>
 		/// <param name="userData">用户自定义数据。</param>
-		public void OnInit(int serialId, string uiFormAssetName, IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
+		public void OnInit(int serialId, string uiFormAssetName, GameFramework.UI.IUIGroup uiGroup, bool pauseCoveredUIForm, bool isNewInstance, object userData)
 		{
 			#region 框架逻辑
 			m_SerialId = serialId;
@@ -27,6 +35,7 @@ namespace GameLogic
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
+			m_IsCloseRequested = false;
 			UIStringKeys.ForEach(key => key.SetLocalizationValue());
 			#endregion
 		}
@@ -53,6 +62,11 @@ namespace GameLogic
 			#region 框架逻辑
 			Visible = true;
 			#endregion
+			GF.Event.Subscribe(OpenUIFormUpdateEventArgs.EventId, OnLoadingUpdate);
+			GF.Event.Subscribe(LoadSceneUpdateEventArgs.EventId, OnLoadingUpdate);
+
+			GF.Event.Subscribe(OpenUIFormSuccessEventArgs.EventId, OnLoadingSuccess);
+			GF.Event.Subscribe(LoadSceneSuccessEventArgs.EventId, OnLoadingSuccess);
 		}
 
 		/// <summary>
@@ -63,6 +77,12 @@ namespace GameLogic
 			#region 框架逻辑
 			Visible = false;
 			#endregion
+
+			GF.Event.Unsubscribe(OpenUIFormUpdateEventArgs.EventId, OnLoadingUpdate);
+			GF.Event.Unsubscribe(LoadSceneUpdateEventArgs.EventId, OnLoadingUpdate);
+
+			GF.Event.Unsubscribe(OpenUIFormSuccessEventArgs.EventId, OnLoadingSuccess);
+			GF.Event.Unsubscribe(LoadSceneSuccessEventArgs.EventId, OnLoadingSuccess);
 		}
 
 		/// <summary>
@@ -140,6 +160,42 @@ namespace GameLogic
 				if (m_State != null)
 					m_State.Text = logState + $" {clamped:F0}%" ?? "";
 			}
+		}
+
+
+		private async void OnLoadingSuccess(object sender, GameEventArgs e)
+		{
+			if (e is OpenUIFormSuccessEventArgs ui)
+			{
+				if (ui.UIForm == this || ui.UIForm is ITips)
+				{
+					return;
+				}
+			}
+			if (m_IsCloseRequested)
+			{
+				return;
+			}
+			m_IsCloseRequested = true;
+			SetLogState("加载完成", 100);
+			//延迟一帧关闭界面，避免在加载完成后立即关闭界面导致的闪烁问题,由于此处手动延迟且异步，如果加载界面完成后又立刻加载场景，可能会导致重复关闭两次
+			await Task.Delay(100);
+			GF.UI.CloseUIForm(this);
+		}
+
+
+		private void OnLoadingUpdate(object sender, GameEventArgs e)
+		{
+			float progress = 0;
+			if (e is OpenUIFormUpdateEventArgs ui)
+			{
+				progress = ui.Progress;
+			}
+			else if (e is LoadSceneUpdateEventArgs scene)
+			{
+				progress = scene.Progress;
+			}
+			SetLogState("加载中...", progress * 100);
 		}
 	}
 }
