@@ -232,13 +232,7 @@ GF.Event.Unsubscribe(ScoreChangedEventArgs.EventId, OnScoreChanged);
 
 ---
 
-## 6. GameEventSourceGenerator（已移除）
-
-原仓库根 `Tools/GameEventSourceGenerator/` 是一套 TEngine/Unity Roslyn 源生成器 + 分析器，生成 `UnityEngine` 命名空间的代码，与 GGF 事件系统无关且从未接入。**该工具目录已移除（2026-07）。**
-
----
-
-## 7. 注意事项 / FAQ
+## 6. 注意事项 / FAQ
 
 **Q: Fire 后事件没触发？**
 ① 检查订阅时机是否晚于 Fire（Fire 的事件下帧才分发，但订阅必须在分发前完成）；② 确认 `Id` 双方一致（一个用常量一个用 GetHashCode 是对不上的）；③ 全局池允许无订阅者，不会报错提示。
