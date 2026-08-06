@@ -10,15 +10,15 @@
     },
     {
       "Name": "DataTableBundle",
-      "Size": 1860,
-      "Hash": "05034ba80c4cc6bcf8c719babdc974f90a9e7bcb2da8864f0cdf658484cfb81b",
+      "Size": 1988,
+      "Hash": "836d51b8a8d6bd4ce82e7951dce357633840c4c5173f58d88295c96c1d1b0036",
       "Url": "http://192.168.124.5:58696/subpackages/DataTableBundle.pck",
       "Type": 0
     },
     {
       "Name": "EntityBundle",
-      "Size": 9648,
-      "Hash": "6202e411b289964c9bf8e5462a970d9f7faabbc5b5bfd458d52fdfc10230bfc5",
+      "Size": 9584,
+      "Hash": "2af5b5da733661dba3baf85b19be49be61a10d377afaa7221f527c7f6de4f72e",
       "Url": "http://192.168.124.5:58696/subpackages/EntityBundle.pck",
       "Type": 0
     },
@@ -38,8 +38,8 @@
     },
     {
       "Name": "UIsBundle",
-      "Size": 17464,
-      "Hash": "c78899aeb20d9c93e96cee6c61f4d60cb7d8bf3370edaf81f8d81d0d651723a8",
+      "Size": 18840,
+      "Hash": "9872aee31d772f71d5b6dc2436da654c02a931beb585111467e559eccd912a85",
       "Url": "http://192.168.124.5:58696/subpackages/UIsBundle.pck",
       "Type": 0
     }

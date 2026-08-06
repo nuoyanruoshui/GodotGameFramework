@@ -35,7 +35,6 @@ script = ExtResource("3_353g6")
 
 [node name="Resource" type="Node" parent="." unique_id=553100123]
 script = ExtResource("11_res")
-_resourceMode = 2
 _UpdateSettingRes = ExtResource("5_y55im")
 
 [node name="Debugger" type="Node" parent="." unique_id=443209794]

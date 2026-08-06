@@ -14,6 +14,11 @@ namespace GameLogic
 	{
 		private Tween m_ProgressTween;
 		/// <summary>
+		/// 关闭防重入标记
+		/// 场景加载成功与后续界面打开成功可能先后触发多次，避免重复关闭已回收的表单。
+		/// </summary>
+		private bool m_IsCloseRequested;
+		/// <summary>
 		/// 初始化界面。
 		/// </summary>
 		/// <param name="serialId">界面序列编号。</param>
@@ -30,6 +35,7 @@ namespace GameLogic
 			m_UIGroup = uiGroup;
 			m_DepthInUIGroup = 0;
 			m_PauseCoveredUIForm = pauseCoveredUIForm;
+			m_IsCloseRequested = false;
 			UIStringKeys.ForEach(key => key.SetLocalizationValue());
 			#endregion
 		}
@@ -166,8 +172,13 @@ namespace GameLogic
 					return;
 				}
 			}
+			if (m_IsCloseRequested)
+			{
+				return;
+			}
+			m_IsCloseRequested = true;
 			SetLogState("加载完成", 100);
-			//延迟一帧关闭界面，避免在加载完成后立即关闭界面导致的闪烁问题
+			//延迟一帧关闭界面，避免在加载完成后立即关闭界面导致的闪烁问题,由于此处手动延迟且异步，如果加载界面完成后又立刻加载场景，可能会导致重复关闭两次
 			await Task.Delay(100);
 			GF.UI.CloseUIForm(this);
 		}
