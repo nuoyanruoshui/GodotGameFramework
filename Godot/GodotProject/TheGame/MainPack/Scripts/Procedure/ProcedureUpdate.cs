@@ -333,7 +333,7 @@ public class ProcedureUpdate : ProcedureBase
                 m_loadingForm?.SetLogState("更新完成", 100);
                 await Task.Delay(500);
 
-                TipsManager.Instance.ShowTips<QuestionTips>("更新完成，是否重启？", "退出", "确认", () =>
+                GF.UI.OpenQuestionTipsAsync("更新完成，是否重启？", "退出", "确认", () =>
                 {
                     HotUpdateSafetyGuard.MarkStartupSuccess();
                     GameEntry.Shutdown(ShutdownType.Quit);
@@ -368,7 +368,7 @@ public class ProcedureUpdate : ProcedureBase
 
         m_loadingForm?.SetLogState(message, 100);
 
-        TipsManager.Instance.ShowTips<QuestionTips>(message, "退出", "重试", () =>
+        GF.UI.OpenQuestionTipsAsync(message, "退出", "重试", () =>
         {
             tcs.TrySetResult(false); // 退出
         }, () =>

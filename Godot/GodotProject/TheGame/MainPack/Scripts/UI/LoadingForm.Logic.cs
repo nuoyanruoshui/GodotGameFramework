@@ -161,7 +161,7 @@ namespace GameLogic
 		{
 			if (e is OpenUIFormSuccessEventArgs ui)
 			{
-				if (ui.UIForm == this)
+				if (ui.UIForm == this || ui.UIForm is ITips)
 				{
 					return;
 				}

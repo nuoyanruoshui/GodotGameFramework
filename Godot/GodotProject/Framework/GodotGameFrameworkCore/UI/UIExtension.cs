@@ -12,6 +12,7 @@ namespace GodotGameFramework.UI
 {
     public static class UIExtension
     {
+        const string MainPack = "MainPack";
         public static bool HasUIForm<T>(this UIComponent uiComponent, string uiFormAssetName) where T : IUIForm
         {
             IUIForm[] uiForms = uiComponent.GetUIForms(uiFormAssetName);
@@ -96,7 +97,6 @@ namespace GodotGameFramework.UI
             return uIForm as T;
         }
 
-        const string MainPack = "MainPack";
         public static async Task<LoadingForm> OpenLoadingUIFormAsync(this UIComponent uiComponent)
         {
             if (GF.UI.AddUIGroup(MainPack))
@@ -106,6 +106,19 @@ namespace GodotGameFramework.UI
             else
             {
                 return (LoadingForm)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_LoadingForm, MainPack);
+            }
+        }
+        public static async void OpenQuestionTipsAsync(this UIComponent uiComponent, string contenttxt, string cancelTxt, string confirmTxt, Action cancel = null, Action confirm = null)
+        {
+            if (GF.UI.AddUIGroup(MainPack))
+            {
+                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_QuestionTips, MainPack);
+                tip.SetAction(contenttxt, cancelTxt, confirmTxt, cancel, confirm);
+            }
+            else
+            {
+                var tip = (QuestionTips)await GF.UI.OpenUIFormAsync(ResourcesCollectionConstant.UI_QuestionTips, MainPack);
+                tip.SetAction(contenttxt, cancelTxt, confirmTxt, cancel, confirm);
             }
         }
         public static bool HasUIForm(this UIComponent uiComponent, UIFormId formId)
