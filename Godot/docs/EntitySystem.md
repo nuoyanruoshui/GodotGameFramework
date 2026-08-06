@@ -284,8 +284,6 @@ Godot CharacterBody2D                     Godot Area2D                          
 **Q: `EntityConfig.Priority` 列有什么用？**
 预留。`EntityExtension` 当前未把它传给 `ShowEntity`（恒用优先级 0），且资源层加载队列目前也不按优先级调度（见 `ResourceSystem.md` §3.1）。
 
-**Q: CLAUDE.md 里的 `AbstractCharacterBody2DEntity` 等基类在哪？**
-不存在（文档滞后）。当前模式是实体类直接 `: Godot类型, IEntity`，公共逻辑放游戏侧基类（如 `ActorEntity`）。
 
 ---
 
