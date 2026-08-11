@@ -4116,3 +4116,22 @@ Godot/subpackages/GameFrameworkVersion.dat
 Godot/subpackages/UIsBundle.pck
 ---
 
+## Session End: 20260811_164233
+### Uncommitted Changes
+Godot/GodotProject/addons/TopMenu/GameFrameworkTopMenu.cs
+Godot/GodotProject/project.godot
+Godot/bash.exe.stackdump
+---
+
+## Session End: 20260811_165457
+### Commits
+a692a76 整合生成脚本插件
+### Uncommitted Changes
+Godot/CLAUDE.md
+Godot/docs/EntitySystem.md
+Godot/docs/FrameworkCore.md
+Godot/docs/LocalizationSystem.md
+Godot/docs/README.md
+Godot/docs/ResourceSystem.md
+---
+

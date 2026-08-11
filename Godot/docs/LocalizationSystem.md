@@ -1,6 +1,6 @@
 # 本地化系统 (Localization Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Localization/`、`Framework/GodotGameFrameworkCore/Localization/`、`Framework/GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs`、`addons/LocalizationEditor/`、`Framework/GodotGameFrameworkCore/UI/IStringKey.cs` ｜ 翻译源：仓库根 `Configs/Localization/*.xlsx`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Localization/`、`Framework/GodotGameFrameworkCore/Localization/`、`Framework/GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs`、`addons/TopMenu/`、`Framework/GodotGameFrameworkCore/UI/IStringKey.cs` ｜ 翻译源：仓库根 `Configs/Localization/*.xlsx`
 > 本文档描述 GGF 的本地化系统：语言枚举与切换、字典文件格式、GetString 用法、TranslationServer 桥接、UI 文案刷新机制（IStringKey）与 Excel 翻译工作流。
 
 ---
@@ -13,7 +13,7 @@
 |----|------|------|:--:|
 | 纯 C# 层 | `GameFramework/Localization/` | `LocalizationManager`：字典存储、GetString(1~16 参数格式化)、Language 枚举、DataProvider 解析框架 | ❌ |
 | Godot 桥接层 | `GodotGameFrameworkCore/Localization/` | `LocalizationComponent`（组件 + TranslationServer 桥接）、`DefaultLocalizationHelper`（TSV 解析、系统语言检测）、`LocalizationHelperBase`（Language↔locale 映射） | ✅ |
-| 编辑器插件 | `addons/LocalizationEditor/` | Excel（`Configs/Localization/`）→ `.txt` 字典导出 | ✅（EditorPlugin） |
+| 编辑器插件 | `addons/TopMenu/`（`GameFrameworkTopMenu.Generate.cs`） | TopMenu → Generate File → Localization File：Excel（`Configs/Localization/`）→ `.txt` 字典导出 | ✅（EditorPlugin） |
 | UI 刷新 | `GodotGameFrameworkCore/UI/IStringKey.cs` + `GodotGameFrameworkCore/Localization/ButtonTr.cs` / `LabelTr.cs` + UIForm 生成模板 | 界面文案收集与刷新（`UIStringKeys` / `SetLocalizationValue()`） | ✅ |
 
 ### 能力清单
@@ -34,8 +34,8 @@
 
 ```
 Configs/Localization/本地化.xlsx（仓库根，每个 Sheet = 一种语言，Sheet 名 = Language 枚举名）
-    │  Godot 编辑器菜单 Project → Tools → GenerateLocalizationFile
-    ▼  addons/LocalizationEditor/LocalizationEditorPlugin.cs（解析 xlsx ZIP/XML，仅导出 A–D 列）
+    │  Godot 编辑器菜单 Project → Tools → Generate File → Localization File
+    ▼  addons/TopMenu/GameFrameworkTopMenu.Generate.cs（解析 xlsx ZIP/XML，仅导出 A–D 列）
 res://TheGame/DataTables/Localizations/
     ├── ChineseSimplified.txt
     └── English.txt              ← TSV，文件名即 Language 枚举名
@@ -86,7 +86,7 @@ UI（MenuForm.SetLocalizationValue 等 + LabelTr/ButtonTr 自动刷新）
 | `GodotGameFrameworkCore/Localization/LabelTr.cs` | Label 实现（`Label : IStringKey`，运行时自动刷新 Text） |
 | `GodotGameFrameworkCore/Config/GameFolderConstant.cs` | `LocalizationPath = "res://TheGame/DataTables/Localizations/"`、`LocalizationFiles = "res://TheGame/DataTables/Localizations/{0}.txt"` |
 | `GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs` | 语言变更事件参数（`OnLanagueChangeEventArgs : GameEventArgs`，`Language Language` 属性） |
-| `addons/LocalizationEditor/LocalizationEditorPlugin.cs` | Excel → TSV 导出（Tool 菜单项） |
+| `addons/TopMenu/GameFrameworkTopMenu.Generate.cs` | Excel → TSV 导出（TopMenu → Generate File → Localization File） |
 
 ---
 
@@ -219,7 +219,7 @@ void GF.Localization.RemoveAllRawStrings();      // 清字典 + 注销 Translati
 ### 4.3 翻译工作流（新增一条文案）
 
 1. 打开仓库根 `Configs/Localization/本地化.xlsx`，在**每个语言 Sheet** 中追加一行：B 列序号、C 列键名、D 列译文（Sheet 名必须是 Language 枚举名）。
-2. Godot 编辑器菜单 **Project → Tools → GenerateLocalizationFile**：插件遍历 `Configs/Localization/*.xlsx`，每个 Sheet 导出为 `res://TheGame/DataTables/Localizations/<Sheet名>.txt`（覆盖旧文件，仅 A–D 列），并刷新文件系统。
+2. Godot 编辑器菜单 **Project → Tools → Generate File → Localization File**：生成器遍历 `Configs/Localization/*.xlsx`，每个 Sheet 导出为 `res://TheGame/DataTables/Localizations/<Sheet名>.txt`（覆盖旧文件，仅 A–D 列），并刷新文件系统。
 3. 代码中使用 `GF.Localization.GetString("新键名")`；UI 文案写入界面的 `SetValue()`。
 4. 运行验证——键拼错时界面会显示 `<NoKey>键名`，直观可查。
 
@@ -243,7 +243,7 @@ void GF.Localization.RemoveAllRawStrings();      // 清字典 + 注销 Translati
 可以。`res://TheGame/DataTables/` 下的 `.txt` 可打入 Config 类型子包，`ProcedureUpdate` 先加载 Config 包，`ProcedurePrelode` 随后读取的即是补丁内容（Godot 资源解析链中子包路径优先）。
 
 **Q: `addons/LocalizationEditor/` 目录里也有一个 `本地化.xlsx`？**
-那是历史遗留副本，插件**只读取仓库根 `Configs/Localization/`**（源码中 `res://` 上溯两级拼接），以该目录为唯一翻译源。
+那是历史遗留副本（原 LocalizationEditor 插件目录已并入 TopMenu 的 Generate File），生成器**只读取仓库根 `Configs/Localization/`**（源码中 `res://` 上溯两级拼接），以该目录为唯一翻译源。
 
 **Q: 运行时切换语言后已打开的界面没变？**
 `LabelTr` 和 `ButtonTr` 会自动刷新（它们订阅了 `OnLanagueChangeEventArgs`）。但界面自身的 `SetLocalizationValue()`（如 `MenuForm` 直接给非 Tr 节点赋值）不会自动触发——需在监听到语言变更事件后手动调用每个打开界面的 `SetLocalizationValue()`（及 `UIStringKeys.ForEach(k => k.SetLocalizationValue())`）。

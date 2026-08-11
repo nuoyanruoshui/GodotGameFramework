@@ -34,7 +34,7 @@ project/assembly_name="GodotProject"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/ComponentInsoector/plugin.cfg", "res://addons/ExportInspector/plugin.cfg", "res://addons/LocalizationEditor/plugin.cfg", "res://addons/Resources/plugin.cfg", "res://addons/TopMenu/plugin.cfg", "res://addons/asset_bundle/plugin.cfg", "res://addons/ezpz_inspector/plugin.cfg")
+enabled=PackedStringArray("res://addons/ComponentInsoector/plugin.cfg", "res://addons/ExportInspector/plugin.cfg", "res://addons/TopMenu/plugin.cfg", "res://addons/asset_bundle/plugin.cfg", "res://addons/ezpz_inspector/plugin.cfg")
 
 [file_customization]
 
