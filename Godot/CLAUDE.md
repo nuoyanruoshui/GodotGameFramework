@@ -75,9 +75,7 @@ GodotProject/
     ComponentInsoector/             ← Custom Godot Inspector for framework components
     ExportInspector/                ← AssetBundle visual export management panel (C# EditorPlugin)
     asset_bundle/                   ← AssetBundle resource marker + export plugin + pack utils (GDScript)
-    LocalizationEditor/             ← Excel → .txt localization export
-    Resources/                      ← Resources collection scanner
-    TopMenu/                        ← Log level toggler (rewrites csproj DefineConstants)
+    TopMenu/                        ← GameFramework top menu: log level, open folders, Generate File (localization / GameConfig Luban / resource collection)
 ```
 
 ### Newtonsoft.Json
@@ -339,18 +337,16 @@ The `Tools/GameEventSourceGenerator/` Unity/TEngine Roslyn Source Generator proj
 |--------|----------|
 | **ComponentInsoector** | Custom inspector plugins for framework components (Base, Procedure, Scene, Setting, Entity, UI, Sound, Localization) + UIForm script generator (`ScriptGenerateInspector`) with auto child-node collection and assignment |
 | **ExportInspector** | AssetBundle visual export management panel — scan `.tres` bundle markers, expand to view per-resource details (type, size, import status), one-click export `.pck` subpackages + `GameFrameworkVersion.dat` manifest. Supports **full mode** (source files + imported) and **imported-only mode** (only `.ctex`/`.fontdata`/`.sample`, 80%+ smaller) |
-| **TopMenu** | Toggle log level (rewrites csproj `DefineConstants`) |
-| **LocalizationEditor** | `Configs/Localization/*.xlsx` → `.txt` localization files |
-| **Resources** | Scan `res://TheGame/` resources, generate `ResourcesCollectionConstant.cs` |
+| **TopMenu** | `GameFrameworkLog` / `OpenFolder` / `Generate File` submenus — toggle log level (rewrites csproj `DefineConstants`), open `res://` / `user://` folders, and generate: **Localization File** (`Configs/Localization/*.xlsx` → `.txt`), **GameConfig File** (run Luban `gen_code_bin_to_project.bat/.sh`), **Collection Res** (scan `res://TheGame/`, regenerate `ResourcesCollectionConstant.cs`). Merged from the former `LocalizationEditor` + `Resources` plugins |
 
 Enabled in `project.godot`:
 ```
 editor_plugins/enabled = [
   "res://addons/ComponentInsoector/plugin.cfg",
   "res://addons/ExportInspector/plugin.cfg",
-  "res://addons/LocalizationEditor/plugin.cfg",
-  "res://addons/Resources/plugin.cfg",
-  "res://addons/TopMenu/plugin.cfg"
+  "res://addons/TopMenu/plugin.cfg",
+  "res://addons/asset_bundle/plugin.cfg",
+  "res://addons/ezpz_inspector/plugin.cfg"
 ]
 ```
 

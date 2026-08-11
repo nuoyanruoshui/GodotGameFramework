@@ -103,7 +103,7 @@ BaseComponent.OnPreDestroy()（节点销毁通知）
 | `GodotGameFrameworkCore/Variable/VarInt32 / VarSingle / VarString / VarBoolean` | 池化变量的隐式转换封装 |
 | `GodotGameFrameworkCore/Utility/DefaultLogHelper.cs` | `ILogHelper` 实现：桥接 `GD.Print / PushWarning / PushError` |
 | `GodotGameFrameworkCore/Utility/DefaultTextHelper.cs`、`NodeExtension.cs`、`NodeUtility.cs`、`PhysicsCheck2D.cs`、`GTween.cs`、`LayerMask.cs` | 文本格式化、Node 扩展、2D 物理检测、DOTween 风格 Tween 扩展、物理层名↔索引↔位掩码映射 |
-| `addons/TopMenu/GameFrameworkTopMenu.cs` | 编辑器菜单：日志级别切换（改写 csproj）、打开 res://、user:// 目录 |
+| `addons/TopMenu/GameFrameworkTopMenu.cs` + `GameFrameworkTopMenu.Generate.cs` | 编辑器菜单：日志级别切换（改写 csproj）、打开 res:// / user:// / Configs 目录、Generate File 子菜单（本地化导出 / GameConfig Luban / 资源收集） |
 
 ---
 
@@ -201,7 +201,14 @@ Log（Godot 桥接层，[Conditional] 编译期裁剪，1~16 泛型参数重载�
 
 - `[Conditional]` 意味着符号未定义时**调用点整体被编译器删除**（连参数求值都不发生），零运行时开销。发布版删除整行 `<DefineConstants>` 即全部裁掉。
 
-**TopMenu 插件**（`addons/TopMenu/`）在编辑器 Tools 菜单提供 `GameFramework` 子菜单，一键切换 7 档日志级别 —— 实现方式是正则改写 `GodotProject.csproj` 中的 `<DefineConstants>`（如 "Enable Info And Above Logs" → `ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG`；"Disable All Logs" → 删除整行）。改完需重新 `dotnet build` 生效。另有 `OpenFolder` 子菜单直接打开 `res://` / `user://` 目录。
+**TopMenu 插件**（`addons/TopMenu/`，`GameFrameworkTopMenu.cs` + 分部类 `GameFrameworkTopMenu.Generate.cs`）在编辑器 Tools 菜单提供三个子菜单：
+
+- `GameFrameworkLog` —— 一键切换 7 档日志级别，实现方式是正则改写 `GodotProject.csproj` 中的 `<DefineConstants>`（如 "Enable Info And Above Logs" → `ENABLE_LOG;ENABLE_INFO_AND_ABOVE_LOG`；"Disable All Logs" → 删除整行）。改完需重新 `dotnet build` 生效。
+- `OpenFolder` —— 直接打开 `res://` / `user://` / `Configs/GameConfig` / `Configs/Localization` 目录。
+- `Generate File` —— 整合原 LocalizationEditor / Resources 插件：
+  - `Localization File`：`Configs/Localization/*.xlsx` → `.txt` 字典导出（原 `LocalizationEditorPlugin`）；
+  - `GameConfig File`：启动 Luban `gen_code_bin_to_project.bat/.sh` 生成配置代码；
+  - `Collection Res`：扫描 `res://TheGame/` 重生成 `ResourcesCollectionConstant.cs`（原 `ResourcesCollectionEditor`）。
 
 ### 3.7 SingletonNode / SingletonSystem
 

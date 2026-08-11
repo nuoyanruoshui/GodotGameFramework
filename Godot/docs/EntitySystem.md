@@ -256,7 +256,7 @@ Godot CharacterBody2D                     Godot Area2D                          
 3. **构建**：`cd GodotProject && dotnet build`（新脚本编译后 Inspector 才显示 `[Export]` 字段）
 4. **配表**：`Configs/GameConfig/Datas/实体.xlsx` 加行（EntityId 枚举、AssetPath、EntityGroupName），运行 `gen_code_bin_to_project.bat` 重新生成 `EntityId.cs` / 二进制数据
 5. **实体组**：确认 `EntityGroupRes` 里已有对应组（无则加组条目）
-6. **（可选）路径常量**：编辑器菜单 `CollectionRes` 重新生成 `ResourcesCollectionConstant.cs`
+6. **（可选）路径常量**：编辑器菜单 `Project → Tools → Generate File → Collection Res` 重新生成 `ResourcesCollectionConstant.cs`
 7. **调用**：`await GF.Entity.ShowEntityAsync<XxxEntity>(EntityId.Xxx, userData)`
 
 ---

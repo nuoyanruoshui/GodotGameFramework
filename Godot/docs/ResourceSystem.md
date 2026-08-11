@@ -1,6 +1,6 @@
 # 资源系统 (Resource Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Resource/`、`Framework/GodotGameFrameworkCore/Resource/`、`addons/ExportInspector/`、`addons/asset_bundle/`、`addons/Resources/`
+> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Resource/`、`Framework/GodotGameFrameworkCore/Resource/`、`addons/ExportInspector/`、`addons/asset_bundle/`、`addons/TopMenu/`（Generate File → Collection Res）
 > 本文档描述 GGF 的资源加载与子包管理：架构、加载机制、API 用法、AB 包导出工作流与注意事项。
 > 热更下载流程见 `DownloadSystem.md`，热更链路审计见 `ResourceHotUpdateAudit.md`。
 
@@ -264,9 +264,9 @@ byte[] bytes = GF.Resource.LoadBinary("res://TheGame/GameProto/GameConfig/tbenti
 
 产出目录整体上传服务器即完成一次热更发布（客户端流程见 `DownloadSystem.md` §5）。
 
-### 5.3 路径常量生成（`addons/Resources/`）
+### 5.3 路径常量生成（`addons/TopMenu/` → Generate File）
 
-编辑器菜单 `Project → Tools → CollectionRes`：
+编辑器菜单 `Project → Tools → Generate File → Collection Res`：
 
 - `DirAccess` 递归扫描 `res://TheGame/`，排除 `.cs`、`GameScripts/`、`.import`、`.uid`
 - **同名文件（不同路径）直接报错中止**——因常量名按 `{所在文件夹}_{文件名}` 生成，必须全局唯一
