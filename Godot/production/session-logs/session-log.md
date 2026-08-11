@@ -4116,3 +4116,10 @@ Godot/subpackages/GameFrameworkVersion.dat
 Godot/subpackages/UIsBundle.pck
 ---
 
+## Session End: 20260811_164233
+### Uncommitted Changes
+Godot/GodotProject/addons/TopMenu/GameFrameworkTopMenu.cs
+Godot/GodotProject/project.godot
+Godot/bash.exe.stackdump
+---
+

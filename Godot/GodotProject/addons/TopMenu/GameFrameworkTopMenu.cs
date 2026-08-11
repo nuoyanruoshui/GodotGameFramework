@@ -7,10 +7,12 @@ using System.Text.RegularExpressions;
 [Tool]
 public partial class GameFrameworkTopMenu : EditorPlugin
 {
-    public const string MenuName = "GameFramework";
+    public const string MenuName = "GameFrameworkLog";
     public const string OpenFolderName = "OpenFolder";
+    public const string GenerateName = "Generate File";
     private const string DefineConstantsPattern = @"<DefineConstants>.*?</DefineConstants>";
 
+    private PopupMenu m_GeneratePopup;
     private PopupMenu m_LogPopup;
     private PopupMenu m_OpenFolderPopup;
 
@@ -32,14 +34,24 @@ public partial class GameFrameworkTopMenu : EditorPlugin
         ("Localization Data Path", Path.Combine(ProjectSettings.GlobalizePath("res://"),"../../Configs/Localization/"))
     };
 
+    // Generate 子菜单的数据与处理逻辑位于分部类 GameFrameworkTopMenu.Generate.cs
+
     public override void _EnterTree()
     {
+        m_GeneratePopup = new PopupMenu();
+        m_GeneratePopup.Name = "GameFrameworkGeneratePopup";
+
         m_LogPopup = new PopupMenu();
         m_LogPopup.Name = "GameFrameworkLogPopup";
 
         m_OpenFolderPopup = new PopupMenu();
         m_OpenFolderPopup.Name = "GameFrameworkOpenFolderPopup";
 
+
+        for (int i = 0; i < Generate.Length; i++)
+        {
+            m_GeneratePopup.AddItem(Generate[i].Label, i);
+        }
 
         for (int i = 0; i < LogLevels.Length; i++)
         {
@@ -50,19 +62,27 @@ public partial class GameFrameworkTopMenu : EditorPlugin
         {
             m_OpenFolderPopup.AddItem(Folder[i].Label, i);
         }
-
+        m_GeneratePopup.IdPressed += OnGeneratePopupIdPressed;
         m_LogPopup.IdPressed += OnLogPopupIdPressed;
         m_OpenFolderPopup.IdPressed += OnOpenFolderPopupIdPressed;
+        AddToolSubmenuItem(GenerateName, m_GeneratePopup);
         AddToolSubmenuItem(MenuName, m_LogPopup);
         AddToolSubmenuItem(OpenFolderName, m_OpenFolderPopup);
         GD.Print("[GameFramework] Plugin loaded.");
     }
 
-
-
-
     public override void _ExitTree()
     {
+        if (m_GeneratePopup != null)
+        {
+            m_GeneratePopup.IdPressed -= OnGeneratePopupIdPressed;
+            if (m_GeneratePopup.GetParent() != null)
+            {
+                m_GeneratePopup.GetParent().RemoveChild(m_GeneratePopup);
+            }
+            m_GeneratePopup.QueueFree();
+            m_GeneratePopup = null;
+        }
         if (m_LogPopup != null)
         {
             m_LogPopup.IdPressed -= OnLogPopupIdPressed;
@@ -84,6 +104,7 @@ public partial class GameFrameworkTopMenu : EditorPlugin
             m_OpenFolderPopup = null;
         }
 
+        RemoveToolMenuItem(GenerateName);
         RemoveToolMenuItem(MenuName);
         RemoveToolMenuItem(OpenFolderName);
         GD.Print("[GameFramework] Plugin unloaded.");
