@@ -316,30 +316,28 @@ public class ProcedureUpdate : ProcedureBase
 
                 await LoadDownloadedPacksAsync(serverVersion);
 
-                // ── 5. 加载成功后再保存版本文件（带备份） ──
-                if (localVersion == null || localVersion.Version != serverVersion.Version)
+                // ── 5. 只要发生了下载，就刷新本地数据 ──
+                // 不能只在"版本号变化"时保存：若服务端版本号没变但 .pck 哈希变了
+                // （如重新导出过包），重启后完整性校验会拿旧哈希比对磁盘新文件 → 判定损坏
+                // → 反复重下 + 反复弹"是否重启"，形成死循环。
+                if (localVersion != null && EasySave.ExistsInUser(ResourceManager.GameFrameworkVersionData))
                 {
-                    if (EasySave.ExistsInUser(ResourceManager.GameFrameworkVersionData))
-                    {
-                        EasySave.SaveInUser(localVersion,
-                            ResourceManager.GameFrameworkVersionData + ".bak");
-                    }
-
-                    await EasySave.SaveInUserAsync(serverVersion, ResourceManager.GameFrameworkVersionData);
-                    ResourceManager.LocalPackVersionList = serverVersion;
-                    Log.Info("[ProcedureUpdate] 版本文件已保存。");
+                    EasySave.SaveInUser(localVersion,
+                        ResourceManager.GameFrameworkVersionData + ".bak");
                 }
+
+                await EasySave.SaveInUserAsync(serverVersion, ResourceManager.GameFrameworkVersionData);
+                ResourceManager.LocalPackVersionList = serverVersion;
+                Log.Info("[ProcedureUpdate] 版本文件已保存。");
 
                 m_loadingForm?.SetLogState("更新完成", 100);
                 await Task.Delay(500);
 
                 GF.UI.OpenQuestionTipsAsync("更新完成，是否重启？", "退出", "确认", () =>
                 {
-                    HotUpdateSafetyGuard.MarkStartupSuccess();
                     GameEntry.Shutdown(ShutdownType.Quit);
                 }, () =>
                 {
-                    HotUpdateSafetyGuard.MarkStartupSuccess();
                     GameEntry.Shutdown(ShutdownType.Restart);
                 });
             }
@@ -352,6 +350,7 @@ public class ProcedureUpdate : ProcedureBase
         }
         finally
         {
+            HotUpdateSafetyGuard.MarkStartupSuccess();
             GF.UI.CloseUIForm(m_loadingForm);
         }
 
