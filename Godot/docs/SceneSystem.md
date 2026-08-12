@@ -1,6 +1,6 @@
 # 场景系统 (Scene Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Scene/`、`Framework/GodotGameFrameworkCore/Scene/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Scene/`、`Framework/GodotGameFrameworkCore/Scene/`
 > 本文档描述 GGF 的场景系统：场景加载/卸载流程、`LoadSceneAsync` 的 TCS 模式、场景实例在 Godot SceneTree 中的挂载位置、与资源系统的关系及已知边界。
 
 ---

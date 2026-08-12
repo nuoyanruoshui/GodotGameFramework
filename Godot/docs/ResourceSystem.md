@@ -1,6 +1,6 @@
 # 资源系统 (Resource Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Resource/`、`Framework/GodotGameFrameworkCore/Resource/`、`addons/ExportInspector/`、`addons/asset_bundle/`、`addons/TopMenu/`（Generate File → Collection Res）
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Resource/`、`Framework/GodotGameFrameworkCore/Resource/`、`addons/ExportInspector/`、`addons/asset_bundle/`、`addons/TopMenu/`（Generate File → Collection Res）
 > 本文档描述 GGF 的资源加载与子包管理：架构、加载机制、API 用法、AB 包导出工作流与注意事项。
 > 热更下载流程见 `DownloadSystem.md`，热更链路审计见 `ResourceHotUpdateAudit.md`。
 
@@ -8,14 +8,14 @@
 
 ## 1. 概述
 
-资源系统是 [Game Framework](https://gameframework.cn/) Resource 模块的 Godot 移植。原版 Unity 侧约 97 个接口成员被大幅裁剪——Godot 的 `ResourceLoader` / `.pck` 机制天然覆盖了 AssetBundle 依赖管理，因此当前 `IResourceManager` 只保留 10 个成员。遵循框架**双层架构**：
+资源系统是 [Game Framework](https://gameframework.cn/) Resource 模块的 Godot 移植。原版 Unity 侧约 97 个接口成员被大幅裁剪——Godot 的 `ResourceLoader` / `.pck` 机制天然覆盖了 AssetBundle 依赖管理，因此当前 `IResourceManager` 只保留 18 个成员（10 个核心操作 + 8 个资产/二进制加载代理计数）。遵循框架**双层架构**：
 
 | 层 | 位置 | 职责 | Godot 依赖 |
 |----|------|------|:--:|
 | 纯 C# 层 | `GameFramework/Resource/` | `IResourceManager` 接口、`ResourceMode`、`HasAssetResult`、加载回调委托（`LoadAssetCallbacks` / `LoadBinaryCallbacks`） | ❌ |
-| Godot 桥接层 | `GodotGameFrameworkCore/Resource/` | `ResourceManager` 实现（ResourceLoader 线程加载 + 版本清单）、`ResourceComponent`、`PackVersionList`、加载任务 | ✅ |
+| Godot 桥接层 | `GodotGameFrameworkCore/Resource/` | `ResourceManager` 实现（ResourceLoader 线程加载 + 版本清单）、`ResourceComponent`、`PackVersionList`、加载任务、`IResourceLoadHelper` / `DefaultResourceLoadHelper` 加载辅助器 | ✅ |
 
-> ✅（2026-07）`GameFramework/Resource/` 下 Unity 遗留文件（`PackageVersionList.*`、`LocalVersionList.*`、`Serializer` 等）仍保留在目录中（共约 150 个文件），未被清理。实际运行时使用的清单类型是 Godot 层的 `PackVersionList`（`GodotGameFrameworkCore/Resource/`，JSON 序列化），遗留文件仅在编译时参与但无运行时引用。
+> ✅（2026-08）`GameFramework/Resource/` 下 Unity 遗留死代码已清理：`PackageVersionList.*`、`LocalVersionList.*`、`UpdatableVersionList.*`、`*VersionListSerializer.cs`、update/apply/verify 回调与事件参数等 **55 个零运行时引用的文件已删除**，仅保留在用的 15 个（`IResourceManager`、回调委托、状态枚举、`Constant`、`UnloadSceneCallbacks`）。实际运行时使用的清单类型是 Godot 层的 `PackVersionList`（`GodotGameFrameworkCore/Resource/`，JSON 序列化）。加载操作现抽象为 `IResourceLoadHelper` / `DefaultResourceLoadHelper`（桥接层，可由 `ResourceComponent` Inspector 配置实现）。
 
 ### ResourceMode 现状
 
@@ -27,7 +27,7 @@
 ### 能力清单
 
 - ✅ 同步加载：`LoadAsset<T>` / `LoadBinary`（byte[]）/ `LoadText`（string）
-- ✅ 异步加载资源：`LoadAssetAsync`（`Task<Godot.Resource>`，基于 `ResourceLoader.LoadThreadedRequest` 后台线程加载）
+- ✅ 异步加载资源：`LoadAssetAsync`（`Task<Godot.Resource>`，经 `IResourceLoadHelper`（默认走 `ResourceLoader.LoadThreadedRequest`）后台线程加载）
 - ✅ 异步加载二进制：`LoadBinaryAsync`（`Task<byte[]>`，基于 `Task.Run` 后台线程 IO + 每帧主线程轮询完成）
 - ✅ 存在性检查：`Exists` / `HasAsset`（区分 Godot 资源与 `.bytes` 二进制）
 - ✅ 子包版本清单（`PackVersionList`，JSON）+ 热更子包加载（`ProjectSettings.LoadResourcePack`）
@@ -50,7 +50,7 @@ ResourceComponent (Godot 桥接层，场景节点 "Resource")
 ResourceManager : GameFrameworkModule (实现放在 Godot 层，因直接调 Godot API)
     └── TaskPool<LoadAssetTask>                   ← N Agent 并发（AgentCount，默认 10），按优先级调度
         └── Update(): 遍历所有 WorkingAgent
-                LoadThreadedGetStatus(path)
+                helper.GetLoadStatus(path)（默认走 LoadThreadedGetStatus）
                   ├─ Loaded     → LoadThreadedGet → SuccessCallback → Agent 归还池
                   ├─ InProgress → UpdateCallback（累计 Duration）
                   └─ Failed     → FailureCallback → Agent 归还池
@@ -76,7 +76,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 | 文件 | 职责 |
 |------|------|
-| `GameFramework/Resource/IResourceManager.cs` | 管理器接口（10 成员，含 `SetLoadAssetAgentCount`） |
+| `GameFramework/Resource/IResourceManager.cs` | 管理器接口（18 成员：10 核心 + 8 代理计数，含 `SetLoadAssetAgentCount`） |
 | `GameFramework/Resource/ResourceMode.cs` | Package / Updatable 枚举 |
 | `GameFramework/Resource/HasAssetResult.cs` | 资源存在性结果 |
 | `GameFramework/Resource/LoadAssetCallbacks.cs` | 加载回调委托组（Success/Failure/Update）——Godot 自动管理依赖，无 DependencyAsset |
@@ -88,7 +88,9 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 | `GodotGameFrameworkCore/Resource/LoadAssetAgent.cs` | 加载代理（`ITaskAgent<LoadAssetTask>`，每 Agent 承载一个 LoadThreadedRequest 槽位） |
 | `GodotGameFrameworkCore/Resource/LoadBinaryTask.cs` | 异步二进制加载任务（`TaskBase` + `ReferencePool` 池化） |
 | `GodotGameFrameworkCore/Resource/LoadBinaryAgent.cs` | 异步二进制加载代理（`ITaskAgent<LoadBinaryTask>`，`Task.Run` 后台 `File.ReadAllBytes`，主线程每帧 `Update()` 轮询完成后回调） |
-| `GodotGameFrameworkCore/Resource/ResourceExtension.cs` | 空扩展类（历史便捷方法已移除） |
+| `GodotGameFrameworkCore/Resource/IResourceLoadHelper.cs` | 加载辅助器接口（Asset 异步加载/轮询/取资源 + Binary 同步/异步读取） |
+| `GodotGameFrameworkCore/Resource/ResourceLoadHelperBase.cs` | 加载辅助器抽象基类（`GodotComponent`） |
+| `GodotGameFrameworkCore/Resource/DefaultResourceLoadHelper.cs` | 默认加载辅助器（`ResourceLoader` + `System.IO` 实现，Inspector 可配置） |
 
 ---
 
@@ -102,7 +104,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 2. `LoadAssetTask.Create(...)`（从 `ReferencePool` 取）入 `TaskPool<LoadAssetTask>`
 3. 等待队列按 **`Priority` 降序**插入
 4. 有闲 Agent 时，`TaskPool` 取出任务 → Agent.Start 调用 `ResourceLoader.LoadThreadedRequest(assetName)` 提交加载
-5. 每帧 `Update()` **遍历所有 WorkingAgent** 的 `LoadThreadedGetStatus`，独立交付完成回调；`InProgress` 状态下通过 `LoadThreadedGetStatus(path, progressArray)` 读取**真实加载进度**（`progressArray[0].AsSingle()`，0.0~1.0）并回调 `LoadAssetUpdateCallback`，替换了早期基于时间的模拟进度。
+5. 每帧 `Update()` **遍历所有 WorkingAgent**，经 `IResourceLoadHelper.GetLoadStatus`（默认实现走 `ResourceLoader.LoadThreadedGetStatus`）轮询，独立交付完成回调；`InProgress` 状态下读取**真实加载进度**（`progressArray[0].AsSingle()`，0.0~1.0）并回调 `LoadAssetUpdateCallback`，替换了早期基于时间的模拟进度。
 
 要点：
 
@@ -115,7 +117,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 同步通道：
 
-- `IResourceManager.LoadBinary`：**同步**实现——`FileAccess.Open` 整读 `GetBuffer` 后立即回调（回调签名保留异步形态，便于将来切换实现）。
+- `IResourceManager.LoadBinary`：**同步**实现——经 `IResourceLoadHelper.LoadBinary`（默认 `FileAccess.Open` 整读 `GetBuffer`）后立即回调（回调签名保留异步形态，便于将来切换实现）。
 - `ResourceComponent.LoadBinary/LoadText`：更直接的同步便捷方法，文件不存在或异常返回 `null`（不抛异常）。
 - `GetBinaryLength`：返回文件字节数，不存在返回 `-1`。
 
@@ -299,11 +301,8 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 **Q: `.pck` 里要不要带源文件？**
 纯运行时分发勾选「仅产物」即可（Godot 运行时只读 `.import` + 导入缓存）；需要在其他工程/编辑器中二次导入时才用全量模式。
 
-**Q: `ResourceExtension` 注释里的 `GF.Resource.LoadAsync<T>()` 在哪？**
-不存在。该类已清空，注释为历史遗留；请使用 `LoadAssetAsync` + 强转，或同步 `LoadAsset<T>`。
-
 **Q: 二进制大文件读取卡帧？**
-`LoadBinary` 是主线程同步整读。大文件建议暂时自行 `Task.Run` 包装，或等待 `LoadBinaryAgent` 异步链路接线（见 §7）。
+`LoadBinary` 是主线程同步整读；大文件请用异步通道 `ResourceComponent.LoadBinaryAsync`（`Task<byte[]>`，经 `TaskPool<LoadBinaryTask>` + `LoadBinaryAgent` 后台 `File.ReadAllBytes`，主线程每帧轮询回调），无需自行 `Task.Run` 包装。
 
 ---
 
@@ -313,5 +312,5 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 - [x] `LoadBinaryTask` / `LoadBinaryAgent` 接入 `ResourceManager`（异步二进制不再垄断主线程 IO）✅ 2026-07
 - [x] Package 模式的本地子包加载（`TryLoadLocalSubpackagesAsync`，读取安装目录 `subpackages/GameFrameworkVersion.dat`）✅ 2026-07
 - [x] `LoadAssetDependencyAssetCallback`/`LoadSceneDependencyAssetCallback` 清理（Godot 自动管理资源依赖）✅ 2026-07
-- [ ] Unity 遗留文件清理（`GameFramework/Resource/` 下约 150 个文件，仅部分被当前代码引用）
+- [x] Unity 遗留文件清理（`GameFramework/Resource/` 下 55 个零引用文件已删除，保留 15 个在用的）✅ 2026-08
 - [ ] `PackType.Script` 子包的实际消费（GDScript 热更，见 `CodeHotUpdateDesign.md`；⚠️ 已随代码热更方案搁置，等待华佗团队 Godot 适配）

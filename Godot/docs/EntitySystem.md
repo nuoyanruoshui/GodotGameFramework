@@ -1,6 +1,6 @@
 # 实体系统 (Entity Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Entity/`、`Framework/GodotGameFrameworkCore/Entity/`、`TheGame/GameScripts/Entity/`（含 CatEntity FSM 状态机示例）、`TheGame/MainPack/Scripts/Resources/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Entity/`、`Framework/GodotGameFrameworkCore/Entity/`、`TheGame/GameScripts/Entity/`（含 CatEntity FSM 状态机示例）、`TheGame/MainPack/Scripts/Resources/`
 > 本文档描述 GGF 的实体系统：生命周期、实体组与对象池、配置驱动的显示/隐藏 API、TheGame 实体继承树与新增实体步骤。
 
 ---

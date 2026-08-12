@@ -1,6 +1,6 @@
 # 本地化系统 (Localization Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Localization/`、`Framework/GodotGameFrameworkCore/Localization/`、`Framework/GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs`、`addons/TopMenu/`、`Framework/GodotGameFrameworkCore/UI/IStringKey.cs` ｜ 翻译源：仓库根 `Configs/Localization/*.xlsx`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Localization/`、`Framework/GodotGameFrameworkCore/Localization/`、`Framework/GodotGameFrameworkCore/Event/OnLanagueChangeEventArgs.cs`、`addons/TopMenu/`、`Framework/GodotGameFrameworkCore/UI/IStringKey.cs` ｜ 翻译源：仓库根 `Configs/Localization/*.xlsx`
 > 本文档描述 GGF 的本地化系统：语言枚举与切换、字典文件格式、GetString 用法、TranslationServer 桥接、UI 文案刷新机制（IStringKey）与 Excel 翻译工作流。
 
 ---

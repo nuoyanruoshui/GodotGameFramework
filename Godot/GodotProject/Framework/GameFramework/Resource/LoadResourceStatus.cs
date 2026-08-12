@@ -28,14 +28,9 @@ namespace GameFramework.Resource
         NotReady,
 
         /// <summary>
-        /// 依赖资源错误。
+        /// 加载中
         /// </summary>
-        DependencyError,
-
-        /// <summary>
-        /// 资源类型错误。
-        /// </summary>
-        TypeError,
+        InProgress,
 
         /// <summary>
         /// 加载资源错误。

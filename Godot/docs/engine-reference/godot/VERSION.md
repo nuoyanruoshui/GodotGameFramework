@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Engine Version** | 4.6.2 |
+| **Engine Version** | 4.7 |
 | **Project Pinned** | 2026-06-13 |
 | **LLM Knowledge Cutoff** | May 2025 |
 | **Risk Level** | HIGH — version is well beyond LLM training data |

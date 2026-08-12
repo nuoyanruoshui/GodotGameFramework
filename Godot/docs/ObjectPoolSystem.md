@@ -1,6 +1,6 @@
 # 对象池系统 (Object Pool Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/ObjectPool/`、`Framework/GodotGameFrameworkCore/ObjectPool/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/ObjectPool/`、`Framework/GodotGameFrameworkCore/ObjectPool/`
 > 本文档描述 GGF 的对象池系统：ObjectBase/IObjectPool 设计、Spawn/Unspawn 流程、释放策略、与 ReferencePool 的区别，以及框架内的实际使用点。
 
 ---
@@ -239,7 +239,7 @@ pool.Unspawn(obj.Target);          // → OnUnspawn
 
 ## 7. NodePool 系统
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/MainPack/Scripts/ObjectPool/`、`TheGame/MainPack/Scripts/Resources/NodePoolConfig.cs`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`TheGame/MainPack/Scripts/ObjectPool/`、`TheGame/MainPack/Scripts/Resources/NodePoolConfig.cs`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
 > NodePool 是基于 `GF.ObjectPool` 构建的**场景节点级对象池封装**，提供开箱即用的 Godot Node 复用能力：懒加载实例化、自动回收、编辑器扫描发现。
 
 ---

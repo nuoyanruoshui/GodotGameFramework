@@ -15,6 +15,8 @@ namespace GodotGameFramework.Editor
 		SoundComponentInspectorPlugin m_SoundComponent;
 		LocalizationComponentInspectorPlugin m_LocalizationComponent;
 		DownloadComponentInspectorPlugin m_DownloadComponent;
+		WebRequestComponentInspectorPlugin m_WebRequestComponent;
+		ResourceComponentInspectorPlugin m_ResourceComponent;
 		ScriptGenerateInspector m_ScriptGenerateInspector;
 		NodePoolInspectorPlugin m_NodePoolInspector;
 		public override void _EnterTree()
@@ -28,6 +30,8 @@ namespace GodotGameFramework.Editor
 			m_SoundComponent = new SoundComponentInspectorPlugin();
 			m_LocalizationComponent = new LocalizationComponentInspectorPlugin();
 			m_DownloadComponent = new DownloadComponentInspectorPlugin();
+			m_WebRequestComponent = new WebRequestComponentInspectorPlugin();
+			m_ResourceComponent = new ResourceComponentInspectorPlugin();
 			m_ScriptGenerateInspector = new ScriptGenerateInspector();
 			m_NodePoolInspector = new NodePoolInspectorPlugin();
 			AddInspectorPlugin(m_BaseComponent);
@@ -39,6 +43,8 @@ namespace GodotGameFramework.Editor
 			AddInspectorPlugin(m_SoundComponent);
 			AddInspectorPlugin(m_LocalizationComponent);
 			AddInspectorPlugin(m_DownloadComponent);
+			AddInspectorPlugin(m_WebRequestComponent);
+			AddInspectorPlugin(m_ResourceComponent);
 			AddInspectorPlugin(m_ScriptGenerateInspector);
 			AddInspectorPlugin(m_NodePoolInspector);
 		}
@@ -54,6 +60,8 @@ namespace GodotGameFramework.Editor
 			RemoveInspectorPlugin(m_SoundComponent);
 			RemoveInspectorPlugin(m_LocalizationComponent);
 			RemoveInspectorPlugin(m_DownloadComponent);
+			RemoveInspectorPlugin(m_WebRequestComponent);
+			RemoveInspectorPlugin(m_ResourceComponent);
 			RemoveInspectorPlugin(m_ScriptGenerateInspector);
 			RemoveInspectorPlugin(m_NodePoolInspector);
 			m_ProcedureComponent.Free();
@@ -65,6 +73,8 @@ namespace GodotGameFramework.Editor
 			m_SoundComponent.Free();
 			m_LocalizationComponent.Free();
 			m_DownloadComponent.Free();
+			m_WebRequestComponent.Free();
+			m_ResourceComponent.Free();
 			m_ScriptGenerateInspector.Free();
 			m_NodePoolInspector.Free();
 		}

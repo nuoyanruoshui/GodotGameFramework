@@ -96,6 +96,12 @@ namespace GodotGameFramework.Scene
                 m_SceneManager.UnloadSceneSuccess -= OnUnloadSceneSuccess;
                 m_SceneManager.LoadSceneUpdate -= OnLoadSceneUpdate;
             }
+            // 关闭时补全所有挂起的场景加载任务，避免 await 调用方永久挂起
+            foreach (TaskCompletionSource<Node> tcs in m_LoadingTasks.Values)
+            {
+                tcs.TrySetCanceled();
+            }
+            m_LoadingTasks.Clear();
             base.OnExitTree();
         }
 

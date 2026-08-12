@@ -1,6 +1,6 @@
 # NodePool 通用节点池系统
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/MainPack/Scripts/ObjectPool/`、`TheGame/MainPack/Scripts/Resources/`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`TheGame/MainPack/Scripts/ObjectPool/`、`TheGame/MainPack/Scripts/Resources/`、`addons/ComponentInsoector/NodePoolInspectorPlugin.cs`
 > 本文档描述 GGF 的通用 Node 对象池：IPoolable 接口、配置驱动注册、懒加载 Instantiate、孤儿节点设计、归还流程与编辑器扫描工具。
 
 ---

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**GGF** (Godot Game Framework) — **Godot 4.6.2 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download, Debugger, Archive.
+**GGF** (Godot Game Framework) — **Godot 4.7 + C# (.NET 8)** port of [Game Framework](https://gameframework.cn/) (Jiang Yin). Modular architecture: Event, FSM, Procedure, Resource, Entity, UI, Audio, Localization, ObjectPool, DataTable, DataNode, Setting, WebRequest, Download, Debugger, Archive.
 
 > 📚 **Per-system deep-dive docs live in `docs/`** (FrameworkCore / Event / Fsm / Procedure / Debugger / Resource / Entity / ObjectPool / UI / Sound / Scene / DataTable / DataNode / Setting / Localization / WebRequest / Download / Archive + 资源热更审计; C# 程序集热更方案已搁置等待华佗团队适配). See `docs/README.md` for the index. Prefer those docs over this file for system details.
 
@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Build**: `cd GodotProject && dotnet build`
 - **Add .cs files**: `"<godot_exe>" --build-solutions --path GodotProject --no-window -q`
 - **Open editor**: `"<godot_exe>" --path GodotProject --editor`
-- **Godot path**: `E:\Godot\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64\Godot_v4.6.2-stable_mono_win64.exe` (note: the exe is nested two directory levels deep — `Godot_v4.6.2-stable_mono_win64/Godot_v4.6.2-stable_mono_win64/`). Bash on Windows here needs forward slashes.
+- **Godot path**: `D:\Godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64.exe` (note: the exe is nested two directory levels deep — `Godot_v4.7-stable_mono_win64/Godot_v4.7-stable_mono_win64/`). Bash on Windows here needs forward slashes.
 - **Active game project**: `TheGame/`
 - **No test framework detected** — game is runtime-only (no test files found)
 - **Rendering**: D3D12 (Forward Plus), **Physics**: Jolt Physics (3D), **Stretch**: canvas_items / expand
@@ -30,16 +30,16 @@ GodotProject/
       Procedure/                    ← Procedure (game state) manager
       Entity/ UI/ Sound/ Scene/     ← Manager interfaces + logic (no Godot types)
       DataNode/ ObjectPool/
-      Resource/                     ← IResourceManager interface
+      Resource/                     ← IResourceManager + 加载回调委托/状态枚举/Constant
       Debugger/ Download/           ← Debugger windows, download manager
       Event/ Localization/          ← Event manager, localization system
-      Network/ WebRequest/          ← Network channels, HTTP requests
+      WebRequest/                   ← IWebRequestManager + WebRequestManager (TaskPool 调度、serialId、超时)
       Properties/ Utility/          ← Assembly info, text/compression utilities
     GodotGameFrameworkCore/         ← Godot runtime components
       Base/                         ← GF.cs facade, GameEntry, GameFrameworkComponent, GodotComponent
       Entity/ UI/ Sound/ Scene/    ← Godot bridge components (each delegates to the corresponding Manager)
-      Resource/                     ← ResourceComponent, ResourceManager, PackVersionList, load tasks
-      Download/ WebRequest/         ← DownloadComponent (queue+resume+verify), WebRequestComponent (Godot HttpRequest)
+      Resource/                     ← ResourceComponent, ResourceManager, PackVersionList, load tasks, IResourceLoadHelper/DefaultResourceLoadHelper
+      Download/ WebRequest/         ← DownloadComponent (queue+resume+verify), WebRequestComponent (wraps IWebRequestManager + N HttpRequest agent helpers)
       HotUpdate/                    ← HotUpdateSafetyGuard (crash-safe hot update)
       DataNode/ Setting/ Localization/
       Event/ Fsm/ Procedure/ ObjectPool/          ← ObjectPool 含 ReferencePoolComponent（引用池严格检查策略）
@@ -252,13 +252,13 @@ Pooled types: `DamagePop` (floating damage numbers), `DropItem` (collectibles wi
 
 ### Debugger
 
-UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand) + full window with `Console | Information | Profiler | Other` tab groups, rendered as BBCode into a RichTextLabel (IMGUI-style, `[url]` links route interactions). Console captures framework logs via `DefaultLogHelper.LogMessageReceived`. Custom windows: `GF.Debugger.RegisterDebuggerWindow("Game/Cheat", window)`. Details: `docs/DebuggerSystem.md`.
+UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand) + full window with `Console | Information | Profiler | Other` tab groups, rendered as BBCode into a RichTextLabel (IMGUI-style, `[url]` links route interactions). Profiler 页签含 Resource/WebRequest/Download 代理计数窗口。Console captures framework logs via `DefaultLogHelper.LogMessageReceived`. Custom windows: `GF.Debugger.RegisterDebuggerWindow("Game/Cheat", window)`. Details: `docs/DebuggerSystem.md`.
 
 ### Scene System
 
 `SceneComponent` wraps `ISceneManager`. New `enum LoadSceneMode { Single, Additive }`. `LoadScene`/`LoadSceneAsync` now have overloads taking `LoadSceneMode`. `Single` mode calls `UnloadAllScenes()` first; `Additive` stacks scenes. `LoadSceneUpdateEventArgs` provides real-time progress (0.0--1.0), fired via the `m_EnableLoadSceneUpdate` toggle. `SceneEventArgs` (Godot layer) exposes `SceneAssetName`, `Duration`, `Progress`, `UserData`.
 
-`LoadAssetAgent` now reports REAL progress via `ResourceLoader.LoadThreadedGetStatus(path, m_ProgressArray)` (0.0--1.0), consumed by the loading UI and scene update events.
+`LoadAssetAgent` now reports REAL progress via the `IResourceLoadHelper` (`GetLoadStatus(path, progress)`, default impl 走 `ResourceLoader.LoadThreadedGetStatus`) (0.0--1.0), consumed by the loading UI and scene update events.
 
 ### Localization
 
@@ -268,7 +268,7 @@ UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand)
 
 ## Component Inspector Addon
 
-`addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `ProcedureComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, `SettingComponentInspectorPlugin`, `EntityComponentInspectorPlugin`, `UIComponentInspectorPlugin`, `SoundComponentInspectorPlugin`, `LocalizationComponentInspectorPlugin`, and `ScriptGenerateInspector` — each providing custom property editors, dropdowns, and debug info in the Godot editor inspector panel.
+`addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `ProcedureComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, `SettingComponentInspectorPlugin`, `EntityComponentInspectorPlugin`, `UIComponentInspectorPlugin`, `SoundComponentInspectorPlugin`, `LocalizationComponentInspectorPlugin`, `DownloadComponentInspectorPlugin`, `WebRequestComponentInspectorPlugin`, `ResourceComponentInspectorPlugin`, `NodePoolInspectorPlugin`, and `ScriptGenerateInspector` — each providing custom property editors, dropdowns, and debug info in the Godot editor inspector panel.
 
 ### UIForm / Entity Script Generation
 
@@ -335,7 +335,7 @@ The `Tools/GameEventSourceGenerator/` Unity/TEngine Roslyn Source Generator proj
 
 | Plugin | Function |
 |--------|----------|
-| **ComponentInsoector** | Custom inspector plugins for framework components (Base, Procedure, Scene, Setting, Entity, UI, Sound, Localization) + UIForm script generator (`ScriptGenerateInspector`) with auto child-node collection and assignment |
+| **ComponentInsoector** | Custom inspector plugins for framework components (Base, Procedure, Scene, Setting, Entity, UI, Sound, Localization, Download, WebRequest, Resource) + NodePool + UIForm script generator (`ScriptGenerateInspector`) with auto child-node collection and assignment |
 | **ExportInspector** | AssetBundle visual export management panel — scan `.tres` bundle markers, expand to view per-resource details (type, size, import status), one-click export `.pck` subpackages + `GameFrameworkVersion.dat` manifest. Supports **full mode** (source files + imported) and **imported-only mode** (only `.ctex`/`.fontdata`/`.sample`, 80%+ smaller) |
 | **TopMenu** | `GameFrameworkLog` / `OpenFolder` / `Generate File` submenus — toggle log level (rewrites csproj `DefineConstants`), open `res://` / `user://` folders, and generate: **Localization File** (`Configs/Localization/*.xlsx` → `.txt`), **GameConfig File** (run Luban `gen_code_bin_to_project.bat/.sh`), **Collection Res** (scan `res://TheGame/`, regenerate `ResourcesCollectionConstant.cs`). Merged from the former `LocalizationEditor` + `Resources` plugins |
 
@@ -365,7 +365,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ## Resource System
 
-`IResourceManager` with 10 members (reduced from ~97 Unity-era members). Details: `docs/ResourceSystem.md`.
+`IResourceManager` with 18 members (10 core operations + 8 asset/binary agent counts; reduced from ~97 Unity-era members). Details: `docs/ResourceSystem.md`.
 
 | Mode | Status |
 |------|--------|
@@ -375,7 +375,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ### Loading
 
-`TaskPool<LoadAssetTask>` drives async asset loading (`ResourceLoader.LoadThreadedRequest` + per-frame status polling) with a configurable number of load agents (`ResourceComponent.AgentCount` export, default 10, via `SetLoadAssetAgentCount`). The waiting queue is ordered by `priority` (descending). `LoadBinaryTask`/`LoadBinaryAgent` exist but are **not wired up** — `LoadBinary()`/`LoadText()` on `ResourceComponent` are synchronous main-thread implementations. Async API: `LoadAsset`/`LoadAssetAsync<T>` (no `LoadSceneAsync` on ResourceComponent; scene loading goes through `SceneComponent`).
+`TaskPool<LoadAssetTask>` drives async asset loading (`IResourceLoadHelper.LoadAssetAsync` → `ResourceLoader.LoadThreadedRequest` + per-frame status polling) with a configurable number of load agents (`ResourceComponent.AgentCount` export, default 10, via `SetLoadAssetAgentCount`). The waiting queue is ordered by `priority` (descending). `LoadBinaryAsync` 走独立的 `TaskPool<LoadBinaryTask>`（`LoadBinaryAgent` 经 helper 后台 `File.ReadAllBytes`，主线程每帧轮询回调）；`LoadBinary()`/`LoadText()` on `ResourceComponent` 为同步主线程实现。Async API: `LoadAsset`/`LoadAssetAsync<T>` (no `LoadSceneAsync` on ResourceComponent; scene loading goes through `SceneComponent`).
 
 ### Subpackage System (Updatable mode)
 

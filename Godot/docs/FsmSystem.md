@@ -1,6 +1,6 @@
 # 状态机系统 (FSM Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Fsm/`、`Framework/GodotGameFrameworkCore/Fsm/FsmComponent.cs`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Fsm/`、`Framework/GodotGameFrameworkCore/Fsm/FsmComponent.cs`
 > 本文档描述 GGF 的有限状态机系统：泛型 IFsm/FsmState 设计、创建与销毁、状态切换、Fsm 数据存取，以及与 Procedure（流程）系统的关系。
 
 ---

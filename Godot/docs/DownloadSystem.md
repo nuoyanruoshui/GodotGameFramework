@@ -1,6 +1,6 @@
 # 下载系统 (Download Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Download/`、`Framework/GodotGameFrameworkCore/Download/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Download/`、`Framework/GodotGameFrameworkCore/Download/`
 > 本文档描述 GGF 的统一下载通道：架构、关键机制、API 用法、热更流程集成与注意事项。
 
 ---

@@ -1,4 +1,5 @@
 using GameFramework;
+using GameFramework.WebRequest;
 using Godot;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -7,8 +8,8 @@ namespace GodotGameFramework.Web;
 
 /// <summary>
 /// Web 请求组件，提供基于 Godot HttpRequest 的 HTTP 通信能力。
-/// 支持同步 fire-and-forget 和异步 Task 两种调用方式，
-/// 结果同时通过 EventComponent 事件和 Task 返回。
+/// 遵循组件 → IWebRequestManager → TaskPool&lt;WebRequestTask&gt; → WebRequestAgent → DefaultWebRequestAgentHelper 的三层委托模式。
+/// 支持同步 fire-and-forget 和异步 Task 两种调用方式，结果同时通过 EventComponent 事件和 Task 返回。
 /// </summary>
 public partial class WebRequestComponent : GameFrameworkComponent
 {
@@ -16,75 +17,75 @@ public partial class WebRequestComponent : GameFrameworkComponent
     /// 默认请求超时时间（秒）。
     /// </summary>
     private const float DefaultTimeout = 30f;
-    private sealed class PendingRequest
+
+    public static class Parameters
     {
-        public string Url;
-        public TaskCompletionSource<WebRequestCompleteEventArgs> Tcs;
-        public float Timeout;
-        public double Elapsed;
+        public static readonly string WebRequestAgentHelper = "m_WebRequestAgentHelperTypeName";
     }
 
-    private readonly Dictionary<WebRequestAgent, PendingRequest> m_PendingRequests = new();
+    private IWebRequestManager m_WebRequestManager;
     private EventComponent m_EventComponent;
+
+    [Export]
+    private string m_WebRequestAgentHelperTypeName = "GodotGameFramework.Web.DefaultWebRequestAgentHelper";
+
+    [Export]
+    private int m_WebRequestAgentHelperCount = 4;
+
+    private readonly Dictionary<int, TaskCompletionSource<WebRequestCompleteEventArgs>> m_WebRequestTasks = new();
+    private Node m_InstanceRoot;
 
     public override void OnInit()
     {
         base.OnInit();
+        m_WebRequestManager = GameFrameworkEntry.GetModule<IWebRequestManager>();
         m_EventComponent = GameEntry.GetComponent<EventComponent>();
+
+        m_WebRequestManager.WebRequestSuccess += OnWebRequestSuccess;
+        m_WebRequestManager.WebRequestFailure += OnWebRequestFailure;
+
+        if (m_InstanceRoot == null)
+        {
+            m_InstanceRoot = FindChild("WebRequestInstanceRoot");
+            if (m_InstanceRoot == null)
+            {
+                m_InstanceRoot = new Node();
+                m_InstanceRoot.Name = "WebRequestInstanceRoot";
+                AddChild(m_InstanceRoot);
+            }
+        }
+
+        for (int i = 0; i < m_WebRequestAgentHelperCount; i++)
+        {
+            if (Create(m_WebRequestAgentHelperTypeName) is WebRequestAgentHelperBase helper)
+            {
+                helper.Name = $"{helper.GetType().Name}{i}";
+                m_InstanceRoot.AddChild(helper);
+                m_WebRequestManager.AddWebRequestAgentHelper(helper);
+            }
+            else
+            {
+                Log.Error("[WebRequestComponent] Can not create web request agent helper '{0}'.", m_WebRequestAgentHelperTypeName);
+            }
+        }
     }
 
-    /// <summary>
-    /// 每帧轮询，仅负责超时检测。响应处理完全由信号驱动。
-    /// </summary>
-    public override void OnUpdate(double delta)
+    public override void OnExitTree()
     {
-        base.OnUpdate(delta);
-
-        if (m_PendingRequests.Count == 0)
-            return;
-
-        List<WebRequestAgent> timedOut = null;
-
-        foreach (var (agent, info) in m_PendingRequests)
+        if (m_WebRequestManager != null)
         {
-            if (info.Timeout <= 0f)
-                continue;
-
-            info.Elapsed += delta;
-            if (info.Elapsed >= info.Timeout)
-            {
-                timedOut ??= new List<WebRequestAgent>();
-                timedOut.Add(agent);
-            }
+            m_WebRequestManager.WebRequestSuccess -= OnWebRequestSuccess;
+            m_WebRequestManager.WebRequestFailure -= OnWebRequestFailure;
         }
 
-        if (timedOut == null)
-            return;
-
-        foreach (var agent in timedOut)
+        // 关闭时补全所有挂起的请求任务，避免 await 调用方永久挂起（与"url 无效 → null"约定一致）
+        foreach (TaskCompletionSource<WebRequestCompleteEventArgs> tcs in m_WebRequestTasks.Values)
         {
-            if (!m_PendingRequests.TryGetValue(agent, out var info))
-                continue;
-
-            m_PendingRequests.Remove(agent);
-
-            // 取消底层 HTTP 请求
-            agent.CancelRequest();
-
-            Log.Warning("[WebRequestComponent] Request timeout: {0}", info.Url);
-
-            // 超时约定：Result = -1, ResponseCode = 0
-            var pooledArgs = WebRequestCompleteEventArgs.Create(info.Url, -1, 0, null, null);
-            m_EventComponent?.Fire(this, pooledArgs);
-
-            if (info.Tcs != null)
-            {
-                var tcsArgs = new WebRequestCompleteEventArgs(info.Url, -1, 0, null, null);
-                info.Tcs.TrySetResult(tcsArgs);
-            }
-
-            agent.QueueFree();
+            tcs.TrySetResult(null);
         }
+        m_WebRequestTasks.Clear();
+
+        base.OnExitTree();
     }
 
     // ──────────────────────────────────────
@@ -100,7 +101,7 @@ public partial class WebRequestComponent : GameFrameworkComponent
     {
         if (!ValidateUrl(url))
             return;
-        CreateAndSend(url, postData: null, DefaultTimeout, tcs: null);
+        m_WebRequestManager.AddWebRequest(url, DefaultTimeout);
     }
 
     /// <summary>
@@ -112,7 +113,7 @@ public partial class WebRequestComponent : GameFrameworkComponent
     {
         if (!ValidateUrl(url))
             return;
-        CreateAndSend(url, postData: null, timeout, tcs: null);
+        m_WebRequestManager.AddWebRequest(url, timeout);
     }
 
     // ──────────────────────────────────────
@@ -141,7 +142,8 @@ public partial class WebRequestComponent : GameFrameworkComponent
             return Task.FromResult<WebRequestCompleteEventArgs>(null);
 
         var tcs = new TaskCompletionSource<WebRequestCompleteEventArgs>();
-        CreateAndSend(url, postData: null, timeout, tcs);
+        int serialId = m_WebRequestManager.AddWebRequest(url, timeout);
+        m_WebRequestTasks[serialId] = tcs;
         return tcs.Task;
     }
 
@@ -164,75 +166,40 @@ public partial class WebRequestComponent : GameFrameworkComponent
 
         var tcs = new TaskCompletionSource<WebRequestCompleteEventArgs>();
         string body = System.Text.Encoding.UTF8.GetString(postData);
-        CreateAndSend(url, body, timeout, tcs);
+        int serialId = m_WebRequestManager.AddWebRequest(url, body, timeout);
+        m_WebRequestTasks[serialId] = tcs;
         return tcs.Task;
     }
 
-    /// <summary>
-    /// 请求创建与发送
-    /// </summary>
-    private void CreateAndSend(string url, string postData, float timeout, TaskCompletionSource<WebRequestCompleteEventArgs> tcs)
+    // ──────────────────────────────────────
+    //  事件处理
+    // ──────────────────────────────────────
+
+    private void OnWebRequestSuccess(object sender, WebRequestSuccessEventArgs e)
     {
-        var agent = new WebRequestAgent();
-        AddChild(agent);
+        // 全局事件：池化副本（EventPool 拥有并回收，此处不 Release）
+        m_EventComponent?.Fire(this, WebRequestCompleteEventArgs.Create(e.WebRequestUri, e.Result, e.ResponseCode, e.Headers, e.Body));
 
-        // 防止信号重复触发（belt-and-suspenders）
-        bool completed = false;
-
-        agent.RequestCompleted += (result, responseCode, headers, body) =>
+        // 异步通道：全新实例，await 方可安全持有
+        if (m_WebRequestTasks.Remove(e.SerialId, out TaskCompletionSource<WebRequestCompleteEventArgs> tcs))
         {
-            if (completed)
-                return;
-            completed = true;
-
-            m_PendingRequests.Remove(agent);
-
-            var pooledArgs = WebRequestCompleteEventArgs.Create(url, result, responseCode, headers, body);
-            m_EventComponent?.Fire(this, pooledArgs);
-
-            if (tcs != null)
-            {
-                var tcsArgs = new WebRequestCompleteEventArgs(url, result, responseCode, headers, body);
-                tcs.TrySetResult(tcsArgs);
-            }
-
-            Log.Info("[WebRequestComponent] Request completed: {0}, response code: {1}", url, responseCode);
-
-            agent.QueueFree();
-        };
-
-        // 注册到追踪字典，用于超时检测
-        m_PendingRequests[agent] = new PendingRequest
-        {
-            Url = url,
-            Tcs = tcs,
-            Timeout = timeout > 0f ? timeout : 0f,
-            Elapsed = 0.0
-        };
-
-        // 发起 HTTP 请求
-        Error reqError;
-        if (postData != null)
-            reqError = agent.Request(url, null, HttpClient.Method.Post, postData);
-        else
-            reqError = agent.Request(url);
-
-        if (reqError != Error.Ok)
-        {
-            Log.Error("[WebRequestComponent] Failed to initiate request to {0}: {1}", url, reqError);
-
-            m_PendingRequests.Remove(agent);
-
-            var failArgs = new WebRequestCompleteEventArgs(url, (long)reqError, 0, null, null);
-            m_EventComponent?.Fire(this, failArgs);
-            tcs?.TrySetResult(failArgs);
-
-            agent.QueueFree();
+            tcs.TrySetResult(new WebRequestCompleteEventArgs(e.WebRequestUri, e.Result, e.ResponseCode, e.Headers, e.Body));
         }
-        else
+
+        Log.Info("[WebRequestComponent] Request completed: {0}, response code: {1}", e.WebRequestUri, e.ResponseCode);
+    }
+
+    private void OnWebRequestFailure(object sender, WebRequestFailureEventArgs e)
+    {
+        // 失败约定：Result = 错误码（超时 -1 / 发起失败 Godot Error 码），ResponseCode = 0
+        m_EventComponent?.Fire(this, WebRequestCompleteEventArgs.Create(e.WebRequestUri, e.Result, 0, null, null));
+
+        if (m_WebRequestTasks.Remove(e.SerialId, out TaskCompletionSource<WebRequestCompleteEventArgs> tcs))
         {
-            Log.Info("[WebRequestComponent] Request sent: {0}", url);
+            tcs.TrySetResult(new WebRequestCompleteEventArgs(e.WebRequestUri, e.Result, 0, null, null));
         }
+
+        Log.Warning("[WebRequestComponent] Request failure: {0}, error message: {1}", e.WebRequestUri, e.ErrorMessage);
     }
 
     private static bool ValidateUrl(string url)

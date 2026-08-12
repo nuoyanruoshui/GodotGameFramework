@@ -1,6 +1,6 @@
 # 数据表系统 (Luban 配置管线)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`TheGame/GameScripts/GameProto/GameConfig/`（生成代码）、`TheGame/GameScripts/GameProto/ConfigSystem.cs`（加载器）、`Framework/GodotGameFrameworkCore/Lib/LubanLib/`（运行时库）｜ 配置源：仓库根 `Configs/GameConfig/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`TheGame/GameScripts/GameProto/GameConfig/`（生成代码）、`TheGame/GameScripts/GameProto/ConfigSystem.cs`（加载器）、`Framework/GodotGameFrameworkCore/Lib/LubanLib/`（运行时库）｜ 配置源：仓库根 `Configs/GameConfig/`
 > 本文档描述 GGF 的数据表系统：Excel → Luban → C# + 二进制的完整管线、运行时 `ConfigSystem` 懒加载机制、Tb 表访问 API 与新增表的完整步骤。
 
 ---

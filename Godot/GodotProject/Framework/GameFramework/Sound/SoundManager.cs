@@ -542,6 +542,8 @@ namespace GameFramework.Sound
             {
                 m_SoundsToReleaseOnLoad.Add(serialId);
             }
+
+            m_SoundsBeingLoaded.Clear();
         }
 
         /// <summary>
@@ -609,6 +611,7 @@ namespace GameFramework.Sound
             if (m_SoundsToReleaseOnLoad.Contains(playSoundInfo.SerialId))
             {
                 m_SoundsToReleaseOnLoad.Remove(playSoundInfo.SerialId);
+                m_SoundsBeingLoaded.Remove(playSoundInfo.SerialId);
                 if (playSoundInfo.PlaySoundParams.Referenced)
                 {
                     ReferencePool.Release(playSoundInfo.PlaySoundParams);
@@ -679,11 +682,13 @@ namespace GameFramework.Sound
             if (m_SoundsToReleaseOnLoad.Contains(playSoundInfo.SerialId))
             {
                 m_SoundsToReleaseOnLoad.Remove(playSoundInfo.SerialId);
+                m_SoundsBeingLoaded.Remove(playSoundInfo.SerialId);
                 if (playSoundInfo.PlaySoundParams.Referenced)
                 {
                     ReferencePool.Release(playSoundInfo.PlaySoundParams);
                 }
 
+                ReferencePool.Release(playSoundInfo);
                 return;
             }
 

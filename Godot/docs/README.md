@@ -1,6 +1,6 @@
 # GGF 文档索引
 
-> GGF (Godot Game Framework) — Godot 4.6.2 + C# (.NET 8)，[Game Framework](https://gameframework.cn/) 的 Godot 移植。
+> GGF (Godot Game Framework) — Godot 4.7 + C# (.NET 8)，[Game Framework](https://gameframework.cn/) 的 Godot 移植。
 > 本目录为各系统的深度介绍文档。项目总览与开发命令见仓库根 `CLAUDE.md`。
 
 ## 框架核心
@@ -11,13 +11,13 @@
 | [EventSystem.md](EventSystem.md) | EventPool 机制、EventId 约定、Fire vs FireNow、订阅退订、池化回收禁忌 |
 | [FsmSystem.md](FsmSystem.md) | IFsm/FsmState 泛型设计、状态生命周期、SetData/GetData、销毁与池化 |
 | [ProcedureSystem.md](ProcedureSystem.md) | 流程 = 顶层 FSM、启动链路、TheGame 流程链 Launch→Update→Prelode→Game、新增流程教程 |
-| [DebuggerSystem.md](DebuggerSystem.md) | 运行时调试器：FPS 图标 + Console/Information/Profiler/Other 多级页签、BBCode-IMGUI 绘制模型、框架日志+Godot 原生日志双源捕获、自定义调试窗口 |
+| [DebuggerSystem.md](DebuggerSystem.md) | 运行时调试器：FPS 图标 + Console/Information/Profiler/Other 多级页签、BBCode-IMGUI 绘制模型、框架日志+Godot 原生日志双源捕获、Profiler 含 Resource/WebRequest/Download 代理计数、自定义调试窗口 |
 
 ## 资源与内容
 
 | 文档 | 内容 |
 |------|------|
-| [ResourceSystem.md](ResourceSystem.md) | ResourceMode 现状、异步加载队列（Asset+Binary）、子包加载（热更+Package本地）、ExportInspector 导出工作流、ResourcesCollectionConstant |
+| [ResourceSystem.md](ResourceSystem.md) | ResourceMode 现状、异步加载队列（Asset+Binary）、IResourceLoadHelper 可配置加载辅助器、子包加载（热更+Package本地）、ExportInspector 导出工作流、ResourcesCollectionConstant |
 | [DataTableSystem.md](DataTableSystem.md) | Luban 管线（Excel→C#+二进制）、ConfigSystem 懒加载、新增表步骤、4 张配置表、Config 子包热更时序 |
 | [DataNodeSystem.md](DataNodeSystem.md) | 树形数据结构、路径访问语义、Variable 池化类型 |
 | [SettingSystem.md](SettingSystem.md) | ConfigFile → user://Settings.cfg、Save/Load 语义、与 EasySave 的区别 |
@@ -39,7 +39,7 @@
 
 | 文档 | 内容 |
 |------|------|
-| [WebRequestSystem.md](WebRequestSystem.md) | SendRequestAsync、超时约定、与 Download 模块的分工（小文本 vs 大文件） |
+| [WebRequestSystem.md](WebRequestSystem.md) | 三层架构（Component/Manager/Helper）、TaskPool 排队与优先级、SendRequestAsync、超时约定、与 Download 模块的分工（小文本 vs 大文件） |
 | [DownloadSystem.md](DownloadSystem.md) | 下载模块全貌：任务队列/断点续传/校验/DownloadFileAsync/热更集成/错误语义表 |
 | [ResourceHotUpdateAudit.md](ResourceHotUpdateAudit.md) | 资源热更审计：风险项清单与修复状态（2026-07 复审，致命项全部修复 ✅，维持现状维护） |
 | [CodeHotUpdateDesign.md](CodeHotUpdateDesign.md) | ⚠️ **已搁置** — C# 程序集热更方案设计（ALC），等待华佗团队完成 Godot 热更适配后重启

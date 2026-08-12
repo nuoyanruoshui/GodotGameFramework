@@ -129,6 +129,11 @@ namespace GameFramework.DataNode
             /// <param name="data">要设置的数据。</param>
             public void SetData(Variable data)
             {
+                if (ReferenceEquals(m_Data, data))
+                {
+                    return;
+                }
+
                 if (m_Data != null)
                 {
                     ReferencePool.Release(m_Data);

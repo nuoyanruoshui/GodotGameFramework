@@ -1,6 +1,6 @@
 # 框架核心 (Framework Core)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Base/`、`Framework/GodotGameFrameworkCore/Base/`、`SingletonSystem/`、`Variable/`、`Utility/`、`addons/TopMenu/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Base/`、`Framework/GodotGameFrameworkCore/Base/`、`SingletonSystem/`、`Variable/`、`Utility/`、`addons/TopMenu/`
 > 本文档描述 GGF 的核心骨架：模块/组件双层驱动、启动序列、生命周期、GF 门面、引用池、日志系统与通用工具（PhysicsCheck2D、GTween、LayerMask、NodeExtension）。
 
 ---

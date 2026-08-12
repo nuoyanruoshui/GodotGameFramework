@@ -15,6 +15,8 @@ namespace GameFramework
         private sealed class ReferenceCollection
         {
             private readonly Queue<IReference> m_References;
+            // 镜像队列中对象的集合，用于 O(1) 严格判重（避免每次 Release 用 Queue.Contains 扫描 O(n)）
+            private readonly HashSet<IReference> m_ReleasedSet;
             private readonly Type m_ReferenceType;
             private int m_UsingReferenceCount;
             private int m_AcquireReferenceCount;
@@ -25,6 +27,7 @@ namespace GameFramework
             public ReferenceCollection(Type referenceType)
             {
                 m_References = new Queue<IReference>();
+                m_ReleasedSet = new HashSet<IReference>();
                 m_ReferenceType = referenceType;
                 m_UsingReferenceCount = 0;
                 m_AcquireReferenceCount = 0;
@@ -102,7 +105,9 @@ namespace GameFramework
                 {
                     if (m_References.Count > 0)
                     {
-                        return (T)m_References.Dequeue();
+                        IReference reference = m_References.Dequeue();
+                        m_ReleasedSet.Remove(reference);
+                        return (T)reference;
                     }
                 }
 
@@ -118,7 +123,9 @@ namespace GameFramework
                 {
                     if (m_References.Count > 0)
                     {
-                        return m_References.Dequeue();
+                        IReference reference = m_References.Dequeue();
+                        m_ReleasedSet.Remove(reference);
+                        return reference;
                     }
                 }
 
@@ -131,7 +138,9 @@ namespace GameFramework
                 reference.Clear();
                 lock (m_References)
                 {
-                    if (m_EnableStrictCheck && m_References.Contains(reference))
+                    // HashSet.Add 返回 false 表示已存在（重复释放），O(1) 判重
+                    bool alreadyReleased = !m_ReleasedSet.Add(reference);
+                    if (m_EnableStrictCheck && alreadyReleased)
                     {
                         throw new GameFrameworkException("The reference has been released.");
                     }
@@ -155,7 +164,9 @@ namespace GameFramework
                     m_AddReferenceCount += count;
                     while (count-- > 0)
                     {
-                        m_References.Enqueue(new T());
+                        IReference reference = new T();
+                        m_ReleasedSet.Add(reference);
+                        m_References.Enqueue(reference);
                     }
                 }
             }
@@ -167,7 +178,9 @@ namespace GameFramework
                     m_AddReferenceCount += count;
                     while (count-- > 0)
                     {
-                        m_References.Enqueue((IReference)Activator.CreateInstance(m_ReferenceType));
+                        IReference reference = (IReference)Activator.CreateInstance(m_ReferenceType);
+                        m_ReleasedSet.Add(reference);
+                        m_References.Enqueue(reference);
                     }
                 }
             }
@@ -184,7 +197,7 @@ namespace GameFramework
                     m_RemoveReferenceCount += count;
                     while (count-- > 0)
                     {
-                        m_References.Dequeue();
+                        m_ReleasedSet.Remove(m_References.Dequeue());
                     }
                 }
             }
@@ -195,6 +208,7 @@ namespace GameFramework
                 {
                     m_RemoveReferenceCount += m_References.Count;
                     m_References.Clear();
+                    m_ReleasedSet.Clear();
                 }
             }
         }

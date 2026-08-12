@@ -1,6 +1,6 @@
 # 数据结点系统 (DataNode Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/DataNode/`、`Framework/GodotGameFrameworkCore/DataNode/`、`Framework/GodotGameFrameworkCore/Variable/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/DataNode/`、`Framework/GodotGameFrameworkCore/DataNode/`、`Framework/GodotGameFrameworkCore/Variable/`
 > 本文档描述 GGF 的数据结点系统：树形运行时数据结构、路径式读写 API、Variable 包装类型与典型用法。
 
 ---
