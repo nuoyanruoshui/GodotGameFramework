@@ -11,6 +11,16 @@ namespace GodotGameFramework.Resource
     public sealed partial class ResourceComponent : GameFrameworkComponent
     {
         private const int DefaultPriority = 0;
+
+        public static class Parameters
+        {
+            public static readonly string ResourceLoadHelper = "m_ResourceLoadHelperTypeName";
+        }
+
+        [Export]
+        private string m_ResourceLoadHelperTypeName = "GameFramework.Resource.DefaultResourceLoadHelper";
+        private ResourceLoadHelperBase m_ResourceLoadHelper;
+
         private EventComponent m_EventComponent;
         private IResourceManager m_ResourceManager;
         [Export]
@@ -47,10 +57,35 @@ namespace GodotGameFramework.Resource
             m_ResourceManager.SetResourceMode(_resourceMode);
             m_ResourceManager.SetReadWritePath(ProjectSettings.GlobalizePath("user://"));
             ProcessMode = ProcessModeEnum.Always;
+
+            // 创建资源加载辅助器并注入 Manager（须在创建加载代理之前）
+            if (Create(m_ResourceLoadHelperTypeName) is ResourceLoadHelperBase resourceLoadHelper)
+            {
+                resourceLoadHelper.Name = m_ResourceLoadHelperTypeName;
+                m_ResourceLoadHelper = resourceLoadHelper;
+                AddChild(resourceLoadHelper);
+                m_ResourceManager.SetResourceLoadHelper(resourceLoadHelper);
+            }
+            else
+            {
+                Log.Error("[ResourceComponent] Can not create resource load helper '{0}'.", m_ResourceLoadHelperTypeName);
+            }
+
             m_ResourceManager.SetLoadAssetAgentCount(AgentCount);
             m_ResourceManager.SetLoadBinaryAgentCount(BinaryAgentCount);
             Log.Info("[ResourceComponent] Initialized. Mode: {0}, AssetAgents: {1}, BinaryAgents: {2}",
                 _resourceMode, AgentCount, BinaryAgentCount);
+        }
+
+        public override void OnExitTree()
+        {
+            // 关闭时补全所有挂起的资源加载任务，避免 await 调用方永久挂起
+            foreach (TaskCompletionSource<Godot.Resource> tcs in m_LoadingTasks.Values)
+            {
+                tcs.TrySetCanceled();
+            }
+            m_LoadingTasks.Clear();
+            base.OnExitTree();
         }
 
         /// <summary>

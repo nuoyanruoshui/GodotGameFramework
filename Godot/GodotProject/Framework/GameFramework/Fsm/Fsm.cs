@@ -495,6 +495,11 @@ namespace GameFramework.Fsm
             }
 
             Variable oldData = GetData(name);
+            if (ReferenceEquals(oldData, data))
+            {
+                return;
+            }
+
             if (oldData != null)
             {
                 ReferencePool.Release(oldData);

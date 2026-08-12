@@ -10,6 +10,46 @@ namespace GameFramework.Resource
         ResourceMode ResourceMode { get; }
 
         /// <summary>
+        /// 获取资源加载代理总数量。
+        /// </summary>
+        int TotalAssetAgentCount { get; }
+
+        /// <summary>
+        /// 获取可用资源加载代理数量。
+        /// </summary>
+        int FreeAssetAgentCount { get; }
+
+        /// <summary>
+        /// 获取工作中资源加载代理数量。
+        /// </summary>
+        int WorkingAssetAgentCount { get; }
+
+        /// <summary>
+        /// 获取等待资源加载任务数量。
+        /// </summary>
+        int WaitingAssetTaskCount { get; }
+
+        /// <summary>
+        /// 获取二进制加载代理总数量。
+        /// </summary>
+        int TotalBinaryAgentCount { get; }
+
+        /// <summary>
+        /// 获取可用二进制加载代理数量。
+        /// </summary>
+        int FreeBinaryAgentCount { get; }
+
+        /// <summary>
+        /// 获取工作中二进制加载代理数量。
+        /// </summary>
+        int WorkingBinaryAgentCount { get; }
+
+        /// <summary>
+        /// 获取等待二进制加载任务数量。
+        /// </summary>
+        int WaitingBinaryTaskCount { get; }
+
+        /// <summary>
         /// 初始化资源管理器（加载子包和版本清单）。由 ResourceComponent 在 OnInit 时调用。
         /// </summary>
         void SetReadWritePath(string readWritePath);
@@ -53,5 +93,10 @@ namespace GameFramework.Resource
         /// 设置二进制加载代理数量
         /// </summary>
         void SetLoadBinaryAgentCount(int agentCount);
+
+        /// <summary>
+        /// 设置资源加载辅助器。需在 SetLoadAssetAgentCount / SetLoadBinaryAgentCount 之前调用。
+        /// </summary>
+        void SetResourceLoadHelper(IResourceLoadHelper resourceLoadHelper);
     }
 }

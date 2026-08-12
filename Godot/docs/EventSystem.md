@@ -1,6 +1,6 @@
 # 事件系统 (Event Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Event/`、`Framework/GameFramework/Base/EventPool/`、`Framework/GodotGameFrameworkCore/Event/EventComponent.cs`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Event/`、`Framework/GameFramework/Base/EventPool/`、`Framework/GodotGameFrameworkCore/Event/EventComponent.cs`
 > 本文档描述 GGF 的全局事件系统：EventPool 机制、EventId 约定、Fire/FireNow 差异、池化回收规则与自定义事件完整示例。
 
 ---

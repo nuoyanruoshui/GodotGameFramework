@@ -1,6 +1,6 @@
 # UI 系统 (UI Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/UI/`、`Framework/GodotGameFrameworkCore/UI/`、`addons/ComponentInsoector/ScriptGenerateInspector.cs`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/UI/`、`Framework/GodotGameFrameworkCore/UI/`、`addons/ComponentInsoector/ScriptGenerateInspector.cs`
 > 本文档描述 GGF 的界面系统：界面组与层级、UIForm 生命周期、打开/关闭流程、实例池化、本地化文本收集、UIItem 池化，以及 UIForm 脚本生成器的完整工作流。
 
 ---

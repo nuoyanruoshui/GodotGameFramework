@@ -1,6 +1,6 @@
 # 设置系统 (Setting Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Setting/`、`Framework/GodotGameFrameworkCore/Setting/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Setting/`、`Framework/GodotGameFrameworkCore/Setting/`
 > 本文档描述 GGF 的游戏设置系统：键值持久化、存储介质与路径、GetXxx/SetXxx/Save API 与注意事项。
 
 ---

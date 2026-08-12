@@ -1,5 +1,4 @@
 using GameFramework;
-using Godot;
 using System;
 
 namespace GameFramework.Resource
@@ -11,6 +10,16 @@ namespace GameFramework.Resource
 
         public ResourceMode ResourceMode { get; private set; } = ResourceMode.Package;
 
+        public int TotalAssetAgentCount => m_AssetTaskPool.TotalAgentCount;
+        public int FreeAssetAgentCount => m_AssetTaskPool.FreeAgentCount;
+        public int WorkingAssetAgentCount => m_AssetTaskPool.WorkingAgentCount;
+        public int WaitingAssetTaskCount => m_AssetTaskPool.WaitingTaskCount;
+
+        public int TotalBinaryAgentCount => m_BinaryTaskPool.TotalAgentCount;
+        public int FreeBinaryAgentCount => m_BinaryTaskPool.FreeAgentCount;
+        public int WorkingBinaryAgentCount => m_BinaryTaskPool.WorkingAgentCount;
+        public int WaitingBinaryTaskCount => m_BinaryTaskPool.WaitingTaskCount;
+
         /// <summary>
         /// 当前本地缓存的版本清单（与 user://GameFrameworkVersion.dat 同步）。
         /// 由 ProcedureUpdate 在加载后写入，全局统一从此读取。
@@ -20,6 +29,7 @@ namespace GameFramework.Resource
         private TaskPool<LoadAssetTask> m_AssetTaskPool;
         private TaskPool<LoadBinaryTask> m_BinaryTaskPool;
         private string m_ReadWritePath;
+        private IResourceLoadHelper m_ResourceLoadHelper;
 
         public ResourceManager()
         {
@@ -29,16 +39,23 @@ namespace GameFramework.Resource
 
         public void SetReadWritePath(string readWritePath = null)
         {
-            m_ReadWritePath = readWritePath ?? ProjectSettings.GlobalizePath("user://");
+            m_ReadWritePath = readWritePath;
         }
         /// <summary>
         /// 最大并发加载数（= Agent 数量），TaskPool 的优先级调度 + 并发控制。
         /// </summary>
         public void SetLoadAssetAgentCount(int agentCount)
         {
-            for (int i = 0; i < agentCount; i++)
+            int currentCount = m_AssetTaskPool.TotalAgentCount;
+            if (currentCount >= agentCount)
             {
-                m_AssetTaskPool.AddAgent(new LoadAssetAgent());
+                // 幂等：GameFrameworkEntry 静态复用，场景重载时 OnInit 会重复调用，达到目标即返回避免代理累积
+                return;
+            }
+
+            for (int i = currentCount; i < agentCount; i++)
+            {
+                m_AssetTaskPool.AddAgent(new LoadAssetAgent(m_ResourceLoadHelper));
             }
         }
 
@@ -47,30 +64,42 @@ namespace GameFramework.Resource
         /// </summary>
         public void SetLoadBinaryAgentCount(int agentCount)
         {
-            for (int i = 0; i < agentCount; i++)
+            int currentCount = m_BinaryTaskPool.TotalAgentCount;
+            if (currentCount >= agentCount)
             {
-                m_BinaryTaskPool.AddAgent(new LoadBinaryAgent());
+                // 幂等：同上，避免代理累积
+                return;
+            }
+
+            for (int i = currentCount; i < agentCount; i++)
+            {
+                m_BinaryTaskPool.AddAgent(new LoadBinaryAgent(m_ResourceLoadHelper));
             }
         }
 
         public void SetResourceMode(ResourceMode mode) => ResourceMode = mode;
 
+        public void SetResourceLoadHelper(IResourceLoadHelper resourceLoadHelper)
+        {
+            m_ResourceLoadHelper = resourceLoadHelper;
+        }
+
+
         public HasAssetResult HasAsset(string assetName)
         {
             if (string.IsNullOrEmpty(assetName))
                 return HasAssetResult.NotExist;
-            if (ResourceLoader.Exists(assetName))
+            IResourceLoadHelper helper = m_ResourceLoadHelper;
+            if (helper.AssetExists(assetName))
                 return HasAssetResult.AssetOnDisk;
-            if (FileAccess.FileExists(assetName) && assetName.EndsWith(".bytes"))
+            if (helper.FileExists(assetName) && assetName.EndsWith(".bytes"))
                 return HasAssetResult.BinaryOnDisk;
             return HasAssetResult.NotExist;
         }
 
         public int GetBinaryLength(string binaryAssetName)
         {
-            if (!FileAccess.FileExists(binaryAssetName)) return -1;
-            using var file = FileAccess.Open(binaryAssetName, FileAccess.ModeFlags.Read);
-            return file != null ? (int)file.GetLength() : -1;
+            return m_ResourceLoadHelper.GetBinaryLength(binaryAssetName);
         }
 
         public void LoadAsset(string assetName, int priority, LoadAssetCallbacks callbacks, object userData)
@@ -82,7 +111,7 @@ namespace GameFramework.Resource
                 return;
             }
 
-            if (!ResourceLoader.Exists(assetName))
+            if (!m_ResourceLoadHelper.AssetExists(assetName))
             {
                 callbacks.LoadAssetFailureCallback?.Invoke(
                     assetName, LoadResourceStatus.NotExist,
@@ -103,7 +132,8 @@ namespace GameFramework.Resource
                     binaryAssetName, LoadResourceStatus.NotExist, "Binary asset name is invalid.", userData);
                 return;
             }
-            if (!FileAccess.FileExists(binaryAssetName))
+            IResourceLoadHelper helper = m_ResourceLoadHelper;
+            if (!helper.FileExists(binaryAssetName))
             {
                 loadBinaryCallbacks.LoadBinaryFailureCallback?.Invoke(
                     binaryAssetName, LoadResourceStatus.NotExist,
@@ -111,11 +141,11 @@ namespace GameFramework.Resource
                 return;
             }
 
-            using FileAccess file = FileAccess.Open(binaryAssetName, FileAccess.ModeFlags.Read);
-            if (file != null)
+            byte[] bytes = helper.LoadBinary(binaryAssetName);
+            if (bytes != null)
             {
                 loadBinaryCallbacks.LoadBinarySuccessCallback?.Invoke(
-                    binaryAssetName, file.GetBuffer((int)file.GetLength()), 0, userData);
+                    binaryAssetName, bytes, 0, userData);
             }
         }
 
@@ -131,7 +161,7 @@ namespace GameFramework.Resource
                     binaryAssetName, LoadResourceStatus.NotExist, "Binary asset name is invalid.", userData);
                 return;
             }
-            if (!FileAccess.FileExists(binaryAssetName))
+            if (!m_ResourceLoadHelper.FileExists(binaryAssetName))
             {
                 loadBinaryCallbacks.LoadBinaryFailureCallback?.Invoke(
                     binaryAssetName, LoadResourceStatus.NotExist,

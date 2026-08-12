@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 // Game Framework
 // Copyright © 2013-2021 Jiang Yin. All rights reserved.
 // Homepage: https://gameframework.cn/
@@ -25,19 +25,12 @@ namespace GameFramework.WebRequest
         event EventHandler<WebRequestAgentHelperErrorEventArgs> WebRequestAgentHelperError;
 
         /// <summary>
-        /// 通过 Web 请求代理辅助器发送 Web 请求。
+        /// 通过 Web 请求代理辅助器发起 Web 请求。
         /// </summary>
         /// <param name="webRequestUri">Web 请求地址。</param>
+        /// <param name="postData">POST 请求体数据（null 表示 GET）。</param>
         /// <param name="userData">用户自定义数据。</param>
-        void Request(string webRequestUri, object userData);
-
-        /// <summary>
-        /// 通过 Web 请求代理辅助器发送 Web 请求。
-        /// </summary>
-        /// <param name="webRequestUri">Web 请求地址。</param>
-        /// <param name="postData">要发送的数据流。</param>
-        /// <param name="userData">用户自定义数据。</param>
-        void Request(string webRequestUri, byte[] postData, object userData);
+        void Request(string webRequestUri, string postData, object userData);
 
         /// <summary>
         /// 重置 Web 请求代理辅助器。

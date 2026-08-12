@@ -70,6 +70,17 @@ namespace GodotGameFramework.Sound
 
         }
 
+        public override void OnExitTree()
+        {
+            if (m_SoundManager != null)
+            {
+                m_SoundManager.PlaySoundSuccess -= OnPlaySoundSuccess;
+                m_SoundManager.PlaySoundFailure -= OnPlaySoundFailure;
+                m_SoundManager.PlaySoundUpdate -= OnPlaySoundUpdate;
+            }
+            base.OnExitTree();
+        }
+
 
         // ================================================================
         //  声音组管理

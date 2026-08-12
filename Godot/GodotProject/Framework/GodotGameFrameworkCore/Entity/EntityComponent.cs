@@ -76,6 +76,12 @@ namespace GodotGameFramework.Entity
                 m_EntityManager.ShowEntityUpdate -= OnShowEntityUpdate;
                 m_EntityManager.HideEntityComplete -= OnHideEntityComplete;
             }
+            // 关闭时补全所有挂起的实体加载任务，避免 await 调用方永久挂起
+            foreach (TaskCompletionSource<IEntity> tcs in m_LoadingTasks.Values)
+            {
+                tcs.TrySetCanceled();
+            }
+            m_LoadingTasks.Clear();
             base.OnExitTree();
         }
 

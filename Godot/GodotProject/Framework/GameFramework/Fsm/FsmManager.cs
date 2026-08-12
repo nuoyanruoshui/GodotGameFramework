@@ -17,6 +17,8 @@ namespace GameFramework.Fsm
     {
         private readonly Dictionary<TypeNamePair, FsmBase> m_Fsms;
         private readonly List<FsmBase> m_TempFsms;
+        private int m_ModificationVersion;
+        private int m_LastUpdateVersion = -1;
 
         /// <summary>
         /// 初始化有限状态机管理器的新实例。
@@ -57,15 +59,20 @@ namespace GameFramework.Fsm
         /// <param name="realElapseSeconds">真实流逝时间，以秒为单位。</param>
         internal override void Update(float elapseSeconds, float realElapseSeconds)
         {
-            m_TempFsms.Clear();
             if (m_Fsms.Count <= 0)
             {
                 return;
             }
 
-            foreach (KeyValuePair<TypeNamePair, FsmBase> fsm in m_Fsms)
+            // 仅在 FSM 集合被修改时重建快照，避免每帧遍历复制字典
+            if (m_LastUpdateVersion != m_ModificationVersion)
             {
-                m_TempFsms.Add(fsm.Value);
+                m_LastUpdateVersion = m_ModificationVersion;
+                m_TempFsms.Clear();
+                foreach (KeyValuePair<TypeNamePair, FsmBase> fsm in m_Fsms)
+                {
+                    m_TempFsms.Add(fsm.Value);
+                }
             }
 
             foreach (FsmBase fsm in m_TempFsms)
@@ -91,6 +98,7 @@ namespace GameFramework.Fsm
 
             m_Fsms.Clear();
             m_TempFsms.Clear();
+            m_ModificationVersion++;
         }
 
         /// <summary>
@@ -261,6 +269,7 @@ namespace GameFramework.Fsm
 
             Fsm<T> fsm = Fsm<T>.Create(name, owner, states);
             m_Fsms.Add(typeNamePair, fsm);
+            m_ModificationVersion++;
             return fsm;
         }
 
@@ -294,6 +303,7 @@ namespace GameFramework.Fsm
 
             Fsm<T> fsm = Fsm<T>.Create(name, owner, states);
             m_Fsms.Add(typeNamePair, fsm);
+            m_ModificationVersion++;
             return fsm;
         }
 
@@ -402,7 +412,13 @@ namespace GameFramework.Fsm
             if (m_Fsms.TryGetValue(typeNamePair, out fsm))
             {
                 fsm.Shutdown();
-                return m_Fsms.Remove(typeNamePair);
+                bool removed = m_Fsms.Remove(typeNamePair);
+                if (removed)
+                {
+                    m_ModificationVersion++;
+                }
+
+                return removed;
             }
 
             return false;

@@ -30,6 +30,12 @@ namespace GameFramework.ObjectPool
             private float m_ExpireTime;
             private int m_Priority;
             private float m_AutoReleaseTime;
+            // 释放筛选排序比较器：Priority 升序，LastUseTime 升序（静态缓存，避免每次 Release 分配）
+            private static readonly Comparison<T> s_CompareForRelease = (a, b) =>
+            {
+                int priorityCompare = a.Priority.CompareTo(b.Priority);
+                return priorityCompare != 0 ? priorityCompare : a.LastUseTime.CompareTo(b.LastUseTime);
+            };
 
             /// <summary>
             /// 初始化对象池的新实例。
@@ -546,13 +552,20 @@ namespace GameFramework.ObjectPool
 
             internal override void Update(float elapseSeconds, float realElapseSeconds)
             {
-                m_AutoReleaseTime += realElapseSeconds;
-                if (m_AutoReleaseTime < m_AutoReleaseInterval)
+                if (m_AutoReleaseInterval < float.MaxValue)
                 {
-                    return;
+                    // 封顶避免长运行会话中 float 累加精度丢失（默认 AutoReleaseInterval 为 MaxValue，直接跳过累加）
+                    m_AutoReleaseTime += realElapseSeconds;
+                    if (m_AutoReleaseTime > m_AutoReleaseInterval)
+                    {
+                        m_AutoReleaseTime = m_AutoReleaseInterval;
+                    }
                 }
 
-                Release();
+                if (m_AutoReleaseTime >= m_AutoReleaseInterval)
+                {
+                    Release();
+                }
             }
 
             internal override void Shutdown()
@@ -624,21 +637,15 @@ namespace GameFramework.ObjectPool
                     toReleaseCount -= m_CachedToReleaseObjects.Count;
                 }
 
-                for (int i = 0; toReleaseCount > 0 && i < candidateObjects.Count; i++)
+                if (toReleaseCount > 0 && candidateObjects.Count > 0)
                 {
-                    for (int j = i + 1; j < candidateObjects.Count; j++)
+                    // O(n log n) 排序后取前 toReleaseCount 个，语义与原冒泡选择一致
+                    candidateObjects.Sort(s_CompareForRelease);
+                    int count = Math.Min(toReleaseCount, candidateObjects.Count);
+                    for (int i = 0; i < count; i++)
                     {
-                        if (candidateObjects[i].Priority > candidateObjects[j].Priority
-                            || candidateObjects[i].Priority == candidateObjects[j].Priority && candidateObjects[i].LastUseTime > candidateObjects[j].LastUseTime)
-                        {
-                            T temp = candidateObjects[i];
-                            candidateObjects[i] = candidateObjects[j];
-                            candidateObjects[j] = temp;
-                        }
+                        m_CachedToReleaseObjects.Add(candidateObjects[i]);
                     }
-
-                    m_CachedToReleaseObjects.Add(candidateObjects[i]);
-                    toReleaseCount--;
                 }
 
                 return m_CachedToReleaseObjects;

@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 // Game Framework
 // Copyright © 2013-2021 Jiang Yin. All rights reserved.
 // Homepage: https://gameframework.cn/
@@ -19,6 +19,7 @@ namespace GameFramework.WebRequest
         {
             SerialId = 0;
             WebRequestUri = null;
+            Result = 0L;
             ErrorMessage = null;
             UserData = null;
         }
@@ -36,6 +37,15 @@ namespace GameFramework.WebRequest
         /// 获取 Web 请求地址。
         /// </summary>
         public string WebRequestUri
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// 获取失败结果（超时为 -1，发起失败为 Godot Error 码）。
+        /// </summary>
+        public long Result
         {
             get;
             private set;
@@ -64,14 +74,16 @@ namespace GameFramework.WebRequest
         /// </summary>
         /// <param name="serialId">Web 请求任务的序列编号。</param>
         /// <param name="webRequestUri">Web 请求地址。</param>
+        /// <param name="result">失败结果。</param>
         /// <param name="errorMessage">错误信息。</param>
         /// <param name="userData">用户自定义数据。</param>
         /// <returns>创建的 Web 请求失败事件。</returns>
-        public static WebRequestFailureEventArgs Create(int serialId, string webRequestUri, string errorMessage, object userData)
+        public static WebRequestFailureEventArgs Create(int serialId, string webRequestUri, long result, string errorMessage, object userData)
         {
             WebRequestFailureEventArgs webRequestFailureEventArgs = ReferencePool.Acquire<WebRequestFailureEventArgs>();
             webRequestFailureEventArgs.SerialId = serialId;
             webRequestFailureEventArgs.WebRequestUri = webRequestUri;
+            webRequestFailureEventArgs.Result = result;
             webRequestFailureEventArgs.ErrorMessage = errorMessage;
             webRequestFailureEventArgs.UserData = userData;
             return webRequestFailureEventArgs;
@@ -84,6 +96,7 @@ namespace GameFramework.WebRequest
         {
             SerialId = 0;
             WebRequestUri = null;
+            Result = 0L;
             ErrorMessage = null;
             UserData = null;
         }

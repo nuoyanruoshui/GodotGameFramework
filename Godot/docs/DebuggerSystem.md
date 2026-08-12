@@ -1,6 +1,6 @@
 # 调试器系统 (Debugger Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Debugger/`、`Framework/GodotGameFrameworkCore/Debugger/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Debugger/`、`Framework/GodotGameFrameworkCore/Debugger/`
 > 本文档描述 GGF 的运行时调试器：UGF 风格的 FPS 悬浮图标 + 全功能调试窗口（Console / Information / Profiler / Other 多级页签）、BBCode-IMGUI 绘制模型、日志捕获与自定义调试窗口扩展。
 
 ---
@@ -20,7 +20,7 @@
 - ✅ **全功能调试窗口**：标题栏拖拽、`0.5x ~ 4x` 缩放、多级页签（根页签末尾附 `Close` 收起）
 - ✅ **Console**：双源日志捕获（框架日志 + Godot 引擎原生输出）、跨线程安全、五级过滤（Debug/Info/Warning/Error/Fatal 各带计数）、Lock Scroll、行选中查看堆栈、复制到剪贴板、行数上限裁剪
 - ✅ **Information** 页签组：System / Environment / Screen / Graphics / Input / Path / Scene / Time 八个信息窗口
-- ✅ **Profiler** 页签组：内存与对象概况（Godot 监控项 + .NET GC）、对象池逐池详情（含释放按钮）、引用池计数表（含严格检查开关）
+- ✅ **Profiler** 页签组：内存与对象概况（Godot 监控项 + .NET GC）、对象池逐池详情（含释放按钮）、引用池计数表（含严格检查开关）、资源/Web 请求/下载代理计数
 - ✅ **Other** 页签组：Settings（缩放/布局重置/控制台行数）、Operations（GC / 释放对象池 / `GameEntry.Shutdown` 三态）
 - ✅ 图标与窗口的位置、缩放、控制台过滤开关经 `GF.Setting` 持久化
 - ✅ `RegisterDebuggerWindow(path, window)` 注册自定义调试窗口（任意层级路径）
@@ -72,7 +72,7 @@ DebuggerManager.Update（模块轮询，ActiveWindow 时）
 | `GodotGameFrameworkCore/Debugger/DebuggerComponent.FpsCounter.cs` | 帧率计数器（UGF 同款累计/间隔算法） |
 | `GodotGameFrameworkCore/Debugger/DebuggerComponent.ConsoleWindow.cs` | 控制台窗口（日志捕获、过滤、选中详情、复制） |
 | `GodotGameFrameworkCore/Debugger/LogNode.cs` | 日志结点（`IReference` 池化：时间/帧号/级别/内容/堆栈） |
-| `GodotGameFrameworkCore/Debugger/DebuggerComponent.*InformationWindow.cs` | System/Environment/Screen/Graphics/Input/Path/Scene/Time/Profiler 信息窗口 |
+| `GodotGameFrameworkCore/Debugger/DebuggerComponent.*InformationWindow.cs` | System/Environment/Screen/Graphics/Input/Path/Scene/Time/Profiler/Resource/WebRequest/Download 信息窗口 |
 | `GodotGameFrameworkCore/Debugger/DebuggerComponent.ObjectPoolInformationWindow.cs` | 对象池详情（逐池参数 + Release 按钮） |
 | `GodotGameFrameworkCore/Debugger/DebuggerComponent.ReferencePoolInformationWindow.cs` | 引用池 7 列计数表 + 严格检查/全名开关 |
 | `GodotGameFrameworkCore/Debugger/DebuggerComponent.SettingsWindow.cs` / `OperationsWindow.cs` | 设置（缩放/布局/行数）/ 运行时操作（GC/池释放/Shutdown） |
@@ -90,6 +90,9 @@ DebuggerManager.Update（模块轮询，ActiveWindow 时）
 Console                     ← 根级叶子
 Information/System          ← 自动创建 Information 组
 Profiler/Object Pool
+Profiler/Resource           ← 资源加载代理计数
+Profiler/WebRequest         ← Web 请求代理计数
+Profiler/Download           ← 下载代理计数
 Other/Operations
 ```
 
@@ -200,7 +203,7 @@ GF.Debugger.UnregisterDebuggerWindow("Game/Cheat");
 
 ### 4.3 内置窗口路径
 
-`Console`；`Information/System·Environment·Screen·Graphics·Input·Path·Scene·Time`；`Profiler/Summary·Object Pool·Reference Pool`；`Other/Settings·Operations`。
+`Console`；`Information/System·Environment·Screen·Graphics·Input·Path·Scene·Time`；`Profiler/Summary·Object Pool·Reference Pool·Resource·WebRequest·Download`；`Other/Settings·Operations`。
 
 ### 4.4 自定义调试窗口
 

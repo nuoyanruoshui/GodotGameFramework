@@ -1,6 +1,6 @@
 # 流程系统 (Procedure Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Procedure/`、`Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs`、`TheGame/MainPack/Scripts/Procedure/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Procedure/`、`Framework/GodotGameFrameworkCore/Procedure/ProcedureComponent.cs`、`TheGame/MainPack/Scripts/Procedure/`
 > 本文档描述 GGF 的流程系统：Procedure 即顶层 FSM 的设计、启动入口、状态切换、TheGame 现有流程链（Launch → Update → Prelode → Game）与新增流程的完整步骤。
 
 ---

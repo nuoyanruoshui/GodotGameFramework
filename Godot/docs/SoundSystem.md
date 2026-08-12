@@ -1,6 +1,6 @@
 # 声音系统 (Sound Module)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Sound/`、`Framework/GodotGameFrameworkCore/Sound/`
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GameFramework/Sound/`、`Framework/GodotGameFrameworkCore/Sound/`
 > 本文档描述 GGF 的声音系统：声音组与代理调度、PlaySoundParams、与 Godot `AudioStreamPlayer` 的桥接方式（音量/静音/暂停/淡入淡出的手动实现）、API 用法与注意事项。
 
 ---

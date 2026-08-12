@@ -92,6 +92,7 @@ public sealed partial class DebuggerComponent : GameFrameworkComponent
     private bool m_ShowFullWindowState;
     private string m_ToolbarSignature;
     private string m_LastContentText;
+    private readonly StringBuilder m_ToolbarSignatureBuilder = new StringBuilder(128);
     private float m_WindowScale = DefaultWindowScale;
 
     // ---- 拖拽状态 ----
@@ -412,6 +413,9 @@ public sealed partial class DebuggerComponent : GameFrameworkComponent
         RegisterDebuggerWindow("Profiler/Summary", new ProfilerInformationWindow());
         RegisterDebuggerWindow("Profiler/Object Pool", new ObjectPoolInformationWindow());
         RegisterDebuggerWindow("Profiler/Reference Pool", new ReferencePoolInformationWindow());
+        RegisterDebuggerWindow("Profiler/Resource", new ResourceInformationWindow());
+        RegisterDebuggerWindow("Profiler/WebRequest", new WebRequestInformationWindow());
+        RegisterDebuggerWindow("Profiler/Download", new DownloadInformationWindow());
 
         RegisterDebuggerWindow("Other/Settings", new SettingsWindow());
         RegisterDebuggerWindow("Other/Operations", new OperationsWindow());
@@ -573,21 +577,21 @@ public sealed partial class DebuggerComponent : GameFrameworkComponent
     private void RefreshToolbar()
     {
         // 以名称 + 选中索引作为签名，仅在结构 / 选中变化时重建按钮
-        var signatureBuilder = new StringBuilder(128);
+        m_ToolbarSignatureBuilder.Clear();
         IDebuggerWindowGroup group = m_DebuggerManager.DebuggerWindowRoot;
         while (group != null)
         {
             string[] names = group.GetDebuggerWindowNames();
             if (names != null)
             {
-                signatureBuilder.Append(string.Join('|', names));
+                m_ToolbarSignatureBuilder.Append(string.Join('|', names));
             }
 
-            signatureBuilder.Append('#').Append(group.SelectedIndex).Append(';');
+            m_ToolbarSignatureBuilder.Append('#').Append(group.SelectedIndex).Append(';');
             group = group.SelectedWindow as IDebuggerWindowGroup;
         }
 
-        string signature = signatureBuilder.ToString();
+        string signature = m_ToolbarSignatureBuilder.ToString();
         if (signature == m_ToolbarSignature)
         {
             return;

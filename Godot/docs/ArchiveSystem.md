@@ -1,6 +1,6 @@
 # 存档系统 (Archive System)
 
-> 适用版本：Godot 4.6.2 + .NET 8 ｜ 对应代码：`Framework/GodotGameFrameworkCore/Archive/ArchiveSystem.cs`、`Framework/GodotGameFrameworkCore/Json/EasySave.cs`、`TheGame/GameScripts/Archive/GameData.cs`（含 `GameCatalogue` 和 `GameData` 两个类）
+> 适用版本：Godot 4.7 + .NET 8 ｜ 对应代码：`Framework/GodotGameFrameworkCore/Archive/ArchiveSystem.cs`、`Framework/GodotGameFrameworkCore/Json/EasySave.cs`、`TheGame/GameScripts/Archive/GameData.cs`（含 `GameCatalogue` 和 `GameData` 两个类）
 > 本文档描述 GGF 的通用存档系统：ArchiveSystem 泛型设计、Catalogue/Data 分离模式、CRUD API、EasySave 持久化底层与游戏侧定制示例。
 
 ---

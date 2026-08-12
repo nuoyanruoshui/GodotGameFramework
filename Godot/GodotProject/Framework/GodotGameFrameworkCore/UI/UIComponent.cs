@@ -134,7 +134,7 @@ namespace GodotGameFramework.UI
                 m_UIManager.InstancePriority = m_InstancePriority = value;
             }
         }
-        private static readonly Dictionary<int, TaskCompletionSource<IUIForm>> m_UIFormTask = new Dictionary<int, TaskCompletionSource<IUIForm>>();
+        private readonly Dictionary<int, TaskCompletionSource<IUIForm>> m_UIFormTask = new Dictionary<int, TaskCompletionSource<IUIForm>>();
 
         public override void OnInit()
         {
@@ -202,6 +202,24 @@ namespace GodotGameFramework.UI
                     AddChild(m_InstanceRoot);
                 }
             }
+        }
+
+        public override void OnExitTree()
+        {
+            if (m_UIManager != null)
+            {
+                m_UIManager.OpenUIFormSuccess -= OnOpenUIFormSuccess;
+                m_UIManager.OpenUIFormFailure -= OnOpenUIFormFailure;
+                m_UIManager.OpenUIFormUpdate -= OnOpenUIFormUpdate;
+                m_UIManager.CloseUIFormComplete -= OnCloseUIFormComplete;
+            }
+            // 关闭时补全所有挂起的 UI 打开任务，避免 await 调用方永久挂起
+            foreach (TaskCompletionSource<IUIForm> tcs in m_UIFormTask.Values)
+            {
+                tcs.TrySetCanceled();
+            }
+            m_UIFormTask.Clear();
+            base.OnExitTree();
         }
 
         /// <summary>
@@ -665,13 +683,15 @@ namespace GodotGameFramework.UI
             if (m_EnableOpenUIFormFailureEvent)
             {
                 m_EventComponent.Fire(this, OpenUIFormFailureEventArgs.Create(e));
-                m_UIFormTask.TryGetValue(e.SerialId, out TaskCompletionSource<IUIForm> tcs);
-                if (tcs != null)
-                {
-                    Log.Fatal(e.ErrorMessage);
-                    tcs.TrySetException(new GameFrameworkException(e.ErrorMessage));
-                    m_UIFormTask.Remove(e.SerialId);
-                }
+            }
+
+            // TCS 补全不受失败事件开关影响，否则 OpenUIFormAsync 调用方会永久挂起
+            m_UIFormTask.TryGetValue(e.SerialId, out TaskCompletionSource<IUIForm> tcs);
+            if (tcs != null)
+            {
+                Log.Fatal(e.ErrorMessage);
+                tcs.TrySetException(new GameFrameworkException(e.ErrorMessage));
+                m_UIFormTask.Remove(e.SerialId);
             }
         }
 

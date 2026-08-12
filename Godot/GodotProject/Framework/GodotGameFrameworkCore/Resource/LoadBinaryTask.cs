@@ -2,6 +2,8 @@ namespace GameFramework.Resource
 {
     internal sealed class LoadBinaryTask : TaskBase
     {
+        private static int s_Serial = 0;
+
         private string m_Path;
         private LoadBinaryCallbacks m_Callbacks;
         private object m_UserData;
@@ -16,7 +18,7 @@ namespace GameFramework.Resource
             LoadBinaryCallbacks callbacks, object userData)
         {
             LoadBinaryTask task = ReferencePool.Acquire<LoadBinaryTask>();
-            task.Initialize(0, null, 0, null);
+            task.Initialize(++s_Serial, nameof(LoadBinaryTask), 0, userData);
             task.m_Path = path;
             task.m_Callbacks = callbacks;
             task.m_UserData = userData;

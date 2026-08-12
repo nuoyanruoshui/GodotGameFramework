@@ -1,8 +1,8 @@
 <div align="center">
 
-**Godot 4.6.2 + C# (.NET 8) Game Framework**
+**Godot 4.7 + C# (.NET 8) Game Framework**
 
-[![Godot Version](https://img.shields.io/badge/Godot-4.6.2-blue?style=flat-square)](https://godotengine.org/)
+[![Godot Version](https://img.shields.io/badge/Godot-4.7-blue?style=flat-square)](https://godotengine.org/)
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=flat-square)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/github/license/NuoYan/GGF?style=flat-square)](LICENSE)
 [![GameFramework](https://img.shields.io/badge/GameFramework-2025.07.10-green?style=flat-square)](https://gameframework.cn/)
@@ -13,7 +13,7 @@
 
 ## 📖 简介
 
-**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.6.2 + .NET 8 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、数据结点、设置、Web 请求、下载、调试器、存档等子系统。
+**GGF** (Godot Game Framework) 是 [Game Framework](https://gameframework.cn/)（Jiang Yin）的 **Godot 4.7 + .NET 8 C# 移植版**。提供一套完整的模块化游戏开发框架，包含事件、FSM、流程、资源、实体、UI、音频、本地化、对象池、数据表、数据结点、设置、Web 请求、下载、调试器、存档等子系统。
 交流Q群：1098113249
 ### ✨ 核心特性
 
@@ -173,8 +173,8 @@ CharacterBody2D + IEntity + IActor
 
 > 📖 详细文档：[ResourceSystem.md](Godot/docs/ResourceSystem.md) ｜ 热更审计：[ResourceHotUpdateAudit.md](Godot/docs/ResourceHotUpdateAudit.md)
 
-- ✅ **精简 IResourceManager** — 从 Unity 原版 97 个成员精简为 10 个核心方法
-- ✅ **异步加载** — `ResourceLoader.LoadThreadedRequest` + `TaskPool<LoadAssetTask>` 多代理调度
+- ✅ **精简 IResourceManager** — 从 Unity 原版 97 个成员精简为 18 个（10 核心 + 8 代理计数）
+- ✅ **异步加载** — `IResourceLoadHelper`（默认 `ResourceLoader.LoadThreadedRequest`）+ `TaskPool<LoadAssetTask>` 多代理调度
 - ✅ **同步读写** — `LoadBinary()` / `LoadText()` 主线程同步返回
 - ✅ **子包系统** — `Updatable` 模式下热更下载 `.pck` + `ProjectSettings.LoadResourcePack()` 加载
 - ✅ **版本清单** — `PackVersionList`（JSON）记录子包名称、大小、SHA256、MinAppVersion、ForceUpdate
@@ -188,7 +188,7 @@ CharacterBody2D + IEntity + IActor
 - ✅ **异步 API** — `SendRequestAsync(url)` 返回 `Task<WebRequestCompleteEventArgs>`，支持 GET / POST
 - ✅ **事件驱动** — `SendRequest(url)` 通过 `EventComponent` 推送结果
 - ✅ **超时控制** — 默认 30s，可配置，超时自动取消底层请求
-- ✅ **纯 C# 层保留** — `IWebRequestManager` + `WebRequestManager`（TaskPool 驱动）
+- ✅ **三层架构** — Component / 纯 C# Manager / HttpRequest Helper（TaskPool 驱动），并发可配（默认 4）
 
 ### 下载模块 (DownloadComponent)
 
@@ -345,13 +345,11 @@ GodotProject/                    ← Godot 项目根
 │   │   └── Localizations/      ← 本地化文本 (.txt)
 │   └── Resources/               ← Godot 资源配置（ScriptGenerateRes, UpdateSettingRes 等 .tres）
 └── addons/                      ← 编辑器插件
-    ├── ComponentInsoector/      ← 框架组件监视 + UIForm/Entity 脚本生成器 + NodePool 扫描
+    ├── ComponentInsoector/      ← 框架组件监视（含各组件 helper 下拉）+ UIForm/Entity 脚本生成器 + NodePool 扫描
     ├── ExportInspector/         ← 子包可视化导出管理面板（C# EditorPlugin）
     ├── asset_bundle/            ← 资源包标记 + 导出插件 + 打包工具（GDScript）
     ├── ezpz_inspector/          ← C# Inspector 增强（Ezpz Inspector）
-    ├── TopMenu/                 ← 日志级别切换（改写 csproj DefineConstants）
-    ├── LocalizationEditor/      ← Excel → .txt 本地化导出
-    └── Resources/               ← 资源路径常量生成（ResourcesCollectionConstant.cs）
+    └── TopMenu/                 ← 日志级别切换 + 本地化导出 + 资源路径常量生成（合并自 LocalizationEditor/Resources）
 ```
 
 ---
@@ -560,15 +558,13 @@ TheGame/DataTables/GameConfigs/*.bytes          ← 二进制数据（运行时�
 
 | 插件 | 功能 |
 |------|------|
-| **ComponentInsoector** | 框架组件属性监视 + UIForm/Entity 脚本生成器（Ge/Logic 双文件）+ NodePoolInspectorPlugin 扫描 IPoolable 场景 |
+| **ComponentInsoector** | 框架组件属性监视（含各组件 helper 类型下拉）+ UIForm/Entity 脚本生成器（Ge/Logic 双文件）+ NodePoolInspectorPlugin 扫描 IPoolable 场景 |
 | **ExportInspector** | 子包可视化导出管理面板 — 扫描 AssetBundle 标记、展开查看包内资源、一键导出 .pck + 版本清单，支持完整模式和仅产物模式 |
 | **asset_bundle** | 资源包标记（GDScript）— 在目录下创建 `AssetBundle.tres` 标记文件，构建时自动通过 export_plugin 打包为 .pck |
 | **ezpz_inspector** | C# Inspector 增强 — `[ExportButton]`、`[UpperDescription]`、`[ControlMargin]` 等注解 |
-| **TopMenu** | 日志级别切换（Debug / Info / Warning / Error / Fatal / 全部关闭），改写 csproj DefineConstants |
-| **LocalizationEditor** | `Configs/Localization/*.xlsx` → `res://TheGame/DataTables/Localizations/*.txt` |
-| **Resources** | 扫描 `res://TheGame/` 非脚本资源，生成 `ResourcesCollectionConstant.cs` |
+| **TopMenu** | 日志级别切换（Debug / Info / Warning / Error / Fatal / 全部关闭，改写 csproj DefineConstants）+ 本地化导出（`Configs/Localization/*.xlsx` → `.txt`）+ GameConfig File（Luban：`gen_code_bin_to_project.bat/.sh`）+ 资源路径常量生成（`ResourcesCollectionConstant.cs`）。合并自原 LocalizationEditor / Resources 插件 |
 
-> TopMenu / LocalizationEditor / Resources 通过 **Project > Tools** 菜单调用；ComponentInsoector 和 ezpz_inspector 直接作用于检视面板；ExportInspector 在编辑器底部面板显示；asset_bundle 在构建时自动生效。
+> TopMenu 通过 **Project > Tools** 菜单调用；ComponentInsoector 和 ezpz_inspector 直接作用于检视面板；ExportInspector 在编辑器底部面板显示；asset_bundle 在构建时自动生效。
 
 ### UIForm / Entity 脚本生成
 
@@ -614,8 +610,6 @@ TheGame/DataTables/GameConfigs/*.bytes          ← 二进制数据（运行时�
 
 - [ ] **UpdatableWhilePlaying 模式** — 边玩边下载
 - [ ] **NetworkComponent** — Godot 桥接组件（纯 C# 层 `NetworkManager` 已完整实现）
-- [ ] **场景切换过渡** — 过渡动画、异步加载进度回调
-- [ ] **Luban 一键生成菜单** — 将 `gen_code_bin_to_project.bat` 集成到 Godot 编辑器菜单
 
 ---
 

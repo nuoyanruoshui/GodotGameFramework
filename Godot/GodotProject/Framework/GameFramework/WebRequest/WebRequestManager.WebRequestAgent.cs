@@ -1,4 +1,4 @@
-﻿//------------------------------------------------------------
+//------------------------------------------------------------
 // Game Framework
 // Copyright © 2013-2021 Jiang Yin. All rights reserved.
 // Homepage: https://gameframework.cn/
@@ -18,9 +18,15 @@ namespace GameFramework.WebRequest
             private WebRequestTask m_Task;
             private float m_WaitTime;
 
-            public GameFrameworkAction<WebRequestAgent> WebRequestAgentStart;
-            public GameFrameworkAction<WebRequestAgent, byte[]> WebRequestAgentSuccess;
-            public GameFrameworkAction<WebRequestAgent, string> WebRequestAgentFailure;
+            /// <summary>
+            /// Web 请求代理成功委托。
+            /// </summary>
+            public GameFrameworkAction<WebRequestAgent, long, long, string[], byte[]> WebRequestAgentSuccess;
+
+            /// <summary>
+            /// Web 请求代理失败委托。
+            /// </summary>
+            public GameFrameworkAction<WebRequestAgent, long, string> WebRequestAgentFailure;
 
             /// <summary>
             /// 初始化 Web 请求代理的新实例。
@@ -37,7 +43,6 @@ namespace GameFramework.WebRequest
                 m_Task = null;
                 m_WaitTime = 0f;
 
-                WebRequestAgentStart = null;
                 WebRequestAgentSuccess = null;
                 WebRequestAgentFailure = null;
             }
@@ -54,17 +59,6 @@ namespace GameFramework.WebRequest
             }
 
             /// <summary>
-            /// 获取已经等待时间。
-            /// </summary>
-            public float WaitTime
-            {
-                get
-                {
-                    return m_WaitTime;
-                }
-            }
-
-            /// <summary>
             /// 初始化 Web 请求代理。
             /// </summary>
             public void Initialize()
@@ -74,21 +68,27 @@ namespace GameFramework.WebRequest
             }
 
             /// <summary>
-            /// Web 请求代理轮询。
+            /// Web 请求代理轮询，负责超时检测。
             /// </summary>
             /// <param name="elapseSeconds">逻辑流逝时间，以秒为单位。</param>
             /// <param name="realElapseSeconds">真实流逝时间，以秒为单位。</param>
             public void Update(float elapseSeconds, float realElapseSeconds)
             {
-                if (m_Task.Status == WebRequestTaskStatus.Doing)
+                if (m_Task == null || m_Task.Done || m_Task.Timeout <= 0f)
                 {
-                    m_WaitTime += realElapseSeconds;
-                    if (m_WaitTime >= m_Task.Timeout)
+                    return;
+                }
+
+                m_WaitTime += realElapseSeconds;
+                if (m_WaitTime >= m_Task.Timeout)
+                {
+                    // 超时：取消底层请求并上报失败（Result = -1 约定）
+                    m_Helper.Reset();
+                    if (WebRequestAgentFailure != null)
                     {
-                        WebRequestAgentHelperErrorEventArgs webRequestAgentHelperErrorEventArgs = WebRequestAgentHelperErrorEventArgs.Create("Timeout");
-                        OnWebRequestAgentHelperError(this, webRequestAgentHelperErrorEventArgs);
-                        ReferencePool.Release(webRequestAgentHelperErrorEventArgs);
+                        WebRequestAgentFailure(this, -1L, "Web request timeout.");
                     }
+                    m_Task.Done = true;
                 }
             }
 
@@ -115,24 +115,8 @@ namespace GameFramework.WebRequest
                 }
 
                 m_Task = task;
-                m_Task.Status = WebRequestTaskStatus.Doing;
-
-                if (WebRequestAgentStart != null)
-                {
-                    WebRequestAgentStart(this);
-                }
-
-                byte[] postData = m_Task.GetPostData();
-                if (postData == null)
-                {
-                    m_Helper.Request(m_Task.WebRequestUri, m_Task.UserData);
-                }
-                else
-                {
-                    m_Helper.Request(m_Task.WebRequestUri, postData, m_Task.UserData);
-                }
-
                 m_WaitTime = 0f;
+                m_Helper.Request(m_Task.WebRequestUri, m_Task.PostData, m_Task.UserData);
                 return StartTaskStatus.CanResume;
             }
 
@@ -148,12 +132,14 @@ namespace GameFramework.WebRequest
 
             private void OnWebRequestAgentHelperComplete(object sender, WebRequestAgentHelperCompleteEventArgs e)
             {
-                m_Helper.Reset();
-                m_Task.Status = WebRequestTaskStatus.Done;
+                if (m_Task == null || m_Task.Done)
+                {
+                    return;
+                }
 
                 if (WebRequestAgentSuccess != null)
                 {
-                    WebRequestAgentSuccess(this, e.GetWebResponseBytes());
+                    WebRequestAgentSuccess(this, e.Result, e.ResponseCode, e.Headers, e.Body);
                 }
 
                 m_Task.Done = true;
@@ -161,12 +147,14 @@ namespace GameFramework.WebRequest
 
             private void OnWebRequestAgentHelperError(object sender, WebRequestAgentHelperErrorEventArgs e)
             {
-                m_Helper.Reset();
-                m_Task.Status = WebRequestTaskStatus.Error;
+                if (m_Task == null || m_Task.Done)
+                {
+                    return;
+                }
 
                 if (WebRequestAgentFailure != null)
                 {
-                    WebRequestAgentFailure(this, e.ErrorMessage);
+                    WebRequestAgentFailure(this, e.Result, e.ErrorMessage);
                 }
 
                 m_Task.Done = true;
