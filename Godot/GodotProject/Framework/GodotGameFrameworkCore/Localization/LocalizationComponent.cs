@@ -5,6 +5,7 @@ using Godot;
 using GodotGameFramework.Extensions;
 using GodotGameFramework.Resource;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace GodotGameFramework.Localization
@@ -555,23 +556,34 @@ namespace GodotGameFramework.Localization
         /// </summary>
         public string[] GetLocalizationFileNames()
         {
-            string folder = ProjectSettings.GlobalizePath(GameFolderConstant.LocalizationPath);
-            if (!Directory.Exists(folder))
+            // 用 DirAccess 而非 System.IO.Directory：打包后 res:// 位于 .pck 虚拟文件系统内，
+            // System.IO 的磁盘扫描无法读取，只有 DirAccess 能跨编辑器 / 主包 / 已加载子包枚举。
+            using DirAccess dir = DirAccess.Open(GameFolderConstant.LocalizationPath);
+            if (dir == null)
             {
-                Log.Warning("Localization folder '{0}' does not exist.", folder);
+                Log.Warning("Localization folder '{0}' does not exist.", GameFolderConstant.LocalizationPath);
                 return new string[0];
             }
+
             // 获取所有 .txt 文件
-            string[] files = Directory.GetFiles(folder, "*.txt", SearchOption.TopDirectoryOnly);
-            for (int i = 0; i < files.Length; i++)
+            var names = new List<string>();
+            dir.ListDirBegin();
+            string fileName;
+            while ((fileName = dir.GetNext()) != "")
             {
-                files[i] = Path.GetFileNameWithoutExtension(files[i]);
+                if (!dir.CurrentIsDir() && fileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+                {
+                    names.Add(Path.GetFileNameWithoutExtension(fileName));
+                }
             }
-            if (files.Length == 0)
+            dir.ListDirEnd();
+            names.Sort(StringComparer.Ordinal);
+
+            if (names.Count == 0)
             {
-                Log.Warning("No localization files found in folder '{0}'.", folder);
+                Log.Warning("No localization files found in folder '{0}'.", GameFolderConstant.LocalizationPath);
             }
-            return files;
+            return names.ToArray();
         }
     }
 }
