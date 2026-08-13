@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Threading.Tasks;
 using GameFramework.Resource;
+using GodotGameFramework.Archive;
 
 namespace GodotGameFramework.Json;
 
@@ -110,6 +111,9 @@ public static class EasySave
 
     public static bool DeleteInProject(string fileName) =>
         TryDelete(Path.Combine(s_ProjectDir, fileName));
+    public static bool ExistsInProject(string fileName) =>
+            File.Exists(Path.Combine(s_ProjectDir, fileName));
+
 
     // ──────────────────────────
     //  异步方法（用于非 Godot 线程的调用场景）
@@ -125,6 +129,31 @@ public static class EasySave
                 Directory.CreateDirectory(dir);
 
             string json = JsonConvert.SerializeObject(data, Formatting.Indented);
+
+            await Task.Run(() =>
+            {
+                using var writer = new StreamWriter(path, false, System.Text.Encoding.UTF8);
+                writer.Write(json);
+            });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"[EasySave] 异步保存失败: {path} — {ex.Message}");
+            return false;
+        }
+    }
+
+    public static async Task<bool> SaveInUserAsync<T>(T data, string fileName, bool encrypt, string key, string salt)
+    {
+        string path = Path.Combine(s_UserDir, fileName);
+        try
+        {
+            string dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            string json = encrypt ? Rijindael.Encrypt(JsonConvert.SerializeObject(data, Formatting.Indented), key, salt) : JsonConvert.SerializeObject(data, Formatting.Indented);
             await Task.Run(() =>
             {
                 using var writer = new StreamWriter(path, false, System.Text.Encoding.UTF8);
@@ -149,6 +178,26 @@ public static class EasySave
                 if (!File.Exists(path)) return null;
                 using var reader = new StreamReader(path, System.Text.Encoding.UTF8);
                 string json = reader.ReadToEnd();
+                return JsonConvert.DeserializeObject<T>(json);
+            });
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"[EasySave] 异步加载失败: {path} — {ex.Message}");
+            return null;
+        }
+    }
+
+    public static async Task<T> LoadFromUserAsync<T>(string fileName, bool encrypt, string key, string salt) where T : class, new()
+    {
+        string path = Path.Combine(s_UserDir, fileName);
+        try
+        {
+            return await Task.Run(() =>
+            {
+                if (!File.Exists(path)) return null;
+                using var reader = new StreamReader(path, System.Text.Encoding.UTF8);
+                string json = encrypt ? Rijindael.Decrypt(reader.ReadToEnd(), key, salt) : reader.ReadToEnd();
                 return JsonConvert.DeserializeObject<T>(json);
             });
         }

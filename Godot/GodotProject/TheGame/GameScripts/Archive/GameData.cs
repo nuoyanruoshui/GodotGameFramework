@@ -1,5 +1,5 @@
 using Godot;
-using GodotGameFrameworkCore.Archive;
+using GodotGameFramework.Archive;
 using System;
 using System.Collections.Generic;
 [Serializable]

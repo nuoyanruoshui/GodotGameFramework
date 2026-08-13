@@ -1,11 +1,11 @@
-using Godot;
-using GodotGameFramework;
 using GodotGameFramework.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Godot;
+using GameConfig.Constant;
 
-namespace GodotGameFrameworkCore.Archive;
+namespace GodotGameFramework.Archive;
 /// <summary>
 /// 存档目录
 /// </summary>
@@ -23,10 +23,21 @@ public class ArchiveData
 //一个简单的示例存储架构
 public sealed class ArchiveSystem<T, U> where T : ArchiveCatalogue, new() where U : ArchiveData, new()
 {
-    const string ArchivePath = "GameData";
     public List<T> Catalogues { get; private set; } = new();
     public T CurrentCatalogue { get; private set; }
     public U CurrentData { get; private set; }
+    private ArchiveSetting m_Setting;
+    public ArchiveSetting Setting
+    {
+        get
+        {
+            if (m_Setting == null)
+            {
+                m_Setting = ResourceLoader.Load<ArchiveSetting>(ResourcesCollectionConstant.Resources_ArchiveSetting);
+            }
+            return m_Setting;
+        }
+    }
 
     /// <summary>
     /// 创建新存档并保存
@@ -41,8 +52,8 @@ public sealed class ArchiveSystem<T, U> where T : ArchiveCatalogue, new() where 
         CurrentCatalogue = catalogue;
         CurrentData = data;
 
-        bool catalogueSaved = await EasySave.SaveInUserAsync(Catalogues, $"{ArchivePath}/Catalogue.sav");
-        bool dataSaved = await EasySave.SaveInUserAsync(data, $"{ArchivePath}/Data/{catalogue.UnitId}.sav");
+        bool catalogueSaved = await EasySave.SaveInUserAsync(Catalogues, $"{Setting.Folder}/Catalogue.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
+        bool dataSaved = await EasySave.SaveInUserAsync(data, $"{Setting.Folder}/Data/{catalogue.UnitId}.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
 
         if (catalogueSaved && dataSaved)
         {
@@ -72,7 +83,7 @@ public sealed class ArchiveSystem<T, U> where T : ArchiveCatalogue, new() where 
         }
 
         CurrentCatalogue = Catalogues.Find(x => x.UnitId == unitId);
-        bool saved = await EasySave.SaveInUserAsync(CurrentData, $"{ArchivePath}/Data/{CurrentCatalogue.UnitId}.sav");
+        bool saved = await EasySave.SaveInUserAsync(CurrentData, $"{Setting.Folder}/Data/{CurrentCatalogue.UnitId}.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
 
         if (saved)
         {
@@ -98,29 +109,38 @@ public sealed class ArchiveSystem<T, U> where T : ArchiveCatalogue, new() where 
     }
 
     /// <summary>
-    /// 加载或者初始化存档数据，默认加载最新存档
+    /// 加载或者初始化存档数据，默认加载最新存档。
+    /// 仅当文件不存在时才新建存档；文件存在但读取失败时拒绝覆盖，避免吞掉玩家数据。
     /// </summary>
     public async Task LoadAsync()
     {
-        var catalogues = await EasySave.LoadFromUserAsync<List<T>>($"{ArchivePath}/Catalogue.sav");
-        if (catalogues == null || catalogues.Count == 0)
+        string cataloguePath = $"{Setting.Folder}/Catalogue.sav";
+
+        // 文件不存在 → 首次存档
+        if (!EasySave.ExistsInUser(cataloguePath))
         {
             await SaveAsync();
+            return;
+        }
+
+        var catalogues = await EasySave.LoadFromUserAsync<List<T>>(cataloguePath, Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
+        if (catalogues == null || catalogues.Count == 0)
+        {
+            Log.Error("[ArchiveSystem] 存档存在但读取失败，已拒绝覆盖。请检查密钥/盐值是否变更或存档是否损坏。");
+            return;
+        }
+
+        Catalogues = catalogues;
+        CurrentCatalogue = Catalogues[^1];
+        CurrentData = await EasySave.LoadFromUserAsync<U>($"{Setting.Folder}/Data/{CurrentCatalogue.UnitId}.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
+
+        if (CurrentData == null)
+        {
+            Log.Error("[ArchiveSystem]加载存档数据失败，单位ID{0}", CurrentCatalogue.UnitId);
         }
         else
         {
-            Catalogues = catalogues;
-            CurrentCatalogue = Catalogues[^1];
-            CurrentData = await EasySave.LoadFromUserAsync<U>($"{ArchivePath}/Data/{CurrentCatalogue.UnitId}.sav");
-
-            if (CurrentData == null)
-            {
-                Log.Error("[ArchiveSystem]加载存档数据失败，单位ID{0}", CurrentCatalogue.UnitId);
-            }
-            else
-            {
-                Log.Info("[ArchiveSystem]加载存档数据成功，单位ID{0}", CurrentCatalogue.UnitId);
-            }
+            Log.Info("[ArchiveSystem]加载存档数据成功，单位ID{0}", CurrentCatalogue.UnitId);
         }
     }
 
@@ -142,7 +162,7 @@ public sealed class ArchiveSystem<T, U> where T : ArchiveCatalogue, new() where 
         }
 
         CurrentCatalogue = Catalogues.Find(x => x.UnitId == unitId);
-        CurrentData = await EasySave.LoadFromUserAsync<U>($"{ArchivePath}/Data/{CurrentCatalogue.UnitId}.sav");
+        CurrentData = await EasySave.LoadFromUserAsync<U>($"{Setting.Folder}/Data/{CurrentCatalogue.UnitId}.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
 
         if (CurrentData == null)
         {
@@ -180,8 +200,8 @@ public sealed class ArchiveSystem<T, U> where T : ArchiveCatalogue, new() where 
             CurrentData = null;
         }
 
-        await EasySave.DeleteInUserAsync($"{ArchivePath}/Data/{unitId}.sav");
-        await EasySave.SaveInUserAsync(Catalogues, $"{ArchivePath}/Catalogue.sav");
+        await EasySave.DeleteInUserAsync($"{Setting.Folder}/Data/{unitId}.sav");
+        await EasySave.SaveInUserAsync(Catalogues, $"{Setting.Folder}/Catalogue.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
 
         Log.Info("[ArchiveSystem]删除存档成功，单位ID{0}", unitId);
     }
