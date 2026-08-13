@@ -73,37 +73,6 @@ public partial class GameFrameworkTopMenu : EditorPlugin
 
     public override void _ExitTree()
     {
-        if (m_GeneratePopup != null)
-        {
-            m_GeneratePopup.IdPressed -= OnGeneratePopupIdPressed;
-            if (m_GeneratePopup.GetParent() != null)
-            {
-                m_GeneratePopup.GetParent().RemoveChild(m_GeneratePopup);
-            }
-            m_GeneratePopup.QueueFree();
-            m_GeneratePopup = null;
-        }
-        if (m_LogPopup != null)
-        {
-            m_LogPopup.IdPressed -= OnLogPopupIdPressed;
-            if (m_LogPopup.GetParent() != null)
-            {
-                m_LogPopup.GetParent().RemoveChild(m_LogPopup);
-            }
-            m_LogPopup.QueueFree();
-            m_LogPopup = null;
-        }
-        if (m_OpenFolderPopup != null)
-        {
-            m_OpenFolderPopup.IdPressed -= OnOpenFolderPopupIdPressed;
-            if (m_OpenFolderPopup.GetParent() != null)
-            {
-                m_OpenFolderPopup.GetParent().RemoveChild(m_OpenFolderPopup);
-            }
-            m_OpenFolderPopup.QueueFree();
-            m_OpenFolderPopup = null;
-        }
-
         RemoveToolMenuItem(GenerateName);
         RemoveToolMenuItem(MenuName);
         RemoveToolMenuItem(OpenFolderName);
