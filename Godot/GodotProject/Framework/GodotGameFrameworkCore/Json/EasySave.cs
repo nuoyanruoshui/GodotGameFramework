@@ -111,6 +111,9 @@ public static class EasySave
 
     public static bool DeleteInProject(string fileName) =>
         TryDelete(Path.Combine(s_ProjectDir, fileName));
+    public static bool ExistsInProject(string fileName) =>
+            File.Exists(Path.Combine(s_ProjectDir, fileName));
+
 
     // ──────────────────────────
     //  异步方法（用于非 Godot 线程的调用场景）

@@ -109,29 +109,38 @@ public sealed class ArchiveSystem<T, U> where T : ArchiveCatalogue, new() where 
     }
 
     /// <summary>
-    /// 加载或者初始化存档数据，默认加载最新存档
+    /// 加载或者初始化存档数据，默认加载最新存档。
+    /// 仅当文件不存在时才新建存档；文件存在但读取失败时拒绝覆盖，避免吞掉玩家数据。
     /// </summary>
     public async Task LoadAsync()
     {
-        var catalogues = await EasySave.LoadFromUserAsync<List<T>>($"{Setting.Folder}/Catalogue.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
-        if (catalogues == null || catalogues.Count == 0)
+        string cataloguePath = $"{Setting.Folder}/Catalogue.sav";
+
+        // 文件不存在 → 首次存档
+        if (!EasySave.ExistsInUser(cataloguePath))
         {
             await SaveAsync();
+            return;
+        }
+
+        var catalogues = await EasySave.LoadFromUserAsync<List<T>>(cataloguePath, Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
+        if (catalogues == null || catalogues.Count == 0)
+        {
+            Log.Error("[ArchiveSystem] 存档存在但读取失败，已拒绝覆盖。请检查密钥/盐值是否变更或存档是否损坏。");
+            return;
+        }
+
+        Catalogues = catalogues;
+        CurrentCatalogue = Catalogues[^1];
+        CurrentData = await EasySave.LoadFromUserAsync<U>($"{Setting.Folder}/Data/{CurrentCatalogue.UnitId}.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
+
+        if (CurrentData == null)
+        {
+            Log.Error("[ArchiveSystem]加载存档数据失败，单位ID{0}", CurrentCatalogue.UnitId);
         }
         else
         {
-            Catalogues = catalogues;
-            CurrentCatalogue = Catalogues[^1];
-            CurrentData = await EasySave.LoadFromUserAsync<U>($"{Setting.Folder}/Data/{CurrentCatalogue.UnitId}.sav", Setting.EnableAesEncryption, Setting.KEY, Setting.Salt);
-
-            if (CurrentData == null)
-            {
-                Log.Error("[ArchiveSystem]加载存档数据失败，单位ID{0}", CurrentCatalogue.UnitId);
-            }
-            else
-            {
-                Log.Info("[ArchiveSystem]加载存档数据成功，单位ID{0}", CurrentCatalogue.UnitId);
-            }
+            Log.Info("[ArchiveSystem]加载存档数据成功，单位ID{0}", CurrentCatalogue.UnitId);
         }
     }
 
