@@ -19,6 +19,7 @@ namespace GodotGameFramework.Editor
 		ResourceComponentInspectorPlugin m_ResourceComponent;
 		ScriptGenerateInspector m_ScriptGenerateInspector;
 		NodePoolInspectorPlugin m_NodePoolInspector;
+		ArchiveSettingInspectorPlugin m_ArchiveSettingInspector;
 		public override void _EnterTree()
 		{
 			m_ProcedureComponent = new ProcedureComponentInspectorPlugin();
@@ -34,6 +35,7 @@ namespace GodotGameFramework.Editor
 			m_ResourceComponent = new ResourceComponentInspectorPlugin();
 			m_ScriptGenerateInspector = new ScriptGenerateInspector();
 			m_NodePoolInspector = new NodePoolInspectorPlugin();
+			m_ArchiveSettingInspector = new ArchiveSettingInspectorPlugin();
 			AddInspectorPlugin(m_BaseComponent);
 			AddInspectorPlugin(m_ProcedureComponent);
 			AddInspectorPlugin(m_SceneComponent);
@@ -47,6 +49,7 @@ namespace GodotGameFramework.Editor
 			AddInspectorPlugin(m_ResourceComponent);
 			AddInspectorPlugin(m_ScriptGenerateInspector);
 			AddInspectorPlugin(m_NodePoolInspector);
+			AddInspectorPlugin(m_ArchiveSettingInspector);
 		}
 
 		public override void _ExitTree()
@@ -64,6 +67,7 @@ namespace GodotGameFramework.Editor
 			RemoveInspectorPlugin(m_ResourceComponent);
 			RemoveInspectorPlugin(m_ScriptGenerateInspector);
 			RemoveInspectorPlugin(m_NodePoolInspector);
+			RemoveInspectorPlugin(m_ArchiveSettingInspector);
 			m_ProcedureComponent.Free();
 			m_BaseComponent.Free();
 			m_SceneComponent.Free();
@@ -77,6 +81,7 @@ namespace GodotGameFramework.Editor
 			m_ResourceComponent.Free();
 			m_ScriptGenerateInspector.Free();
 			m_NodePoolInspector.Free();
+			m_ArchiveSettingInspector.Free();
 		}
 	}
 }

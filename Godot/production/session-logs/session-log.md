@@ -5487,3 +5487,12 @@ Godot/subpackages/SpritesBundle.pck
 Godot/subpackages/UIsBundle.pck
 ---
 
+## Session End: 20260813_164357
+### Uncommitted Changes
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Archive/ArchiveSystem.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Base/GF.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/Json/EasySave.cs
+Godot/GodotProject/TheGame/GameScripts/Archive/GameData.cs
+Godot/GodotProject/TheGame/GameScripts/GameProto/ResourcesCollectionConstant.cs
+---
+

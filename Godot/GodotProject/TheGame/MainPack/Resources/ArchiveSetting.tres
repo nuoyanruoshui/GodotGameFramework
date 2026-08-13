@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ArchiveSetting" format=3 uid="uid://b7gxam7id0kha"]
+
+[ext_resource type="Script" uid="uid://co0c3ptf7xv0t" path="res://TheGame/MainPack/Scripts/Resources/ArchiveSetting.cs" id="1_k0cmf"]
+
+[resource]
+script = ExtResource("1_k0cmf")
+Salt = "maImBRos/Zpk6zzV9oG7dA=="
+metadata/_custom_type_script = "uid://co0c3ptf7xv0t"
