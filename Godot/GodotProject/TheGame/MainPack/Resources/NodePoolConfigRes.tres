@@ -17,7 +17,7 @@ Scene = "res://TheGame/UIs/DamagePop.tscn"
 
 [resource]
 script = ExtResource("1_8jdg")
-Entries = Array[Object]([SubResource("Resource_lqe6w"), SubResource("Resource_kq84q"), SubResource("Resource_3vwbs")])
+Entries = Array[ExtResource("1_j1vs4")]([SubResource("Resource_lqe6w"), SubResource("Resource_kq84q"), SubResource("Resource_3vwbs")])
 DefaultExpireTime = 300.0
 DefaultAutoReleaseInterval = 300.0
 metadata/_custom_type_script = "uid://yiewfnn1gx67"

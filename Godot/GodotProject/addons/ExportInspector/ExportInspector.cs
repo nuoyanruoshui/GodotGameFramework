@@ -73,7 +73,7 @@ namespace GodotGameFramework.Editor
         private Label _lblSummary;   // 底部的状态栏
         private TreeItem _treeRoot;
 
-        private string _exportFolder = "";
+        public static string _exportFolder = "";
         private string _version = "1.0.0";
         private readonly Dictionary<string, Godot.Resource> _bundles = new();
 

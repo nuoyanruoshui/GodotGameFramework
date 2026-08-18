@@ -21,8 +21,8 @@
 
 | 模式 | 枚举值 | 实现程度 |
 |------|:--:|------|
-| `ResourceMode.Package` | 1 | ✅ 单机模式。全部资源在主包内，`Godot.ResourceLoader` 直接加载；`ProcedureUpdate` 跳过远端更新检测，但尝试通过 `TryLoadLocalSubpackagesAsync()` 加载安装目录 `subpackages/` 下的本地 `.pck` 子包（失败不阻塞启动） |
-| `ResourceMode.Updatable` | 2 | ✅ 热更模式。启动时 `DeserializeUpdatablePackVersion()` 读取 `user://GameFrameworkVersion.dat` 得到本地清单；子包 `.pck` 的下载/校验/`LoadResourcePack` 由 `ProcedureUpdate` 驱动（见 §3.3 与 `DownloadSystem.md` §5） |
+| `ResourceMode.Package` | 1 | ✅ 单机模式。全部资源在主包内，`Godot.ResourceLoader` 直接加载；`ProcedureUpdateVersion` 跳过远端更新检测，但尝试通过 `TryLoadLocalSubpackagesAsync()` 加载安装目录 `subpackages/` 下的本地 `.pck` 子包（失败不阻塞启动） |
+| `ResourceMode.Updatable` | 2 | ✅ 热更模式。启动时 `DeserializeUpdatablePackVersion()` 读取 `user://GameFrameworkVersion.dat` 得到本地清单；子包 `.pck` 的下载/校验/`LoadResourcePack` 由热更流程链（`ProcedureUpdateVersion` → `ProcedureCheckResources` → `ProcedureUpdateResources`）驱动（见 §3.3 与 `DownloadSystem.md` §5） |
 
 ### 能力清单
 
@@ -60,8 +60,8 @@ ResourceManager : GameFrameworkModule (实现放在 Godot 层，因直接调 God
 子包加载（Updatable 模式，启动期一次性）：
 
 ```
-ProcedureLaunch → ProcedureUpdate
-    │  远端清单下载/比对/差量下载（见 DownloadSystem.md §5）
+ProcedureLaunch → ProcedureUpdateVersion → ProcedureCheckResources → ProcedureUpdateResources
+    │  版本检查 / 本地校验+差量 / 并发下载+加载（见 DownloadSystem.md §5）
     ▼
 LoadDownloadedPacks(version)
     │  Config 包优先排序 → 逐包 大小校验 + SHA256 重校验(>1MB)
@@ -137,10 +137,10 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 | 阶段 | 执行者 | 内容 |
 |------|--------|------|
 | 启动 | `ResourceComponent.OnInit` | `SetResourceMode(Inspector 配置)` → `SetReadWritePath(user://)` → `SetLoadAssetAgentCount(AgentCount)` → `DeserializeUpdatablePackVersion()` 读 `user://GameFrameworkVersion.dat`（`Utility.Json` 反序列化，缺失/损坏仅警告不中断） |
-| 热更 | `ProcedureUpdate` | 远端清单比对 → `GF.Download` 差量下载到 `SubpackDir` → `EasySave.SaveInUserAsync` 保存新清单（旧清单备份为 `.bak`） |
-| 加载 | `ProcedureUpdate.LoadDownloadedPacks` | 按 `PackType.Config` 优先排序（配置先于场景就绪）→ 逐包大小校验 + 大文件(>1MB) SHA256 重校验 → `ProjectSettings.LoadResourcePack(packPath)` → `CleanStalePacks` 清理不在清单中的废弃 `.pck` → 有失败包则 `RollbackVersionFile()` |
+| 热更 | `ProcedureUpdateVersion` → `ProcedureCheckResources` → `ProcedureUpdateResources` | 版本检查 → 远端清单比对 → `GF.Download` 差量下载到 `SubpackDir` → `EasySave.SaveInUserAsync` 保存新清单（旧清单备份为 `.bak`） |
+| 加载 | `ProcedureUpdateBase.LoadDownloadedPacks`（热更链共享） | 按 `PackType.Config` 优先排序（配置先于场景就绪）→ 逐包大小校验 + 大文件(>1MB) SHA256 重校验 → `ProjectSettings.LoadResourcePack(packPath)` → `CleanStalePacks` 清理不在清单中的废弃 `.pck` → 有失败包则 `RollbackVersionFile()` |
 
-`SubpackDir` 选择优先级（`ProcedureUpdate.GetOrCreateHotUpdateDir`）：
+`SubpackDir` 选择优先级（`HotUpdateContext` 首次访问计算并缓存）：
 
 1. `UpdateSettingRes.HotUpdatePath`（显式配置；资源文件位于 `TheGame/MainPack/Resources/UpdateSettingRes.tres`）
 2. 游戏安装目录 `subpackages/`（写测试通过时；编辑器下为 `res://../../Godot/subpackages`）
@@ -148,7 +148,7 @@ ProjectSettings.LoadResourcePack(SubpackDir/{Name}.pck)   ← 插入 Godot 资�
 
 > 注意：**版本清单固定存于 `user://`**（`EasySave.SaveInUser` / `ResourceManager` 只从 `m_ReadWritePath = user://` 读取），而 `.pck` 本体可能在游戏安装目录——两者路径策略不同，属有意设计。
 
-**Package 模式**：不检测远端更新，但启动时自动尝试加载安装目录下的本地子包——`ProcedureUpdate.TryLoadLocalSubpackagesAsync()` 读取 `SubpackDir/GameFrameworkVersion.dat` 清单，逐包加载 `.pck`（与 Updatable 共用 `LoadDownloadedPacksAsync`，含大小校验 + SHA256 校验 + Config 优先排序）。失败**不阻塞启动**——子包缺失或清单无效仅记录日志后静默跳过。随主包分发的资源直接走 `res://`。编辑器侧 `addons/asset_bundle/export_plugin.gd` 会在**工程导出时**把标记为 AssetBundle 的目录从主包剥离，单独产出 `<导出目录>/subpackages/*.pck`。
+**Package 模式**：不检测远端更新，但启动时自动尝试加载安装目录下的本地子包——`ProcedureUpdateVersion.TryLoadLocalSubpackagesAsync()` 读取 `SubpackDir/GameFrameworkVersion.dat` 清单，逐包加载 `.pck`（与 Updatable 共用 `LoadDownloadedPacksAsync`，含大小校验 + SHA256 校验 + Config 优先排序）。失败**不阻塞启动**——子包缺失或清单无效仅记录日志后静默跳过。随主包分发的资源直接走 `res://`。编辑器侧 `addons/asset_bundle/export_plugin.gd` 会在**工程导出时**把标记为 AssetBundle 的目录从主包剥离，单独产出 `<导出目录>/subpackages/*.pck`。
 
 ### 3.4 版本清单（PackVersionList）
 
@@ -175,7 +175,7 @@ public struct Pack {
 
 ### 3.5 版本清单校验加载（`LoadAndValidateVersionList`）
 
-`NodeUtility.LoadAndValidateVersionList(fileName)` 提供带严格校验的版本清单加载，`ProcedureUpdate` 在多处使用该方法替代普通的 JSON 反序列化：
+`NodeUtility.LoadAndValidateVersionList(fileName)` 提供带严格校验的版本清单加载，热更流程链在多处使用该方法替代普通的 JSON 反序列化：
 
 1. **JSON 结构检测**：空文件 / 截断（长度 < 2）/ 缺少花括号 → 返回 `null` 并记录具体原因。
 2. **`PackVersionList.Validate()`** 深度校验：（a）`Version` 非空；（b）`Packs` 非 null 非空；（c）每个 `Pack` 有效性检查（名称/大小/SHA256 均合法）；（d）**重复包名检测**——`HashSet<string>` 逐包登记，重名直接拒绝。
@@ -195,7 +195,7 @@ public struct Pack {
 |------|------|--------|------|
 | `_resourceMode` | `ResourceMode` | `Package` | 资源模式，`OnInit` 时写入 `ResourceManager` |
 | `AgentCount` | `int`（0–20） | `10` | 资源加载代理数量（并发上限），`OnInit` 时经 `SetLoadAssetAgentCount` 注入 |
-| `_UpdateSettingRes` | `UpdateSettingRes` | — | 热更配置资源（`RemoteUrl` 远端地址、`HotUpdatePath` 补丁目录），供 `ProcedureUpdate` / ExportInspector 读取 |
+| `_UpdateSettingRes` | `UpdateSettingRes` | — | 热更配置资源（`RemoteUrl` 远端地址、`HotUpdatePath` 补丁目录），供热更链 / ExportInspector 读取 |
 
 ### 4.2 API 总览
 
@@ -296,7 +296,7 @@ Luban 实体/UI 配置表中的场景路径引用这些常量对应的字符串�
 不能。`LocalPackVersionList` 返回 `null`。Package 模式不读任何清单。判空后再使用。
 
 **Q: 热更子包加载失败怎么办？**
-`ProcedureUpdate.LoadDownloadedPacks` 逐包容错：损坏包删除并计失败，任一失败即回退 `user://` 版本清单（`.bak` 恢复），下次启动重新下载。游戏继续以旧资源运行。
+`ProcedureUpdateBase.LoadDownloadedPacks` 逐包容错：损坏包删除并计失败，任一失败即回退 `user://` 版本清单（`.bak` 恢复），下次启动重新下载。游戏继续以旧资源运行。
 
 **Q: `.pck` 里要不要带源文件？**
 纯运行时分发勾选「仅产物」即可（Godot 运行时只读 `.import` + 导入缓存）；需要在其他工程/编辑器中二次导入时才用全量模式。

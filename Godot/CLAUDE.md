@@ -55,7 +55,7 @@ GodotProject/
     MainPack/                       ← Main package (shared core infrastructure)
       Scripts/
         ObjectPool/                 ← NodePool, NodeObject, PoolContainer
-        Procedure/                  ← ProcedureLaunch, ProcedureUpdate, ProcedurePrelode, ProcedureGame
+        Procedure/                  ← ProcedureLaunch, ProcedureUpdateVersion, ProcedureCheckResources, ProcedureUpdateResources, ProcedurePrelode, ProcedureGame
         Resources/                  ← EntityGroup, SoundGroup, UIGroup, NodePoolConfig, ScriptGenerateRes, UpdateSettingRes
         UI/                         ← LoadingForm, QuestionTips (shared UI)
       Fonts/                        ← simhei.ttf
@@ -169,8 +169,10 @@ TheGame UIs: `LoadingForm`, `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuFo
 ### Procedure (FSM) System
 
 Procedures manage top-level game states. TheGame procedure chain:
-- `ProcedureLaunch` — validates all framework components, then → `ProcedureUpdate`
-- `ProcedureUpdate` — resource hot-update (active): version check, concurrent pack download via `GF.Download`, integrity verify, subpackage loading (see `docs/DownloadSystem.md`), then → `ProcedurePrelode`；C# 程序集热更已搁置等待华佗团队 Godot 适配
+- `ProcedureLaunch` — validates all framework components, then → `ProcedureUpdateVersion`
+- `ProcedureUpdateVersion` — version check (active): fetch server version manifest, App version compatibility; handles Package-mode / crash-recovery / no-RemoteUrl shortcuts, then → `ProcedureCheckResources`
+- `ProcedureCheckResources` — verify local pack integrity (SHA256), diff against server, disk-space pre-check; if nothing to download → `ProcedurePrelode`, else → `ProcedureUpdateResources`
+- `ProcedureUpdateResources` — concurrent pack download via `GF.Download` (see `docs/DownloadSystem.md`), load subpackages, persist manifest, then prompt to restart; C# 程序集热更已搁置等待华佗团队 Godot 适配
 - `ProcedurePrelode` — loads entity/UI/sound groups and localization, then → `ProcedureGame`
 - `ProcedureGame` — gameplay loop, opens `MenuForm` on entry
 
@@ -370,7 +372,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 | Mode | Status |
 |------|--------|
 | `ResourceMode.Package` | ✅ Active (Godot.ResourceLoader; no subpackage loading in this mode. When `BaseComponent.EnableEditorResLoad` is true, this mode also skips local subpackage detection — resources load directly from `res://TheGame/`) |
-| `Updatable` | ✅ Hot-update pipeline live (`ProcedureUpdate` downloads + loads `.pck` subpackages) |
+| `Updatable` | ✅ Hot-update pipeline live (`ProcedureUpdateVersion` → `ProcedureCheckResources` → `ProcedureUpdateResources` downloads + loads `.pck` subpackages) |
 | `UpdatableWhilePlaying` | 📅 Not implemented |
 
 ### Loading
@@ -379,7 +381,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ### Subpackage System (Updatable mode)
 
-`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Patch files are stored in `SubpackDir` (game-exe `subpackages/` folder or `user://subpackages/` fallback; formerly always `user://`). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Package mode skips local subpackage detection when `BaseComponent.EnableEditorResLoad` is true. Audit trail: `docs/ResourceHotUpdateAudit.md`. C# 程序集热更（`docs/CodeHotUpdateDesign.md`）已搁置等待华佗团队 Godot 适配。
+The hot-update chain (`ProcedureUpdateVersion` → `ProcedureCheckResources` → `ProcedureUpdateResources`) downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Patch files are stored in `SubpackDir` (game-exe `subpackages/` folder or `user://subpackages/` fallback; formerly always `user://`). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Package mode skips local subpackage detection when `BaseComponent.EnableEditorResLoad` is true. Audit trail: `docs/ResourceHotUpdateAudit.md`. C# 程序集热更（`docs/CodeHotUpdateDesign.md`）已搁置等待华佗团队 Godot 适配。
 
 `PackVersionList` structure (`PackVersionList.cs`):
 ```csharp

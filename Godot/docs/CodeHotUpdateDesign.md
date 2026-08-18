@@ -4,7 +4,7 @@
 >
 > **配套基础设施（已落地，搁置期间不动）：**
 > - 统一下载通道 `GF.Download`（`GodotGameFrameworkCore/Download/`，断点续传 + 大小/SHA256 校验，详见 `DownloadSystem.md`）
-> - 资源热更管线 `ProcedureUpdate`（多包并发下载、版本比对、失败回退）
+> - 资源热更管线（`ProcedureUpdateVersion` → `ProcedureCheckResources` → `ProcedureUpdateResources`：多包并发下载、版本比对、失败回退）
 > - 崩溃安全守护 `HotUpdateSafetyGuard`（`GodotGameFrameworkCore/HotUpdate/`，命名空间 `GodotGameFramework.HotUpdate` 已建立）
 
 ## 前提
@@ -35,7 +35,7 @@
 
 | 类型 | 是否 Godot 脚本 | ALC 热更 |
 |------|:--:|:--:|
-| **ProcedureBase 子类** (ProcedureLaunch, ProcedureGame, ProcedureUpdate...) | ❌ 纯 C# | ✅ 零改动直接热更 |
+| **ProcedureBase 子类** (ProcedureLaunch, ProcedureGame, ProcedureUpdateVersion...) | ❌ 纯 C# | ✅ 零改动直接热更 |
 | **Entity** (CatEntity, AngerEntity...) | ✅ CharacterBody2D | ❌ 需提取逻辑到接口 |
 | **UI Form** (MenuForm, MainForm...) | ✅ Control | ❌ 需提取逻辑到接口 |
 | **Event 参数** (ScoreChangedEventArgs...) | ❌ 纯 C# | ✅ 零改动直接热更 |
@@ -344,7 +344,9 @@ namespace GodotGameFramework.HotUpdate
             return new Type[]
             {
                 typeof(ProcedureLaunch),
-                typeof(ProcedureUpdate),
+                typeof(ProcedureUpdateVersion),
+                typeof(ProcedureCheckResources),
+                typeof(ProcedureUpdateResources),
                 typeof(ProcedurePrelode),
                 typeof(ProcedureGame),
             };
@@ -414,7 +416,7 @@ public void StartProcedure<T>() where T : ProcedureBase
 ### 3.2 启动流程调整
 
 ```
-原流程:  ProcedureLaunch → ProcedureUpdate → ProcedurePrelode → ProcedureGame
+原流程:  ProcedureLaunch → ProcedureUpdateVersion → ProcedureCheckResources → ProcedureUpdateResources → ProcedurePrelode → ProcedureGame
 
 新流程:
   Bootstrap 启动
@@ -569,14 +571,14 @@ public class PackVersionList
 }
 ```
 
-> **现状（2026-07）**：`PackVersionList`（`Framework/GodotGameFrameworkCore/Resource/PackVersionList.cs`）已实现 `Version / Packs / MinAppVersion / ForceUpdate`（后两者已在 `ProcedureUpdate` 中接入）；`DllHash / DllSize / DllUrl / MinBootstrapVersion` 等程序集相关字段仍为规划中。
+> **现状（2026-07）**：`PackVersionList`（`Framework/GodotGameFrameworkCore/Resource/PackVersionList.cs`）已实现 `Version / Packs / MinAppVersion / ForceUpdate`（后两者已在热更链中接入）；`DllHash / DllSize / DllUrl / MinBootstrapVersion` 等程序集相关字段仍为规划中。
 
-### 6.3 ProcedureUpdate 增强
+### 6.3 热更流程链增强
 
-在现有 `ProcedureUpdate` 中增加 DLL 下载逻辑：
+在现有热更流程链（`ProcedureUpdateResources`）中增加 DLL 下载逻辑：
 
 ```
-ProcedureUpdate.OnEnter:
+ProcedureUpdateResources.OnEnter:
   1. 请求服务器 version.json
   2. 解析 DllHash / DllSize / DllUrl
   3. 对比本地 DLL 版本（从 user://hotupdate/version.json 读取）
@@ -586,7 +588,7 @@ ProcedureUpdate.OnEnter:
   7. 下载完成 → 弹窗"更新已就绪，重启生效" → 用户点确定 → 重启
 ```
 
-> **现状（2026-07）**：`ProcedureUpdate` 的 .pck 资源热更部分已落地——版本清单经 `GF.WebRequest` 请求（3 次指数退避重试），子包经 `GF.Download.DownloadFileAsync` 多包并发下载（`Task.WhenAll`，进度按字节加权聚合，每包 3 次指数退避重试，断点续传 + 大小/SHA256 校验自动生效，详见 `DownloadSystem.md`）。DLL 下载逻辑（步骤 2~5、7）尚未实现，可直接复用同一下载通道。
+> **现状（2026-07）**：热更链（`ProcedureUpdateVersion` → `ProcedureCheckResources` → `ProcedureUpdateResources`）的 .pck 资源热更部分已落地——版本清单经 `GF.WebRequest` 请求（3 次指数退避重试），子包经 `GF.Download.DownloadFileAsync` 多包并发下载（`Task.WhenAll`，进度按字节加权聚合，每包 3 次指数退避重试，断点续传 + 大小/SHA256 校验自动生效，详见 `DownloadSystem.md`）。DLL 下载逻辑（步骤 2~5、7）尚未实现，可直接复用同一下载通道。
 
 ---
 
@@ -613,13 +615,13 @@ App 启动
   │     └── 未找到 DLL → IsHotUpdateLoaded = false → 使用内置程序集
   │
   ├── 正常启动流程
-  │   ProcedureLaunch → ProcedureUpdate → ProcedurePrelode → ProcedureGame
+  │   ProcedureLaunch → ProcedureUpdateVersion → ProcedureCheckResources → ProcedureUpdateResources → ProcedurePrelode → ProcedureGame
   │   （每个 Procedure 类型从 HotUpdateManager 解析）
   │
   └── Entity/UI 创建时 → HotUpdateManager.CreateEntityLogic/CreateUIFormLogic
 ```
 
-> **现状（2026-07）**：崩溃检测/安全模式已由 `HotUpdateSafetyGuard` 落地并接入资源热更侧——`ProcedureUpdate` 开头检测 `WasLastSessionCrashed()`（命中则 `EnterSafeMode()` 回退版本文件并跳过全部热更补丁），加载子包前 `MarkStartupBegin()` 写启动锁，`ProcedureGame.OnEnter` 调用 `MarkStartupSuccess()`。上图中"DLL 加载失败 → 回退"分支实施时应复用该机制。
+> **现状（2026-07）**：崩溃检测/安全模式已由 `HotUpdateSafetyGuard` 落地并接入资源热更侧——`ProcedureUpdateVersion` 开头检测 `WasLastSessionCrashed()`（命中则 `EnterSafeMode()` 回退版本文件并跳过全部热更补丁），加载子包前 `MarkStartupBegin()` 写启动锁，`ProcedureGame.OnEnter` 调用 `MarkStartupSuccess()`。上图中"DLL 加载失败 → 回退"分支实施时应复用该机制。
 
 ---
 
@@ -638,7 +640,7 @@ user://hotupdate/
 - 备份也失败 → 删除全部补丁，使用内置程序集
 - 用户可在设置中手动"清除热更补丁，恢复出厂版本"
 
-> **现状（2026-07）**：资源热更侧的回滚已实现——保存新版本清单前先备份 `GameFrameworkVersion.dat.bak`；任一子包加载失败自动回退版本文件（`ProcedureUpdate.RollbackVersionFile`）；上次启动崩溃时 `HotUpdateSafetyGuard.EnterSafeMode` 回退到 `.bak`（无备份则清除版本文件用内置版本）。DLL 侧 `.backup/` 机制待随 ALC 方案实施。
+> **现状（2026-07）**：资源热更侧的回滚已实现——保存新版本清单前先备份 `GameFrameworkVersion.dat.bak`；任一子包加载失败自动回退版本文件（`ProcedureUpdateBase.RollbackVersionFile`）；上次启动崩溃时 `HotUpdateSafetyGuard.EnterSafeMode` 回退到 `.bak`（无备份则清除版本文件用内置版本）。DLL 侧 `.backup/` 机制待随 ALC 方案实施。
 
 ---
 
@@ -708,9 +710,9 @@ EOF
 
 ### Phase 2: Procedure 热更打通（1 天）
 
-> 前置能力已就绪（2026-07）：`GF.Download.DownloadFileAsync` 提供大小/SHA256 校验 + 断点续传；`ProcedureUpdate` 已实现 .pck 的并发下载/重试/校验/回退，DLL 下载可按同一模式接入（详见 `DownloadSystem.md`）。
+> 前置能力已就绪（2026-07）：`GF.Download.DownloadFileAsync` 提供大小/SHA256 校验 + 断点续传；热更链已实现 .pck 的并发下载/重试/校验/回退，DLL 下载可按同一模式接入（详见 `DownloadSystem.md`）。
 
-- [ ] ProcedureUpdate 增加 DLL 下载逻辑
+- [ ] 热更流程链增加 DLL 下载逻辑
 - [ ] 版本比对（DllHash）
 - [ ] 重启提示
 - [ ] **验证：从 CDN 下载新版 DLL → 重启 → Procedure 行为变化**
@@ -726,7 +728,7 @@ EOF
 ### Phase 4: 健壮性（1-2 天）
 
 - [ ] 回滚机制（备份/恢复）——资源热更侧已实现（2026-07：版本 `.bak` + 加载失败自动回退 + `HotUpdateSafetyGuard` 崩溃安全模式）；DLL 侧待实施
-- [ ] 强制更新弹窗（`ForceUpdate` 字段已在 `ProcedureUpdate` 读取，强制拦截逻辑待完善）
+- [ ] 强制更新弹窗（`ForceUpdate` 字段已在热更链读取，强制拦截逻辑待完善）
 - [ ] 下载进度 UI——资源热更侧已实现（2026-07：`LoadingForm` 进度 + `LoadSceneUpdate` 真实进度转发）；DLL 侧待实施
 - [ ] 完整性校验（SHA256）——下载通道已内置（2026-07：`GF.Download.DownloadFileAsync`）
 - [ ] 错误日志收集
@@ -755,5 +757,5 @@ EOF
 2. `AssemblyLoadContext` 加载热更版主程序集
 3. Procedure（纯 C#）→ 零改动热更
 4. Entity/UI（Godot 脚本）→ 轻量重构为壳+逻辑，逻辑可热更
-5. 现有 `ProcedureUpdate` 增加 DLL 下载 → 校验 → 重启流程
+5. 现有热更流程链增加 DLL 下载 → 校验 → 重启流程
 6. 下载后重启生效，健壮可靠

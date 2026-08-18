@@ -5496,3 +5496,40 @@ Godot/GodotProject/TheGame/GameScripts/Archive/GameData.cs
 Godot/GodotProject/TheGame/GameScripts/GameProto/ResourcesCollectionConstant.cs
 ---
 
+## Session End: 20260818_183013
+### Uncommitted Changes
+Godot/CLAUDE.md
+Godot/GodotProject/Framework/GameFramework.tscn
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceMode.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureLaunch.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs.uid
+Godot/docs/CodeHotUpdateDesign.md
+Godot/docs/DownloadSystem.md
+Godot/docs/ProcedureSystem.md
+Godot/docs/ResourceSystem.md
+Godot/production/session-logs/agent-audit.log
+---
+
+## Session End: 20260818_193811
+### Uncommitted Changes
+Godot/CLAUDE.md
+Godot/GodotProject/Framework/GameFramework.tscn
+Godot/GodotProject/Framework/GameFramework/Resource/ResourceMode.cs
+Godot/GodotProject/Framework/GodotGameFrameworkCore/UI/DefaultUIFormHelper.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureLaunch.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs.uid
+Godot/docs/CodeHotUpdateDesign.md
+Godot/docs/DownloadSystem.md
+Godot/docs/ProcedureSystem.md
+Godot/docs/ResourceSystem.md
+Godot/production/session-logs/agent-audit.log
+Godot/production/session-logs/session-log.md
+Godot/subpackages/DataTableBundle.pck
+Godot/subpackages/EntityBundle.pck
+Godot/subpackages/ScenesBundle.pck
+Godot/subpackages/SpritesBundle.pck
+Godot/subpackages/UIsBundle.pck
+---
+

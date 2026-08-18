@@ -10,7 +10,7 @@ namespace GameFramework.Resource
     public enum ResourceMode : byte
     {
         /// <summary>
-        /// 单机模式。所有资源打包在主包内
+        /// 单机模式。
         /// </summary>
         Package = 1,
 

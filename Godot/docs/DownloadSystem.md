@@ -236,12 +236,12 @@ GF.Download.Paused = true;       // 暂停整个队列（进行中的代理完�
 
 ---
 
-## 5. 热更流程集成（ProcedureUpdate）
+## 5. 热更流程集成（热更流程链）
 
-`TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs` 是本模块的主要消费者。完整流程：
+热更由三个链式流程消费（`TheGame/MainPack/Scripts/Procedure/` 下的 `ProcedureUpdateVersion` → `ProcedureCheckResources` → `ProcedureUpdateResources`，跨流程共享状态在 `HotUpdateContext`）。完整流程：
 
 ```
-ProcedureLaunch → ProcedureUpdate → ProcedurePrelode → ProcedureGame
+ProcedureLaunch → ProcedureUpdateVersion → ProcedureCheckResources → ProcedureUpdateResources → ProcedurePrelode → ProcedureGame
 ```
 
 | 步骤 | 内容 | 失败策略 |
@@ -281,7 +281,7 @@ public struct Pack {
 
 ### 5.3 热更目录选择（SubpackDir）
 
-`SubpackDir` 是 `ProcedureUpdate` 的一个只读属性，每次访问调用 `GetOrCreateHotUpdateDir()` 自动选择可写目录：
+`SubpackDir` 由 `HotUpdateContext` 提供（首次访问调用 `GetOrCreateHotUpdateDir()` 计算并缓存，避免每次访问都重新探测可写性）：
 
 1. `UpdateSettingRes.HotUpdatePath`（显式配置）
 2. 游戏安装目录 `subpackages/`（通过 `IsDirectoryWritable` 写测试探测可写性；编辑器下解析为 `res://../../Godot/subpackages`）
@@ -314,7 +314,7 @@ Helper 的读循环在数据同步就绪时不主动让帧，极端情况下单�
 `DownloadAgent` 完成时会调用 `WebGLPersistence.Sync()` 同步 IndexedDB；传输层 HttpClient 在 Web 平台受浏览器限制，未经验证，暂不支持。
 
 **Q: 旧版 `.tmp` 临时文件？**
-旧 `StreamingDownloader` 使用 `.tmp` 后缀，现行机制为 `.download`。`ProcedureUpdate` 在每包下载前会清理同名 `.tmp` 遗留文件。
+旧 `StreamingDownloader` 使用 `.tmp` 后缀，现行机制为 `.download`。下载流程（`ProcedureUpdateResources`）在每包下载前会清理同名 `.tmp` 遗留文件。
 
 ---
 

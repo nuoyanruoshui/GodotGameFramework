@@ -29,13 +29,13 @@ script = ExtResource("1_781av")
 [node name="Base" type="Node" parent="." unique_id=611780270]
 script = ExtResource("2_781av")
 m_JsonHelper = "GodotGameFramework.NewtonsoftJsonHelper"
-EnableEditorResLoad = true
 
 [node name="Event" type="Node" parent="." unique_id=355543369]
 script = ExtResource("3_353g6")
 
 [node name="Resource" type="Node" parent="." unique_id=553100123]
 script = ExtResource("11_res")
+_resourceMode = 2
 _UpdateSettingRes = ExtResource("5_y55im")
 
 [node name="Debugger" type="Node" parent="." unique_id=443209794]
@@ -45,7 +45,7 @@ _ActiveWindowType = 0
 [node name="Procedure" type="Node" parent="." unique_id=1553213140]
 script = ExtResource("5_qii40")
 EnterProcedure = "ProcedureLaunch"
-Procedures = PackedStringArray("ProcedureGame", "ProcedureLaunch", "ProcedurePrelode", "ProcedureUpdate")
+Procedures = PackedStringArray("ProcedureGame", "ProcedureLaunch", "ProcedurePrelode", "ProcedureUpdateVersion", "ProcedureCheckResources", "ProcedureUpdateResources")
 
 [node name="Scene" type="Node" parent="." unique_id=883403288]
 script = ExtResource("15_pcfq2")

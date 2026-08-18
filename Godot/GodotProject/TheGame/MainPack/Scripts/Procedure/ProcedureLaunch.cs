@@ -59,7 +59,7 @@ public class ProcedureLaunch : ProcedureBase
         if (m_Components.All(x => x.Value))
         {
             Log.Info($"[LaunchProcedure] 框架组件验证通过");
-            ChangeState<ProcedureUpdate>(procedureOwner);
+            ChangeState<ProcedureUpdateVersion>(procedureOwner);
         }
         else
         {

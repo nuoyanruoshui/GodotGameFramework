@@ -54,12 +54,12 @@ ProcedureManager.StartProcedure(入口流程类型)
 
 ```
 EnterProcedure = "ProcedureLaunch"
-Procedures = ["ProcedureGame", "ProcedureLaunch", "ProcedurePrelode", "ProcedureUpdate"]
+Procedures = ["ProcedureGame", "ProcedureLaunch", "ProcedurePrelode", "ProcedureUpdateVersion", "ProcedureCheckResources", "ProcedureUpdateResources"]
 ```
 
 ```
-ProcedureLaunch ──► ProcedureUpdate ──► ProcedurePrelode ──► ProcedureGame
-   组件自检             热更检测/下载          资源组预载             玩法入口
+ProcedureLaunch ──► ProcedureUpdateVersion ──► ProcedureCheckResources ──► ProcedureUpdateResources ──► ProcedurePrelode ──► ProcedureGame
+   组件自检               版本检查/获取                本地校验/差量                 下载/加载/保存               资源组预载             玩法入口
 ```
 
 ### 2.3 文件清单
@@ -71,7 +71,11 @@ ProcedureLaunch ──► ProcedureUpdate ──► ProcedurePrelode ──► P
 | `GameFramework/Procedure/ProcedureManager.cs` | 持有流程 FSM；Initialize/StartProcedure/HasProcedure/GetProcedure |
 | `GodotGameFrameworkCore/Procedure/ProcedureComponent.cs` | Inspector 配置 + 反射装配 + `StartProcedure()` |
 | `TheGame/MainPack/Scripts/Procedure/ProcedureLaunch.cs` | 入口：框架组件自检 |
-| `TheGame/MainPack/Scripts/Procedure/ProcedureUpdate.cs` | 热更：版本比对、并发下载、子包加载（详见 DownloadSystem.md §5） |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureUpdateBase.cs` | 热更基类：公共完整性校验/子包加载/错误处理（abstract，不进流程 FSM） |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureUpdateVersion.cs` | 热更①：版本检查——拉取清单、App 兼容性、短路分支 |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureCheckResources.cs` | 热更②：本地校验 + 差量比对 + 磁盘预检 |
+| `TheGame/MainPack/Scripts/Procedure/ProcedureUpdateResources.cs` | 热更③：并发下载、加载子包、保存清单、重启提示 |
+| `TheGame/MainPack/Scripts/HotUpdate/HotUpdateContext.cs` | 热更链共享上下文（LoadingForm / 版本清单 / 目录缓存） |
 | `TheGame/MainPack/Scripts/Procedure/ProcedurePrelode.cs` | 预载：本地化 + UI/Entity/Sound 组注册 |
 | `TheGame/MainPack/Scripts/Procedure/ProcedureGame.cs` | 玩法：标记启动成功、打开主菜单 |
 
@@ -99,7 +103,7 @@ ProcedureLaunch ──► ProcedureUpdate ──► ProcedurePrelode ──► P
 protected internal override void OnEnter(ProcedureOwner procedureOwner)
 {
     base.OnEnter(procedureOwner);
-    ChangeState<ProcedureUpdate>(procedureOwner);   // 当前流程 OnLeave → 目标流程 OnEnter
+    ChangeState<ProcedureUpdateVersion>(procedureOwner);   // 当前流程 OnLeave → 目标流程 OnEnter
 }
 ```
 
@@ -124,11 +128,11 @@ procedureOwner.RemoveData("NextSceneId");                 // 用完移除（自�
 
 ### 3.5 与异步的配合
 
-`ProcedureUpdate` / `ProcedureGame` 的 `OnEnter` 是 `async void`：进入流程后启动异步任务（热更下载、`OpenUIFormAsync`），完成后再 `ChangeState`。注意：
+热更链（`ProcedureUpdateVersion` / `ProcedureCheckResources` / `ProcedureUpdateResources`）与 `ProcedureGame` 的 `OnEnter` 是 `async void`：进入流程后启动异步任务（热更下载、`OpenUIFormAsync`），完成后再 `ChangeState`。注意：
 
 - 框架不会等待异步完成，流程期间的每帧逻辑仍走 `OnUpdate`；
 - 异步续体经 Godot 同步上下文回到主线程，可直接调 `ChangeState`；
-- 异常要自行 try/catch（`async void` 的异常无法被框架捕获），`ProcedureUpdate` 的做法是 catch 后 `SkipToNext`（降级进入下一流程）。
+- 异常要自行 try/catch（`async void` 的异常无法被框架捕获），热更链的 `ProcedureUpdateBase.HandleUpdateErrorAsync` 在 catch 后 `SkipToNext`（降级进入下一流程）。
 
 ---
 
@@ -136,20 +140,23 @@ procedureOwner.RemoveData("NextSceneId");                 // 用完移除（自�
 
 ### 4.1 ProcedureLaunch（入口）
 
-`OnEnter` 检查 14 个框架组件（`Base / Event / Fsm / Setting / DataNode / Resource / Entity / UI / Sound / Localization / WebRequest / Download / Scene / ObjectPool`）是否都已注册（`GF.Xxx != null`）。全部通过后 `ChangeState<ProcedureUpdate>`；否则 `Log.Fatal` 列出缺失组件并停留。
+`OnEnter` 检查 14 个框架组件（`Base / Event / Fsm / Setting / DataNode / Resource / Entity / UI / Sound / Localization / WebRequest / Download / Scene / ObjectPool`）是否都已注册（`GF.Xxx != null`）。全部通过后 `ChangeState<ProcedureUpdateVersion>`；否则 `Log.Fatal` 列出缺失组件并停留。
 
-### 4.2 ProcedureUpdate（热更）
+### 4.2 热更流程链（ProcedureUpdateVersion → ProcedureCheckResources → ProcedureUpdateResources）
 
 完整逻辑见 `DownloadSystem.md` §5，摘要：
 
-- Package 模式 + `EnableEditorResLoad` → 直接 `ChangeState<ProcedurePrelode>`（跳过子包加载）；
-- Package 模式（非 EditorResLoad）→ 调用 `TryLoadLocalSubpackagesAsync()` 读取 `SubpackDir` 下的 `GameFrameworkVersion.dat` 清单加载本地子包，然后进入下一流程；
-- 上次启动崩溃（`HotUpdateSafetyGuard` 安全模式）→ 直接 `ChangeState<ProcedurePrelode>`；
-- 未配置 `RemoteUrl` → 校验并加载本地已下载子包后进入下一流程；
-- 正常路径：拉取远端 `GameFrameworkVersion.dat` → `MinAppVersion` 检查 → 本地完整性自检 → 差量比对 → 磁盘空间预检 → `GF.Download` 并发下载（每包重试 3 次、指数退避）→ `LoadResourcePack` 加载子包 → 保存新清单；
-- 热更目录 `SubpackDir` 优先级：`UpdateSettingRes.HotUpdatePath` → 安装目录 `subpackages/`（可写时）→ `user://subpackages/`；
-- 字段 `LoadingForm m_loadingForm`（打开后经 `SetLogState(message, progress)` 更新进度条与状态文本）；异步加载流程在 `finally` 块中关闭 LoadingForm；
-- 任何异常都降级 `SkipToNext` → `ProcedurePrelode`（保证能进游戏）。
+- `ProcedureUpdateVersion`（版本检查）：
+  - Package 模式 + `EnableEditorResLoad` → 直接 `ChangeState<ProcedurePrelode>`（跳过子包加载）；
+  - Package 模式（非 EditorResLoad）→ 调用 `TryLoadLocalSubpackagesAsync()` 读取 `SubpackDir` 下的 `GameFrameworkVersion.dat` 清单加载本地子包，然后进入下一流程；
+  - 上次启动崩溃（`HotUpdateSafetyGuard` 安全模式）→ 直接 `ChangeState<ProcedurePrelode>`；
+  - 未配置 `RemoteUrl` → 校验并加载本地已下载子包后进入下一流程；
+  - 正常路径：拉取远端 `GameFrameworkVersion.dat`（重试 3 次、指数退避）→ `MinAppVersion` 兼容性检查 → `ChangeState<ProcedureCheckResources>`；
+- `ProcedureCheckResources`（本地校验）：本地完整性自检 → 与服务器差量比对 → 磁盘空间预检；无需下载 → `LoadDownloadedPacksAsync` + `ChangeState<ProcedurePrelode>`；
+- `ProcedureUpdateResources`（下载）：`GF.Download` 并发下载（每包重试 3 次、指数退避、SHA256 校验）→ `LoadResourcePack` 加载子包 → 保存新清单（旧清单备份 `.bak`）→ 弹"更新完成是否重启"对话框（两按钮均退出，此流程不直接进入 Prelode）；
+- 热更目录 `SubpackDir` 优先级：`UpdateSettingRes.HotUpdatePath` → 安装目录 `subpackages/`（可写时）→ `user://subpackages/`（由 `HotUpdateContext` 首次访问时缓存，避免每次探测可写性）；
+- LoadingForm 由 `HotUpdateContext.EnsureLoadingFormAsync()` 打开一次、跨三个流程保持，经 `SetLogState(message, progress)` 更新进度条与状态文本；每个终态（进 Prelode / 退出）由 `MarkSuccessAndCloseLoading()` 关闭；
+- 任何异常都经 `ProcedureUpdateBase.HandleUpdateErrorAsync` 降级 `SkipToNext` → `ProcedurePrelode`（保证能进游戏）；强制更新则阻塞对话框，重试跳回 `ProcedureUpdateVersion` 或退出。
 
 ### 4.3 ProcedurePrelode（预载）
 
