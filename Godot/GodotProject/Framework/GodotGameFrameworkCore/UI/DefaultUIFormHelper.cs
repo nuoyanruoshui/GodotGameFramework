@@ -36,7 +36,7 @@ namespace GodotGameFramework.UI
             // 创建 UIForm 包装器节点
             if (uiFormInstance is IUIForm uIForm)
             {
-                var uiForm = (Node)uIForm;
+                var uiForm = (CanvasItem)uIForm;
                 Node groupContainer = ((Node)uiGroup.Helper);
                 if (groupContainer == null)
                 {
@@ -49,7 +49,7 @@ namespace GodotGameFramework.UI
                     uiForm.Name = "UIForm_" + uiForm.GetType().Name;
                     groupContainer.AddChild(uiForm);
                 }
-
+                uiForm.MoveToFront();
                 return uIForm;
             }
             else
