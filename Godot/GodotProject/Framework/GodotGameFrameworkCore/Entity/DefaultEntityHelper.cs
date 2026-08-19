@@ -44,6 +44,7 @@ namespace GodotGameFramework.Entity
                     {
                         groupHelper.AddChild((Node)entity);
                     }
+                    if (node is CanvasItem canvasItem) canvasItem.MoveToFront();
                 }
             }
             else
