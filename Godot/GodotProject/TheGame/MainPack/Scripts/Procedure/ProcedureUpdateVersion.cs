@@ -24,7 +24,7 @@ using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedure
 /// </summary>
 public class ProcedureUpdateVersion : ProcedureUpdateBase
 {
-    private const float VersionFetchTimeoutSeconds = 10f;    // 单次版本清单请求超时（秒）
+    private const float VersionFetchTimeoutSeconds = 5f;     // 单次版本清单请求超时（秒）
 
     protected internal override async void OnEnter(ProcedureOwner procedureOwner)
     {
@@ -91,7 +91,6 @@ public class ProcedureUpdateVersion : ProcedureUpdateBase
         await HotUpdateContext.EnsureLoadingFormAsync();
 
         // ── 4. 请求服务器版本文件 ──
-        bool isForceUpdate = false;
         PackVersionList serverVersion = null;
 
         string versionUrl = $"{remoteUrl.TrimEnd('/')}/{ResourceManager.GameFrameworkVersionData}";
@@ -103,7 +102,6 @@ public class ProcedureUpdateVersion : ProcedureUpdateBase
             ?? NodeUtility.LoadAndValidateVersionList(ResourceManager.GameFrameworkVersionData);
         if (localVersionPre != null)
             ResourceManager.LocalPackVersionList = localVersionPre;
-        isForceUpdate = localVersionPre?.ForceUpdate == true;
 
         serverVersion = await FetchVersionWithRetryAsync(versionUrl);
         if (serverVersion == null || !serverVersion.IsValid())
@@ -125,7 +123,6 @@ public class ProcedureUpdateVersion : ProcedureUpdateBase
             return;
         }
 
-        isForceUpdate = serverVersion.ForceUpdate;
         Log.Info("[ProcedureUpdateVersion] 服务器版本: {0}, {1} 个子包",
             serverVersion.Version, serverVersion.Packs?.Length ?? 0);
 
@@ -162,41 +159,31 @@ public class ProcedureUpdateVersion : ProcedureUpdateBase
 
             try
             {
-                if (!GF.Base.EnableEditorResLoad)
+                var result = await GF.WebRequest.SendRequestAsync(versionUrl, VersionFetchTimeoutSeconds);
+                if (!IsHttpSuccess(result))
                 {
-                    var result = await GF.WebRequest.SendRequestAsync(versionUrl, VersionFetchTimeoutSeconds);
-                    if (!IsHttpSuccess(result))
+                    HotUpdateContext.LoadingForm?.SetLogState($"版本文件请求失败(再次尝试:{attempt + 1}/{MaxRetries})", 0);
+                    Log.Warning("[ProcedureUpdateVersion] 版本文件请求失败 (attempt {0}/{1}, HTTP {2})",
+                        attempt + 1, MaxRetries, result?.ResponseCode);
+                    continue;
+                }
+
+                string json = Encoding.UTF8.GetString(result.Body);
+                var version = Utility.Json.ToObject<PackVersionList>(json);
+                if (version != null)
+                {
+                    // 校验服务器版本清单完整性
+                    if (!version.Validate(out string validateError))
                     {
-                        HotUpdateContext.LoadingForm?.SetLogState($"版本文件请求失败(再次尝试:{attempt + 1}/{MaxRetries})", 0);
-                        Log.Warning("[ProcedureUpdateVersion] 版本文件请求失败 (attempt {0}/{1}, HTTP {2})",
-                            attempt + 1, MaxRetries, result?.ResponseCode);
+                        Log.Warning("[ProcedureUpdateVersion] 服务器版本数据校验失败: {0} (attempt {1}/{2})",
+                            validateError, attempt + 1, MaxRetries);
                         continue;
                     }
-
-                    string json = Encoding.UTF8.GetString(result.Body);
-                    var version = Utility.Json.ToObject<PackVersionList>(json);
-                    if (version != null)
-                    {
-                        // 校验服务器版本清单完整性
-                        if (!version.Validate(out string validateError))
-                        {
-                            Log.Warning("[ProcedureUpdateVersion] 服务器版本数据校验失败: {0} (attempt {1}/{2})",
-                                validateError, attempt + 1, MaxRetries);
-                            continue;
-                        }
-                        return version;
-                    }
-
-                    Log.Warning("[ProcedureUpdateVersion] 版本 JSON 解析为 null (attempt {0}/{1})",
-                        attempt + 1, MaxRetries);
+                    return version;
                 }
-                else
-                {
-                    string folder = GodotGameFramework.Editor.ExportInspector._exportFolder;
-                    //获得时间最晚的文件夹
-                    Directory.GetDirectories(folder);
-                    //TODO:
-                }
+
+                Log.Warning("[ProcedureUpdateVersion] 版本 JSON 解析为 null (attempt {0}/{1})",
+                    attempt + 1, MaxRetries);
             }
             catch (Exception ex)
             {

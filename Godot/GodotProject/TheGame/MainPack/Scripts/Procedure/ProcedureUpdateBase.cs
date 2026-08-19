@@ -89,8 +89,8 @@ public abstract class ProcedureUpdateBase : ProcedureBase
                 {
                     damageReason = $"大小不匹配 (期望 {pack.Size}, 实际 {fileInfo.Length})";
                 }
-                // 3. SHA256 校验（>1MB 文件，线程池执行避免卡帧）
-                else if (fileInfo.Length > 1024 * 1024)
+                // 3. SHA256 校验（线程池执行避免卡帧；所有文件均校验，含小文件）
+                else
                 {
                     try
                     {
@@ -137,10 +137,10 @@ public abstract class ProcedureUpdateBase : ProcedureBase
     /// 先加载 Config 类型（Luban/本地化），再加载 Resource 类型（场景/贴图）。
     /// 加载前大小校验，对大文件做 SHA256 重校验。
     /// </summary>
-    protected async Task LoadDownloadedPacksAsync(PackVersionList version)
+    protected Task<int> LoadDownloadedPacksAsync(PackVersionList version)
     {
         if (version?.Packs == null || version.Packs.Length == 0)
-            return;
+            return Task.FromResult(0);
 
         // 先 Config 后 Resource，确保场景加载时配置已就绪
         var ordered = version.Packs
@@ -162,7 +162,7 @@ public abstract class ProcedureUpdateBase : ProcedureBase
                 continue;
             }
 
-            // 大小校验
+            // 大小校验（完整性已由 VerifyLocalPackIntegrityAsync 全量 SHA256 保证，此处避免重复哈希）
             var fileInfo = new FileInfo(packPath);
             if (fileInfo.Length != pack.Size)
             {
@@ -172,29 +172,6 @@ public abstract class ProcedureUpdateBase : ProcedureBase
                     Log.Warning("[ProcedureUpdate] 无法删除损坏文件（可能被占用）: {0}", packPath);
                 failed++;
                 continue;
-            }
-
-            // 对大文件做 SHA256 重校验（线程池执行，防御磁盘静默损坏）
-            if (fileInfo.Length > 1024 * 1024)
-            {
-                try
-                {
-                    string actualHash = await Task.Run(() => NodeUtility.ComputeSHA256(packPath));
-                    if (!string.Equals(actualHash, pack.Hash, StringComparison.OrdinalIgnoreCase))
-                    {
-                        Log.Warning("[ProcedureUpdate] SHA256 重校验失败，文件可能损坏: {0}", pack.Name);
-                        if (!EasySave.TryDelete(packPath))
-                            Log.Warning("[ProcedureUpdate] 无法删除损坏文件（可能被占用）: {0}", packPath);
-                        failed++;
-                        continue;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning("[ProcedureUpdate] SHA256 计算失败: {0} — {1}", pack.Name, ex.Message);
-                    failed++;
-                    continue;
-                }
             }
 
             // 加载
@@ -222,6 +199,8 @@ public abstract class ProcedureUpdateBase : ProcedureBase
 
         Log.Info("[ProcedureUpdate] 子包加载完成: {0}/{1} (失败: {2})",
             loaded, version.Packs.Length, failed);
+
+        return Task.FromResult(failed);
     }
 
     /// <summary>清理磁盘上不在版本清单中的废弃 .pck 文件。</summary>
@@ -251,26 +230,10 @@ public abstract class ProcedureUpdateBase : ProcedureBase
         }
     }
 
-    /// <summary>回退版本文件到备份。</summary>
+    /// <summary>回退版本文件到备份（委托 HotUpdateSafetyGuard 公共逻辑，避免两处重复）。</summary>
     protected void RollbackVersionFile()
     {
-        try
-        {
-            string versionPath = Path.Combine(
-                ProjectSettings.GlobalizePath("user://"), ResourceManager.GameFrameworkVersionData);
-            string backupPath = versionPath + ".bak";
-
-            if (File.Exists(backupPath))
-            {
-                EasySave.TryDelete(versionPath);
-                File.Move(backupPath, versionPath);
-                Log.Info("[ProcedureUpdate] 已自动回退到上一版本。");
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Error("[ProcedureUpdate] 版本回退失败: {0}", ex.Message);
-        }
+        HotUpdateSafetyGuard.RestoreVersionFileFromBackup();
     }
 
     /// <summary>

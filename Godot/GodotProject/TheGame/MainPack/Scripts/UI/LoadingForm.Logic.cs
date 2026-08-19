@@ -158,7 +158,7 @@ namespace GameLogic
 					.SetTrans(Tween.TransitionType.Quad)
 					.SetEase(Tween.EaseType.Out);
 				if (m_State != null)
-					m_State.Text = logState + $" {clamped:F0}%" ?? "";
+					m_State.Text = $"{logState} {clamped:F0}%";
 			}
 		}
 

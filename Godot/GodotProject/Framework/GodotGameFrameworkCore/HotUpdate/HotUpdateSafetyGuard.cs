@@ -44,6 +44,31 @@ namespace GodotGameFramework.HotUpdate
         }
 
         /// <summary>
+        /// 从备份恢复版本文件（.bak → GameFrameworkVersion.dat）。
+        /// 存在备份并恢复成功返回 true；无备份或失败返回 false。
+        /// </summary>
+        public static bool RestoreVersionFileFromBackup()
+        {
+            try
+            {
+                string versionPath = Path.Combine(UserDir, ResourceManager.GameFrameworkVersionData);
+                string backupPath = versionPath + ".bak";
+                if (!File.Exists(backupPath))
+                    return false;
+
+                TryDelete(versionPath);
+                File.Move(backupPath, versionPath);
+                Log.Info("[HotUpdateSafety] 已回退版本文件到上一版本。");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("[HotUpdateSafety] 版本回退失败: {0}", ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 进入安全模式：清除崩溃标记，回退版本文件，跳过本次热更。
         /// </summary>
         public static void EnterSafeMode()
@@ -53,20 +78,10 @@ namespace GodotGameFramework.HotUpdate
                 // 清除崩溃标记
                 TryDelete(LockPath);
 
-                // 回退版本文件到备份
-                string versionPath = Path.Combine(UserDir, ResourceManager.GameFrameworkVersionData);
-                string backupPath = versionPath + ".bak";
-
-                if (File.Exists(backupPath))
+                // 回退版本文件到备份；无备份则清除版本文件，使用内置版本
+                if (!RestoreVersionFileFromBackup())
                 {
-                    TryDelete(versionPath);
-                    File.Move(backupPath, versionPath);
-                    Log.Info("[HotUpdateSafety] 已回退版本文件到上一版本。");
-                }
-                else
-                {
-                    // 没有备份 → 直接删掉版本文件，使用内置版本
-                    TryDelete(versionPath);
+                    TryDelete(Path.Combine(UserDir, ResourceManager.GameFrameworkVersionData));
                     Log.Info("[HotUpdateSafety] 无备份，已清除版本文件，使用内置版本。");
                 }
             }

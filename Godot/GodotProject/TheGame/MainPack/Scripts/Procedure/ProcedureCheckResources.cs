@@ -78,7 +78,7 @@ public class ProcedureCheckResources : ProcedureUpdateBase
         }
 
         // ── 4. 磁盘空间预检 ──
-        long totalSize = toDownload.Sum(x => x.Pack.Size);
+        long totalSize = HotUpdateContext.ToDownloadTotalSize = toDownload.Sum(x => x.Pack.Size);
         long freeSpace = NodeUtility.GetFreeDiskSpace(SubpackDir);
         if (freeSpace > 0 && freeSpace < totalSize * 2)
         {

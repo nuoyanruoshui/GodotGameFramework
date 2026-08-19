@@ -49,7 +49,7 @@ public class ProcedureUpdateResources : ProcedureUpdateBase
             return;
         }
 
-        long totalSize = toDownload.Sum(x => x.Pack.Size);
+        long totalSize = HotUpdateContext.ToDownloadTotalSize;
         Log.Info("[ProcedureUpdate] 共 {0} 个包需要更新，总计 {1}，开始下载...",
             toDownload.Count, StringExtension.FormatBytes(totalSize));
 
@@ -87,9 +87,29 @@ public class ProcedureUpdateResources : ProcedureUpdateBase
         HotUpdateContext.LoadingForm?.SetLogState("加载资源...", 95);
         HotUpdateSafetyGuard.MarkStartupBegin();
 
-        await LoadDownloadedPacksAsync(serverVersion);
+        int failedCount = await LoadDownloadedPacksAsync(serverVersion);
 
-        // ── 4. 只要发生了下载，就刷新本地数据 ──
+        // ── 4. 部分加载失败 → 回退已生效，不得保存新版本，阻塞提示 ──
+        // LoadDownloadedPacksAsync 内部失败时会 RollbackVersionFile（.bak 恢复旧版本），
+        // 这里必须跳过保存 serverVersion，否则回退被覆盖 → 下次启动仍缺包重下。
+        if (failedCount > 0)
+        {
+            Log.Warning("[ProcedureUpdate] {0} 个子包加载失败，本次更新未生效（版本文件已回退）。", failedCount);
+            bool retry = await ShowForceUpdateDialogAsync(
+                $"{failedCount} 个子包加载失败，本次更新未生效。\n请重试或退出游戏。");
+            if (retry)
+            {
+                // 重试整个更新流程
+                HotUpdateContext.CloseLoadingForm();
+                ChangeState<ProcedureUpdateVersion>(procedureOwner);
+                return;
+            }
+            MarkSuccessAndCloseLoading();
+            GameEntry.Shutdown(ShutdownType.Quit);
+            return;
+        }
+
+        // ── 5. 全部加载成功 → 刷新本地数据 ──
         // 不能只在"版本号变化"时保存：若服务端版本号没变但 .pck 哈希变了
         // （如重新导出过包），重启后完整性校验会拿旧哈希比对磁盘新文件 → 判定损坏
         // → 反复重下 + 反复弹"是否重启"，形成死循环。

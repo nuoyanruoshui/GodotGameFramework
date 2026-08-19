@@ -32,6 +32,9 @@ public static class HotUpdateContext
     /// <summary>待下载包列表（ProcedureCheckResources 差量计算写入，ProcedureUpdateResources 消费）。</summary>
     public static List<(Pack Pack, string Url)> ToDownload { get; set; }
 
+    /// <summary>待下载总字节数（CheckResources 磁盘预检时计算，UpdateResources 日志复用，避免重复 Sum）。</summary>
+    public static long ToDownloadTotalSize { get; set; }
+
     private static string m_SubpackDir;
 
     /// <summary>热更补丁存储目录（首次访问时探测并缓存）。</summary>
