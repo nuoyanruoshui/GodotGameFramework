@@ -1,138 +1,42 @@
 # Available Skills (Slash Commands)
 
-73 slash commands organized by phase. Type `/` in Claude Code to access any of them.
+16 project skills organized by purpose. Type `/` in Claude Code to access any of them.
 
-## Onboarding & Navigation
+> 游戏生产流水线技能（GDD/故事/冲刺/QA/发布/团队编排，共 61 个）已归档到 `.claude/skills-archived/`（2026-08）——GGF 项目当前为 Technical Setup 阶段、无对应生产工件。需要时移回 `.claude/skills/` 即可恢复，见 `.claude/skills-archived/README.md`。
+> 另外 Claude Code 内置了若干通用命令，始终可用且不在下方列表：`/code-review`（审查当前 diff）、`/security-review`、`/verify`、`/simplify`、`/init`、`/review`、`/loop`、`/deep-research` 等。
+
+## 入门与导航
 
 | Command | Purpose |
 |---------|---------|
 | `/start` | First-time onboarding — asks where you are, then guides you to the right workflow |
 | `/help` | Context-aware "what do I do next?" — reads current stage and surfaces the required next step |
 | `/project-stage-detect` | Full project audit — detect phase, identify existence gaps, recommend next steps |
-| `/setup-engine` | Configure engine + version, detect knowledge gaps, populate version-aware reference docs |
-| `/adopt` | Brownfield format audit — checks internal structure of existing GDDs/ADRs/stories, produces migration plan |
 
-## Game Design
+## 思考与审查
 
 | Command | Purpose |
 |---------|---------|
-| `/brainstorm` | Guided ideation using professional studio methods (MDA, SDT, Bartle, verb-first) |
-| `/map-systems` | Decompose game concept into systems, map dependencies, prioritize design order |
-| `/design-system` | Guided, section-by-section GDD authoring for a single game system |
-| `/quick-design` | Lightweight design spec for small changes — tuning, tweaks, minor additions |
-| `/review-all-gdds` | Cross-GDD consistency and game design holism review across all design docs |
-| `/propagate-design-change` | When a GDD is revised, find affected ADRs and produce an impact report |
-
-## Art & Assets
-
-| Command | Purpose |
-|---------|---------|
-| `/art-bible` | Guided, section-by-section Art Bible authoring — creates visual identity spec before asset production begins |
-| `/asset-spec` | Generate per-asset visual specifications and AI generation prompts from GDDs, level docs, or character profiles |
-| `/asset-audit` | Audit assets for naming conventions, file size budgets, and pipeline compliance |
-
-## UX & Interface Design
-
-| Command | Purpose |
-|---------|---------|
-| `/ux-design` | Guided section-by-section UX spec authoring (screen/flow, HUD, or pattern library) |
-| `/ux-review` | Validate UX specs for GDD alignment, accessibility, and pattern compliance |
-
-## Architecture
-
-| Command | Purpose |
-|---------|---------|
-| `/create-architecture` | Guided authoring of the master architecture document |
-| `/architecture-decision` | Create an Architecture Decision Record (ADR) |
-| `/architecture-review` | Validate all ADRs for completeness, dependency ordering, and GDD coverage |
-| `/create-control-manifest` | Generate flat programmer rules sheet from accepted ADRs |
-
-## Stories & Sprints
-
-| Command | Purpose |
-|---------|---------|
-| `/create-epics` | Translate GDDs + ADRs into epics — one per architectural module |
-| `/create-stories` | Break a single epic into implementable story files |
-| `/dev-story` | Read a story and implement it — routes to the correct programmer agent |
-| `/sprint-plan` | Generate or update a sprint plan; initializes sprint-status.yaml |
-| `/sprint-status` | Fast 30-line sprint snapshot (reads sprint-status.yaml) |
-| `/story-readiness` | Validate a story is implementation-ready before pickup (READY/NEEDS WORK/BLOCKED) |
-| `/story-done` | 8-phase completion review after implementation; updates story file, surfaces next story |
-| `/estimate` | Structured effort estimate with complexity, dependencies, and risk breakdown |
-
-## Reviews & Analysis
-
-| Command | Purpose |
-|---------|---------|
-| `/design-review` | Review a game design document for completeness and consistency |
-| `/code-review` | Architectural code review for a file or changeset |
-| `/balance-check` | Analyze game balance data, formulas, and config — flag outliers |
-| `/content-audit` | Audit GDD-specified content counts against implemented content |
-| `/scope-check` | Analyze feature or sprint scope against original plan, flag scope creep |
+| `/caveman` | 原始人思维 — strip all abstraction and jargon, explain from zero in concrete terms |
+| `/grill-me` | 深度追问 — Socratic stress-test of an idea/proposal: find holes, weak links, unverified assumptions |
+| `/grill-with-docs` | Deep code review backed by project docs (docs/, CLAUDE.md, ADR) — domain fidelity, architecture consistency, seams, leaks |
+| `/improve-codebase-architecture` | Deepen analysis — find shallow modules, propose seam/depth refactors, HTML report + Q&A loop |
+| `/security-audit` | 安全审计 — save tampering, cheat vectors, network exploits, data exposure, input validation |
 | `/perf-profile` | Structured performance profiling with bottleneck identification |
 | `/tech-debt` | Scan, track, prioritize, and report on technical debt |
-| `/gate-check` | Validate readiness to advance between development phases (PASS/CONCERNS/FAIL) |
-| `/consistency-check` | Scan all GDDs against the entity registry to detect cross-document inconsistencies (stats, names, rules that contradict each other) |
-| `/security-audit` | Audit the game for security vulnerabilities: save tampering, cheat vectors, network exploits, data exposure, and input validation gaps |
+| `/reverse-document` | Generate design/architecture docs from existing implementation (works backwards from code) |
 
-## QA & Testing
+## 配置与数据管线
 
 | Command | Purpose |
 |---------|---------|
-| `/qa-plan` | Generate a QA test plan for a sprint or feature |
-| `/smoke-check` | Run critical path smoke test gate before QA hand-off |
-| `/soak-test` | Generate a soak test protocol for extended play sessions |
-| `/regression-suite` | Map test coverage to GDD critical paths, identify fixed bugs without regression tests |
-| `/test-setup` | Scaffold the test framework and CI/CD pipeline for the project's engine |
-| `/test-helpers` | Generate engine-specific test helper libraries for the test suite |
-| `/test-evidence-review` | Quality review of test files and manual evidence documents |
-| `/test-flakiness` | Detect non-deterministic (flaky) tests from CI run logs |
-| `/skill-test` | Validate skill files for structural compliance and behavioral correctness |
-| `/skill-improve` | Improve a skill using a test-fix-retest loop — diagnose, propose fix, rewrite, verify |
-
-## Production
-
-| Command | Purpose |
-|---------|---------|
-| `/milestone-review` | Review milestone progress and generate status report |
-| `/retrospective` | Run a structured sprint or milestone retrospective |
-| `/bug-report` | Create a structured bug report |
-| `/bug-triage` | Read all open bugs, re-evaluate priority vs. severity, assign owner and label |
-| `/reverse-document` | Generate design or architecture docs from existing implementation |
-| `/playtest-report` | Generate a structured playtest report or analyze existing playtest notes |
-
-## Release
-
-| Command | Purpose |
-|---------|---------|
-| `/release-checklist` | Generate and validate a pre-release checklist for the current build |
-| `/launch-checklist` | Complete launch readiness validation across all departments |
-| `/changelog` | Auto-generate changelog from git commits and sprint data |
-| `/patch-notes` | Generate player-facing patch notes from git history and internal data |
-| `/hotfix` | Emergency fix workflow with audit trail, bypassing normal sprint process |
-| `/day-one-patch` | Prepare a focused day-one patch for known issues discovered after gold master but before or at public launch |
-
-## Creative & Content
-
-| Command | Purpose |
-|---------|---------|
-| `/prototype` | Concept prototype — throwaway build right after brainstorm to validate core idea (Phase 1) |
-| `/vertical-slice` | Pre-Production validation — production-quality end-to-end build before committing to Production (Phase 4) |
-| `/onboard` | Generate contextual onboarding document for a new contributor or agent |
+| `/luban-dev` | Luban 配置全栈工具 — Excel 表/枚举/Bean CRUD（luban_helper.py）、导表生成代码与二进制、GGF 集成（ConfigSystem 懒加载）、Schema/校验器 |
 | `/localize` | Localization workflow: string extraction, validation, translation readiness |
 
-## Team Orchestration
+## 工程环境与元技能
 
-Coordinate multiple agents on a single feature area:
-
-| Command | Coordinates |
-|---------|-------------|
-| `/team-combat` | game-designer + gameplay-programmer + ai-programmer + technical-artist + sound-designer + qa-tester |
-| `/team-narrative` | narrative-director + writer + world-builder + level-designer |
-| `/team-ui` | ux-designer + ui-programmer + art-director + accessibility-specialist |
-| `/team-release` | release-manager + qa-lead + devops-engineer + producer |
-| `/team-polish` | performance-analyst + technical-artist + sound-designer + qa-tester |
-| `/team-audio` | audio-director + sound-designer + technical-artist + gameplay-programmer |
-| `/team-level` | level-designer + narrative-director + world-builder + art-director + systems-designer + qa-tester |
-| `/team-live-ops` | live-ops-designer + economy-designer + community-manager + analytics-engineer |
-| `/team-qa` | qa-lead + qa-tester + gameplay-programmer + producer |
+| Command | Purpose |
+|---------|---------|
+| `/setup-engine` | Configure engine + version, detect knowledge gaps, populate version-aware reference docs（GGF 已完成 Godot 4.7 锁定） |
+| `/skill-test` | Validate skill files for structural compliance and behavioral correctness |
+| `/skill-improve` | Improve a skill using a test-fix-retest loop — diagnose, propose fix, rewrite, verify |

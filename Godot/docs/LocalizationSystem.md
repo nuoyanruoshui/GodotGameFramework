@@ -130,7 +130,7 @@ GF.Base.EnableEditorResLoad
   6. `GF.Setting.SetInt("Language", (int)value)` + `GF.Setting.Save()` —— 持久化语言选择到 `user://Settings.cfg`
 
 - **字典文件名要求**：`GameFolderConstant.LocalizationPath` 指定文件夹（`res://TheGame/DataTables/Localizations/`），`LocalizationFiles` 为模板 `"res://TheGame/DataTables/Localizations/{0}.txt"`，其中 `{0}` = `value.ToString()`，即字典文件名必须与 Language 枚举名一致（`ChineseSimplified.txt`、`English.txt` 等）。
-- **`GetLocalizationFileNames()` 方法**：扫描 `LocalizationPath` 文件夹下所有 `.txt` 文件，返回不含扩展名的文件名数组（大小写与磁盘实际一致）。用于 UI（如 SettingForm）动态生成语言下拉列表。
+- **`GetLocalizationFileNames()` 方法**：扫描 `LocalizationPath` 文件夹下所有 `.txt` 文件，返回不含扩展名的文件名数组（按名称排序）。用于 UI（如 SettingForm）动态生成语言下拉列表。**实现走 `DirAccess` 而非 `System.IO.Directory`**（2026-08 修复）：打包后 `res://` 位于 `.pck` 虚拟文件系统内，`System.IO` 磁盘扫描读不到，只有 `DirAccess` 能跨编辑器 / 主包 / 已加载子包枚举。
 - **Language<->locale 映射**：硬编码在 `LocalizationHelperBase.GetLocaleByLanguage()` / `GetLanguageByLocale()` 中（覆盖 GF 全量 51 种语言，未命中回退 `en`）。
 - **运行时切换语言**：只需一行 `GF.Localization.Language = Language.English;` —— setter 自动完成清理旧字典、加载新字典、广播事件、持久化等全部操作。**无需手动调用 `RemoveAllRawStrings` / `ReadData` / `Save`**。
 

@@ -47,7 +47,7 @@ Use the Task tool to spawn each team member as a subagent:
 - `subagent_type: ux-designer` — User flows, wireframes, accessibility, input handling
 - `subagent_type: ui-programmer` — UI framework, screens, widgets, data binding
 - `subagent_type: art-director` — Visual style, layout polish, art bible consistency
-- `subagent_type: [UI engine specialist]` — Engine-specific UI pattern validation (e.g., unity-ui-specialist, ue-umg-specialist, godot-specialist)
+- `subagent_type: [UI engine specialist]` — Engine-specific UI pattern validation (本项目仅 Godot：`godot-specialist`；`unity-ui-specialist`/`ue-umg-specialist` 等已随引擎特化 agent 于 2026-07 移除)
 - `subagent_type: accessibility-specialist` — Accessibility compliance audit
 
 Always provide full context in each agent's prompt (feature requirements, existing UI patterns, platform targets). Launch independent agents in parallel where the pipeline allows it (e.g., Phase 4 review agents can run simultaneously).

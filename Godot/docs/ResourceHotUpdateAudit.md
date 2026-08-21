@@ -25,6 +25,7 @@
 | 1.2 | 🟡 | ✅ **已修复 (2026-07)** — `VersionFetchTimeoutSeconds` 为每次版本清单请求设置 10s 独立超时（原全局 30s）。原问题：单次请求没有独立超时，3 次重试 × 30s = 90s 才失败，对用户来说像卡死。 | 弱网下 10s 超时，3 次重试共 30s | `ProcedureUpdate.cs` |
 | 1.3 | 🟢 | ✅ **已修复 (2026-07)** — `LoadingForm` 打开失败路径加入 `try-catch`，异常时显示错误提示并通过 userData 传递错误上下文。原问题：LoadingForm 打开失败时用户看到黑屏无任何提示。 | LoadingForm 失败 → 用户看到错误提示 | `ProcedureUpdate:151` |
 | 1.4 | 🟢 | 🔶 **部分修复 (2026-07)** — `Pack.IsValid()` 已校验 `Name` 非空 + `Size > 0`，比对/下载/加载全链路过滤无效包；✅ `Pack.IsValid()` 已校验 Hash 非空 + 64 字符（2026-07）。空 Hash / 无效 Hash 的包在全链路被过滤。 | 服务器配无效 Hash → 被过滤 | `PackVersionList:83-84` |
+| 1.5 | 🔴 | ✅ **已修复 (2026-08)** — 版本文件保存条件放宽：**只要发生了下载就保存新清单**（原仅在"版本号变化"时保存，且 `MarkStartupSuccess` 依赖用户点击重启/退出回调）。原问题：服务端版本号未变但 `.pck` 哈希已变（重新导出过包）时，重启后完整性自检拿旧哈希比对新文件 → 判定损坏 → 反复重下 + 反复弹"是否重启"，形成死循环。 | 版本号未变+哈希变化 → 不再反复重下 | `ProcedureUpdate.cs`（保存逻辑 + `finally` 统一 `MarkStartupSuccess`） |
 
 ---
 

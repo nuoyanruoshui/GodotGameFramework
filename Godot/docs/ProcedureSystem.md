@@ -146,9 +146,9 @@ procedureOwner.RemoveData("NextSceneId");                 // 用完移除（自�
 - Package 模式（非 EditorResLoad）→ 调用 `TryLoadLocalSubpackagesAsync()` 读取 `SubpackDir` 下的 `GameFrameworkVersion.dat` 清单加载本地子包，然后进入下一流程；
 - 上次启动崩溃（`HotUpdateSafetyGuard` 安全模式）→ 直接 `ChangeState<ProcedurePrelode>`；
 - 未配置 `RemoteUrl` → 校验并加载本地已下载子包后进入下一流程；
-- 正常路径：拉取远端 `GameFrameworkVersion.dat` → `MinAppVersion` 检查 → 本地完整性自检 → 差量比对 → 磁盘空间预检 → `GF.Download` 并发下载（每包重试 3 次、指数退避）→ `LoadResourcePack` 加载子包 → 保存新清单；
+- 正常路径：拉取远端 `GameFrameworkVersion.dat` → `MinAppVersion` 检查 → 本地完整性自检 → 差量比对 → 磁盘空间预检 → `GF.Download` 并发下载（每包重试 3 次、指数退避）→ `LoadResourcePack` 加载子包 → 保存新清单（**只要有下载就保存**，不依赖版本号变化，防止"版本号未变但哈希已变"导致的反复重下死循环，2026-08 修复）；
 - 热更目录 `SubpackDir` 优先级：`UpdateSettingRes.HotUpdatePath` → 安装目录 `subpackages/`（可写时）→ `user://subpackages/`；
-- 字段 `LoadingForm m_loadingForm`（打开后经 `SetLogState(message, progress)` 更新进度条与状态文本）；异步加载流程在 `finally` 块中关闭 LoadingForm；
+- 字段 `LoadingForm m_loadingForm`（打开后经 `SetLogState(message, progress)` 更新进度条与状态文本）；异步加载流程在 `finally` 块中关闭 LoadingForm，`HotUpdateSafetyGuard.MarkStartupSuccess()` 也在 `finally` 统一标记（不再依赖用户点击重启/退出回调）；
 - 任何异常都降级 `SkipToNext` → `ProcedurePrelode`（保证能进游戏）。
 
 ### 4.3 ProcedurePrelode（预载）

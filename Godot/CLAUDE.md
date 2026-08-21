@@ -44,7 +44,7 @@ GodotProject/
       DataNode/ Setting/ Localization/
       Event/ Fsm/ Procedure/ ObjectPool/          ← ObjectPool 含 ReferencePoolComponent（引用池严格检查策略）
       Debugger/                     ← UGF 风格运行时调试器（FPS 图标 + Console/Information/Profiler/Other 页签）
-      Archive/                      ← ArchiveSystem<T,U> 通用存档系统（Catalogue + Data 分离）
+      Archive/                      ← ArchiveSystem<T,U> 通用存档系统（Catalogue + Data 分离）+ Rijindael（AES-256 加密，由 ArchiveSetting 配置）
       Config/ Variable/             ← GameFolderConstant, VarInt32/VarString/VarBoolean/VarSingle
       Json/                         ← Newtonsoft.Json helper (local .dll reference) + EasySave
       Lib/LubanLib/                 ← Luban runtime (ByteBuf, BeanBase, StringUtil)
@@ -133,7 +133,7 @@ GF.Setting / GF.Scene / GF.WebRequest / GF.Download / GF.Debugger
 GF.Archive   // 共 16 个组件 + 1 个存档管理器
 ```
 
-Each property calls `GameEntry.GetComponent<T>()` and caches the result. `GF.Archive` is an exception: it's an `ArchiveSystem<GameCatalogue, GameData>` lazily created via `new()` rather than looked up from the component registry.
+Each property calls `GameEntry.GetComponent<T>()` and caches the result. `GF.Archive` is an exception: it's an `ArchiveSystem<GameCatalogue, GameData>` lazily created via `new()` rather than looked up from the component registry. 存档目录名/加密开关/密钥盐由 `ArchiveSetting.tres`（`TheGame/MainPack/Resources/`）驱动，可经 `Rijindael` 做 AES-256 加密（详见 `docs/ArchiveSystem.md`）。
 
 ## Key Patterns
 
@@ -150,7 +150,7 @@ CharacterBody2D (Godot)                  Area2D (Godot)                    Node2
   ActorData (Hp/MaxHp), EntityTeam, PhysicsCheck2D, Die()
 ```
 
-Entity spawning via `GF.Entity.ShowEntity<T>(EntityId.Xxx)` or `ShowEntityAsync<T>(EntityId.Xxx, userData)` — config-driven from `TbEntityConfig`.
+Entity spawning via `GF.Entity.ShowEntity<T>(EntityId.Xxx)` or `ShowEntityAsync<T>(EntityId.Xxx, userData)` — config-driven from `TbEntityConfig`. `DefaultEntityHelper` 会在 AddChild 后对 `CanvasItem` 实体调用 `MoveToFront()`（同样 `DefaultUIFormHelper` 生成 UIForm 后 `MoveToFront()`，保证新开窗口/实体置顶）。
 
 **CatEntity FSM example:** `CatEntity` creates a nested `Fsm<CatEntity>` in `OnInit` with `IdleState`/`MoveState : FsmState<CatEntity>` classes. `m_Fsm.Start<IdleState>()` in `OnShow`. States switch based on the public `m_IsMoving` flag. `Anim` (`AnimatedSprite2D`) is declared in the `ActorEntity` base class, shared by `CatEntity` and `AngerEntity`.
 
@@ -262,13 +262,13 @@ UGF-style runtime debugger (`GF.Debugger`): draggable FPS icon (click to expand)
 
 ### Localization
 
-`LocalizationComponent.Language` setter now (on change): sets manager language, sets `TranslationServer.Locale`, calls `RemoveAllRawStrings()`, reloads data, fires `OnLanagueChangeEventArgs`, persists via `GF.Setting.SetInt("Language", ...)` + `GF.Setting.Save()`. New `GetLocalizationFileNames()` returns `.txt` file names from `GameFolderConstant.LocalizationPath`.
+`LocalizationComponent.Language` setter now (on change): sets manager language, sets `TranslationServer.Locale`, calls `RemoveAllRawStrings()`, reloads data, fires `OnLanagueChangeEventArgs`, persists via `GF.Setting.SetInt("Language", ...)` + `GF.Setting.Save()`. New `GetLocalizationFileNames()` returns `.txt` file names from `GameFolderConstant.LocalizationPath`（经 `DirAccess` 扫描，兼容打包后的 `.pck` 虚拟文件系统；结果按名称排序）.
 
 `LabelTr`/`ButtonTr` implement `IStringKey` and auto-subscribe to `OnLanagueChangeEventArgs` in `_Ready` / `_ExitTree` for live text updates on language switch.
 
 ## Component Inspector Addon
 
-`addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `ProcedureComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, `SettingComponentInspectorPlugin`, `EntityComponentInspectorPlugin`, `UIComponentInspectorPlugin`, `SoundComponentInspectorPlugin`, `LocalizationComponentInspectorPlugin`, `DownloadComponentInspectorPlugin`, `WebRequestComponentInspectorPlugin`, `ResourceComponentInspectorPlugin`, `NodePoolInspectorPlugin`, and `ScriptGenerateInspector` — each providing custom property editors, dropdowns, and debug info in the Godot editor inspector panel.
+`addons/ComponentInsoector/` provides custom Godot Inspector plugins for the framework's component hierarchy. It registers `BaseComponentInspectorPlugin`, `ProcedureComponentInspectorPlugin`, `SceneComponentInspectorPlugin`, `SettingComponentInspectorPlugin`, `EntityComponentInspectorPlugin`, `UIComponentInspectorPlugin`, `SoundComponentInspectorPlugin`, `LocalizationComponentInspectorPlugin`, `DownloadComponentInspectorPlugin`, `WebRequestComponentInspectorPlugin`, `ResourceComponentInspectorPlugin`, `NodePoolInspectorPlugin`, `ArchiveSettingInspectorPlugin`, and `ScriptGenerateInspector` — each providing custom property editors, dropdowns, and debug info in the Godot editor inspector panel. `ArchiveSettingInspectorPlugin` 提供存档配置编辑：`EnableAesEncryption` 开关 + 密钥/盐字段显隐 + 随机盐生成按钮。
 
 ### UIForm / Entity Script Generation
 
@@ -327,6 +327,8 @@ Generated code: `TheGame/GameScripts/GameProto/GameConfig/` (e.g., `EntityConfig
 
 Config-driven usage: `GF.Entity.ShowEntity(EntityId.Cat)` → `TbEntityConfig` resolves the scene path.
 
+> 💡 **配表操作请使用 `/luban-dev` 技能** — 提供 Excel 表/枚举/Bean 的 CRUD 工具（`luban_helper.py`）、导表命令（`gen_code_bin_to_project_lazyload.bat/sh`）、Schema/校验器参考，并内置本项目的 GGF 集成约定（`ConfigSystem.Instance.Tables` 懒加载、`GameConfig` 命名空间、输出路径）。详见 `.claude/skills/luban-dev/`。
+
 ## Source Generators (Tools/) — Removed
 
 The `Tools/GameEventSourceGenerator/` Unity/TEngine Roslyn Source Generator project has been **removed** (2026-07). It was never referenced by `GodotProject.csproj` and was unrelated to GGF's event system.
@@ -379,7 +381,7 @@ Level granularity: `ENABLE_DEBUG_LOG / INFO / WARNING / ERROR / FATAL_LOG` and c
 
 ### Subpackage System (Updatable mode)
 
-`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, backed up before overwrite). Patch files are stored in `SubpackDir` (game-exe `subpackages/` folder or `user://subpackages/` fallback; formerly always `user://`). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Package mode skips local subpackage detection when `BaseComponent.EnableEditorResLoad` is true. Audit trail: `docs/ResourceHotUpdateAudit.md`. C# 程序集热更（`docs/CodeHotUpdateDesign.md`）已搁置等待华佗团队 Godot 适配。
+`ProcedureUpdate` downloads `.pck` subpackages via `GF.Download` (concurrent, resumable, SHA256-verified — see `docs/DownloadSystem.md`), then loads them via `ProjectSettings.LoadResourcePack()` and persists the manifest (`GameFrameworkVersion.dat`, 旧版先备份为 `.bak`)。**版本文件保存条件已放宽**：只要发生了下载就刷新本地清单（不再仅在版本号变化时保存），避免服务端版本号未变但 `.pck` 哈希已变（重新导出）时，重启后完整性校验拿旧哈希比对新文件 → 判定损坏 → 反复重下 + 反复弹"是否重启"的死循环。`HotUpdateSafetyGuard.MarkStartupSuccess()` 在 `finally` 中统一标记（不再只依赖用户点击重启/退出回调）。Patch files are stored in `SubpackDir` (game-exe `subpackages/` folder or `user://subpackages/` fallback; formerly always `user://`). Crash-safety via `HotUpdateSafetyGuard` (skip patches after a crashed launch). Package mode skips local subpackage detection when `BaseComponent.EnableEditorResLoad` is true. Audit trail: `docs/ResourceHotUpdateAudit.md`. C# 程序集热更（`docs/CodeHotUpdateDesign.md`）已搁置等待华佗团队 Godot 适配。
 
 `PackVersionList` structure (`PackVersionList.cs`):
 ```csharp
@@ -424,3 +426,4 @@ dotnet build                              # Daily development build
 - **MCP**: CodeGraph (`@colbymchenry/codegraph`) in `.mcp.json` — provides code intelligence via SQLite knowledge graph of all symbols/edges/files
 - **Hooks**: SessionStart, PreToolUse (Bash validation), PostToolUse (Write/Edit validation), Notification, PreCompact/PostCompact, Stop, SubagentStart/SubagentStop
 - **Agent definitions**: `.claude/agents/` — specialized agents (godot-csharp-specialist, godot-specialist, gameplay-programmer, etc.) for targeted sub-tasks. Engine-specific agents (unity-*, ue-*, unreal-*) have been removed (2026-07).
+- **Skills** (`.claude/skills/`): **16 个活跃技能**（2026-08 精简）——思考/审查（`/caveman`、`/grill-me`、`/grill-with-docs`、`/improve-codebase-architecture`、`/security-audit`、`/perf-profile`、`/tech-debt`、`/reverse-document`）、配置管线（`/luban-dev`、`/localize`）、导航/元（`/start`、`/help`、`/project-stage-detect`、`/setup-engine`、`/skill-test`、`/skill-improve`）。游戏生产流水线技能（GDD/故事/冲刺/QA/发布/团队编排，61 个）已归档到 `.claude/skills-archived/`。完整索引见 `.claude/docs/skills-reference.md`。

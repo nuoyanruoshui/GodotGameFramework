@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="__root__">
+    <!-- 根模块，用于导入其他子模块 -->
+    <import name="item"/>
+</module>

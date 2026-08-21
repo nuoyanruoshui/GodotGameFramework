@@ -162,9 +162,9 @@ engine risk.
 
 | Engine | Specialist agents available |
 |--------|----------------------------|
-| Godot 4 | `godot-specialist`, `godot-gdscript-specialist`, `godot-shader-specialist` |
-| Unity | `unity-specialist`, `unity-ui-specialist`, `unity-shader-specialist` |
-| Unreal Engine | `unreal-specialist`, `ue-gas-specialist`, `ue-blueprint-specialist`, `ue-umg-specialist`, `ue-replication-specialist` |
+| Godot 4 | `godot-specialist`, `godot-gdscript-specialist`, `godot-gdextension-specialist`, `godot-shader-specialist` |
+
+> 其他引擎特化 agent（`unity-*`/`ue-*`/`unreal-*`）已按项目约定在 2026-07 移除，本项目仅 Godot。
 
 **When engine risk is HIGH** (from the ADR or VERSION.md): always spawn the engine
 specialist, even for non-engine-facing stories. High risk means the ADR records

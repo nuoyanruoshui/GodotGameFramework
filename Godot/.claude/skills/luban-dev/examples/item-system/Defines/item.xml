@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="item">
+
+    <!-- ============ 枚举定义 ============ -->
+
+    <enum name="EItemType" comment="物品类型">
+        <var name="Weapon" alias="武器" value="0"/>
+        <var name="Armor" alias="护甲" value="1"/>
+        <var name="Consumable" alias="消耗品" value="2"/>
+        <var name="Material" alias="材料" value="3"/>
+    </enum>
+
+    <enum name="EQuality" comment="品质">
+        <var name="White" alias="白" value="0"/>
+        <var name="Green" alias="绿" value="1"/>
+        <var name="Blue" alias="蓝" value="2"/>
+        <var name="Purple" alias="紫" value="3"/>
+        <var name="Gold" alias="金" value="4"/>
+    </enum>
+
+    <enum name="EEquipSlot" comment="装备槽位" flags="false">
+        <var name="None" alias="无" value="0"/>
+        <var name="MainHand" alias="主手" value="1"/>
+        <var name="OffHand" alias="副手" value="2"/>
+        <var name="Head" alias="头部" value="3"/>
+        <var name="Chest" alias="胸部" value="4"/>
+        <var name="Legs" alias="腿部" value="5"/>
+    </enum>
+
+    <!-- ============ 结构体定义 ============ -->
+
+    <bean name="ItemBase" comment="物品基础信息" sep=",">
+        <var name="id" type="string" comment="唯一ID"/>
+        <var name="name" type="string" comment="名称"/>
+        <var name="description" type="string" comment="描述"/>
+        <var name="type" type="EItemType" comment="物品类型"/>
+        <var name="quality" type="EQuality" comment="品质"/>
+        <var name="icon" type="string" comment="图标路径"/>
+        <var name="maxStack" type="int#range=[1,999]" comment="最大堆叠数量"/>
+        <var name="sellPrice" type="int#range=[0,)" comment="出售价格"/>
+    </bean>
+
+    <bean name="WeaponProperty" comment="武器属性" sep=",">
+        <var name="damageMin" type="int#range=[0,)" comment="最小伤害"/>
+        <var name="damageMax" type="int#range=[0,)" comment="最大伤害"/>
+        <var name="attackSpeed" type="float#range=(0,)" comment="攻击速度"/>
+        <var name="critRate" type="float#range=[0,1]" comment="暴击率"/>
+    </bean>
+
+    <bean name="ArmorProperty" comment="护甲属性" sep=",">
+        <var name="defense" type="int#range=[0,)" comment="防御值"/>
+        <var name="slot" type="EEquipSlot" comment="装备槽位"/>
+        <var name="durability" type="int#range=[1,)" comment="耐久度"/>
+    </bean>
+
+    <bean name="ConsumableEffect" comment="消耗品效果" sep=";">
+        <var name="effectType" type="string" comment="效果类型"/>
+        <var name="value" type="float" comment="效果数值"/>
+        <var name="duration" type="float#range=[0,)" comment="持续时间"/>
+    </bean>
+
+    <bean name="DropItem" comment="掉落项" sep=",">
+        <var name="itemId" type="string#ref=item.TbItem" comment="物品ID"/>
+        <var name="minCount" type="int#range=[1,)" comment="最小数量"/>
+        <var name="maxCount" type="int#range=[1,)" comment="最大数量"/>
+        <var name="weight" type="int#range=[0,)" comment="权重"/>
+    </bean>
+
+    <!-- 武器完整配置 -->
+    <bean name="WeaponCfg" comment="武器配置">
+        <var name="base" type="ItemBase" comment="基础信息"/>
+        <var name="properties" type="WeaponProperty" comment="武器属性"/>
+        <var name="requiredLevel" type="int#range=[1,)" comment="需求等级"/>
+    </bean>
+
+    <!-- 护甲完整配置 -->
+    <bean name="ArmorCfg" comment="护甲配置">
+        <var name="base" type="ItemBase" comment="基础信息"/>
+        <var name="properties" type="ArmorProperty" comment="护甲属性"/>
+        <var name="requiredLevel" type="int#range=[1,)" comment="需求等级"/>
+    </bean>
+
+    <!-- 消耗品完整配置 -->
+    <bean name="ConsumableCfg" comment="消耗品配置">
+        <var name="base" type="ItemBase" comment="基础信息"/>
+        <var name="effects" type="list,ConsumableEffect" comment="效果列表"/>
+        <var name="cooldown" type="float#range=[0,)" comment="冷却时间"/>
+    </bean>
+
+    <!-- ============ 表定义 ============ -->
+
+    <!-- 基础物品表 -->
+    <table name="TbItem" value="ItemBase"
+           input="item/Item.csv" mode="map" index="id"/>
+
+    <!-- 武器表 -->
+    <table name="TbWeapon" value="WeaponCfg"
+           input="item/Weapon.csv" mode="map" index="id"/>
+
+    <!-- 护甲表 -->
+    <table name="TbArmor" value="ArmorCfg"
+           input="item/Armor.csv" mode="map" index="id"/>
+
+    <!-- 消耗品表 -->
+    <table name="TbConsumable" value="ConsumableCfg"
+           input="item/Consumable.csv" mode="map" index="id"/>
+
+    <!-- 掉落表 (list 模式) -->
+    <table name="TbDropTable" value="DropItem"
+           input="drop/*.csv" mode="list"/>
+
+</module>

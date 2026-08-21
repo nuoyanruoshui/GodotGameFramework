@@ -1,0 +1,6 @@
+id,name,description,type,quality,icon,maxStack,sellPrice
+item_001,生命药水,恢复少量生命值,Consumable,White,icons/potion_red,99,10
+item_002,法力药水,恢复少量法力值,Consumable,White,icons/potion_blue,99,10
+item_003,铁剑,普通的铁制长剑,Weapon,White,icons/sword_iron,1,100
+item_004,钢甲,坚固的钢制护甲,Armor,Green,icons/armor_steel,1,250
+item_005,皮革,普通的皮革材料,Material,White,icons/leather,999,5
