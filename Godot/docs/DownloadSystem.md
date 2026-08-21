@@ -253,7 +253,9 @@ ProcedureLaunch → ProcedureUpdate → ProcedurePrelode → ProcedureGame
 | 4 | 与服务器清单比对（`FindPacksToUpdate`：新包 / Hash / Size 变化） | — |
 | 5 | 磁盘空间预检（需 2× 总大小） | 跳过下载 |
 | 6 | **并发下载**（见下） | 单包失败不影响其他包 |
-| 7 | `LoadResourcePack` 加载子包 → 保存新版本清单（旧清单先备份） | — |
+| 7 | `LoadResourcePack` 加载子包 → 保存新版本清单（旧清单先备份 `.bak`） | — |
+
+> **版本文件保存条件（2026-08 修复）**：步骤 7 现在**只要发生了下载就保存**新清单（不再仅在"版本号变化"时保存）。原因：若服务端版本号未变但 `.pck` 哈希已变（重新导出过包），重启后完整性自检会拿旧哈希比对新磁盘文件 → 判定损坏 → 反复重下 + 反复弹"是否重启"，形成死循环。改动见 `ProcedureUpdate.cs`。
 
 ### 5.1 并发下载与进度聚合
 

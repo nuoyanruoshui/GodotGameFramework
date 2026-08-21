@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="skill">
+
+    <!-- ============ 枚举定义 ============ -->
+
+    <enum name="ESkillType" comment="技能类型">
+        <var name="Active" alias="主动" value="0"/>
+        <var name="Passive" alias="被动" value="1"/>
+        <var name="Buff" alias="Buff" value="2"/>
+    </enum>
+
+    <enum name="EDamageType" comment="伤害类型">
+        <var name="Physical" alias="物理" value="0"/>
+        <var name="Fire" alias="火焰" value="1"/>
+        <var name="Ice" alias="冰霜" value="2"/>
+        <var name="Lightning" alias="闪电" value="3"/>
+    </enum>
+
+    <enum name="ETargetType" comment="目标类型">
+        <var name="Self" alias="自身" value="0"/>
+        <var name="Single" alias="单体" value="1"/>
+        <var name="Area" alias="范围" value="2"/>
+    </enum>
+
+    <!-- ============ 效果配置（多态） ============ -->
+
+    <!-- 基类：效果配置 -->
+    <bean name="EffectConfig" comment="效果配置" sep="," abstract="true">
+        <var name="type" type="string" comment="效果类型"/>
+    </bean>
+
+    <!-- 子类：伤害效果 -->
+    <bean name="DamageEffect" parent="EffectConfig" comment="伤害效果">
+        <var name="damage" type="int#range=[0,)" comment="伤害值"/>
+        <var name="damageType" type="EDamageType" comment="伤害类型"/>
+        <var name="isCrit" type="bool" comment="是否可暴击"/>
+    </bean>
+
+    <!-- 子类：治疗效果 -->
+    <bean name="HealEffect" parent="EffectConfig" comment="治疗效果">
+        <var name="amount" type="int#range=[0,)" comment="治疗量"/>
+        <var name="isPercent" type="bool" comment="是否百分比"/>
+    </bean>
+
+    <!-- 子类：Buff效果 -->
+    <bean name="BuffEffect" parent="EffectConfig" comment="Buff效果">
+        <var name="buffId" type="string" comment="Buff ID"/>
+        <var name="duration" type="float#range=[0,)" comment="持续时间"/>
+        <var name="stacks" type="int#range=[1,99]" comment="层数"/>
+    </bean>
+
+    <!-- 子类：位移效果 -->
+    <bean name="DashEffect" parent="EffectConfig" comment="位移效果">
+        <var name="distance" type="float#range=[0,)" comment="位移距离"/>
+        <var name="direction" type="string" comment="方向"/>
+    </bean>
+
+    <!-- ============ 技能配置 ============ -->
+
+    <bean name="SkillConfig" comment="技能配置">
+        <var name="id" type="string" comment="技能ID"/>
+        <var name="name" type="string" comment="名称"/>
+        <var name="description" type="string" comment="描述"/>
+        <var name="skillType" type="ESkillType" comment="技能类型"/>
+        <var name="targetType" type="ETargetType" comment="目标类型"/>
+        <var name="cooldown" type="float#range=[0,)" comment="冷却时间"/>
+        <var name="manaCost" type="int#range=[0,)" comment="法力消耗"/>
+        <var name="castTime" type="float#range=[0,)" comment="施法时间"/>
+        <var name="range" type="float#range=[0,)" comment="施法距离"/>
+        <var name="effects" type="list,EffectConfig" comment="效果列表"/>
+    </bean>
+
+    <!-- ============ 表定义 ============ -->
+
+    <table name="TbSkill" value="SkillConfig"
+           input="skill/Skill.json" mode="map" index="id"/>
+
+</module>

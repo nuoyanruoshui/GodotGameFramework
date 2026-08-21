@@ -33,7 +33,7 @@
 | [SceneSystem.md](SceneSystem.md) | 场景加载流程、实例挂载位置、LoadSceneMode（Single/Additive 双模式）、LoadSceneAsync、LoadSceneUpdate 进度事件、与 ResourceComponent 的关系 |
 | [ObjectPoolSystem.md](ObjectPoolSystem.md) | ObjectBase/IObjectPool 设计、四参数语义、与 ReferencePool 对照、NodePool 系统（IPoolable + GF.ObjectPool 懒加载） |
 | [NodePoolSystem.md](NodePoolSystem.md) | NodePool 通用节点池：IPoolable 接口、配置驱动注册、懒加载 Instantiate、孤儿节点设计、NodePoolInspectorPlugin 编辑器扫描 |
-| [ArchiveSystem.md](ArchiveSystem.md) | 通用存档系统：ArchiveSystem\<T,U\> 泛型设计、Catalogue/Data 分离模式、CRUD API、EasySave JSON 持久化、GameData 游戏侧定制 |
+| [ArchiveSystem.md](ArchiveSystem.md) | 通用存档系统：ArchiveSystem\<T,U\> 泛型设计、Catalogue/Data 分离模式、CRUD API、AES 存档加密（Rijindael + ArchiveSetting）、EasySave 持久化、GameData 游戏侧定制 |
 
 ## 网络与热更
 

@@ -1,0 +1,67 @@
+{
+    "skill_001": {
+        "id": "skill_001",
+        "name": "火球术",
+        "description": "发射一个火球造成伤害",
+        "skillType": "Active",
+        "targetType": "Single",
+        "cooldown": 3.0,
+        "manaCost": 20,
+        "castTime": 0.5,
+        "range": 10.0,
+        "effects": [
+            {
+                "$type": "DamageEffect",
+                "type": "DamageEffect",
+                "damage": 50,
+                "damageType": "Fire",
+                "isCrit": true
+            }
+        ]
+    },
+    "skill_002": {
+        "id": "skill_002",
+        "name": "治疗术",
+        "description": "恢复生命值",
+        "skillType": "Active",
+        "targetType": "Single",
+        "cooldown": 5.0,
+        "manaCost": 30,
+        "castTime": 1.0,
+        "range": 0.0,
+        "effects": [
+            {
+                "$type": "HealEffect",
+                "type": "HealEffect",
+                "amount": 100,
+                "isPercent": false
+            }
+        ]
+    },
+    "skill_003": {
+        "id": "skill_003",
+        "name": "冲锋",
+        "description": "向目标冲锋并造成伤害",
+        "skillType": "Active",
+        "targetType": "Single",
+        "cooldown": 8.0,
+        "manaCost": 15,
+        "castTime": 0.0,
+        "range": 15.0,
+        "effects": [
+            {
+                "$type": "DashEffect",
+                "type": "DashEffect",
+                "distance": 15.0,
+                "direction": "Target"
+            },
+            {
+                "$type": "DamageEffect",
+                "type": "DamageEffect",
+                "damage": 30,
+                "damageType": "Physical",
+                "isCrit": false
+            }
+        ]
+    }
+}

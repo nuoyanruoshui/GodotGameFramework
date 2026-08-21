@@ -27,7 +27,7 @@
 - 🔧 **编辑器插件** — 组件监视、UIForm/Entity 脚本生成器、子包可视化导出管理、资源路径常量生成、日志级别切换、本地化导出
 - 🧬 **单例模式** — 泛型 `SingletonNode<T>` 提供类型安全的 Godot 节点单例
 - 📦 **子包系统** — 基于 `.pck` 的资源子包管理，支持可视化导出、构建时自动打包、热更新下载 + SHA256 校验
-- 💾 **存档系统** — 通用 `ArchiveSystem<T,U>`（Catalogue + Data 分离），基于 EasySave JSON 持久化
+- 💾 **存档系统** — 通用 `ArchiveSystem<T,U>`（Catalogue + Data 分离），基于 EasySave JSON 持久化，支持 AES-256 加密（`Rijindael` + `ArchiveSetting` 配置）
 
 ---
 
@@ -179,7 +179,7 @@ CharacterBody2D + IEntity + IActor
 - ✅ **子包系统** — `Updatable` 模式下热更下载 `.pck` + `ProjectSettings.LoadResourcePack()` 加载
 - ✅ **版本清单** — `PackVersionList`（JSON）记录子包名称、大小、SHA256、MinAppVersion、ForceUpdate
 - ✅ **多模式** — `ResourceMode.Package`（仅主包）/ `Updatable`（热更管线，已实现）/ `UpdatableWhilePlaying`（未实现）
-- ✅ **EasySave** — JSON 持久化工具（`SaveInUserAsync<T>()` / `LoadFromUserAsync<T>()`），用于版本文件 + 存档
+- ✅ **EasySave** — JSON 持久化工具（`SaveInUserAsync<T>()` / `LoadFromUserAsync<T>()` + 加密重载），用于版本文件 + 存档
 
 ### Web 请求模块 (WebRequestComponent)
 
@@ -307,7 +307,7 @@ GodotProject/                    ← Godot 项目根
 │       ├── Base/                ← GF.cs 门面, GameEntry, GodotComponent, GameFrameworkComponent, Log
 │       ├── Entity/ UI/ Sound/   ← Godot 桥接组件 + DefaultHelper
 │       ├── Resource/            ← ResourceComponent, ResourceManager, PackVersionList, 加载任务
-│       ├── Archive/             ← ArchiveSystem<T,U> 通用存档系统
+│       ├── Archive/             ← ArchiveSystem<T,U> 通用存档系统 + Rijindael（AES-256）
 │       ├── HotUpdate/           ← HotUpdateSafetyGuard（崩溃安全热更）
 │       ├── Download/ WebRequest/
 │       ├── Event/ Fsm/ Procedure/ ObjectPool/
@@ -515,6 +515,8 @@ var allChars = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList
 ```
 
 ### 存档系统
+
+> 目录名 / 加密开关 / 密钥盐由 `ArchiveSetting.tres` 配置，勾选 `EnableAesEncryption` 后经 `Rijindael`（AES-256-CBC）加密存储。`LoadAsync()` 仅在存档文件**不存在**时新建；存在但读取失败（如密钥变更）时**拒绝覆盖**，防止吞档。
 
 ```csharp
 // 初始化（自动加载最新存档，不存在则创建）

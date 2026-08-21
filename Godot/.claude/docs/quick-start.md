@@ -1,5 +1,7 @@
 # Game Studio Agent Architecture -- Quick Start Guide
 
+> **⚠️ 项目状态（2026-08）**：GGF 是 Godot 框架移植项目，当前处于 **Technical Setup** 阶段，无 GDD/Epic/Story/冲刺等生产工件。**游戏生产流水线技能已归档**到 `.claude/skills-archived/`（61 个），下方流程中引用的 `/brainstorm` `/design-system` `/create-stories` `/sprint-plan` `/qa-plan` 等仅在这些技能恢复后才可用。当前**活跃**技能见 `.claude/docs/skills-reference.md`（16 个）。
+
 ## What Is This?
 
 This is a complete Claude Code agent architecture for game development. It
@@ -274,7 +276,8 @@ CLAUDE.md                          -- Master config (read this first, ~60 lines)
 .claude/
   settings.json                    -- Claude Code hooks and project settings
   agents/                          -- 49 agent definitions (YAML frontmatter)
-  skills/                          -- 73 slash command definitions (YAML frontmatter)
+  skills/                          -- 17 active skill definitions (YAML frontmatter)
+  skills-archived/                 -- 62 archived (game-production pipeline, incl. code-review)
   hooks/                           -- 12 hook scripts (.sh) wired by settings.json
   rules/                           -- 11 path-specific rule files
   docs/
