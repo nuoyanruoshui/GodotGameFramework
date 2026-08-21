@@ -1,9 +1,15 @@
 # Available Skills (Slash Commands)
 
-16 project skills organized by purpose. Type `/` in Claude Code to access any of them.
+17 project skills organized by purpose. Type `/` in Claude Code to access any of them.
 
 > 游戏生产流水线技能（GDD/故事/冲刺/QA/发布/团队编排，共 61 个）已归档到 `.claude/skills-archived/`（2026-08）——GGF 项目当前为 Technical Setup 阶段、无对应生产工件。需要时移回 `.claude/skills/` 即可恢复，见 `.claude/skills-archived/README.md`。
 > 另外 Claude Code 内置了若干通用命令，始终可用且不在下方列表：`/code-review`（审查当前 diff）、`/security-review`、`/verify`、`/simplify`、`/init`、`/review`、`/loop`、`/deep-research` 等。
+
+## GGF 开发
+
+| Command | Purpose |
+|---------|---------|
+| `/ggf-dev` | GGF 开发指导 — 红线（双层架构/事件复制/生成代码勿改等）+ 模块文档路由表 + 关键 API 速查（GF 门面/实体/UI/资源/事件/配置/存档） |
 
 ## 入门与导航
 

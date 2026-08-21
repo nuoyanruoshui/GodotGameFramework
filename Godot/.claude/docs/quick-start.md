@@ -276,7 +276,7 @@ CLAUDE.md                          -- Master config (read this first, ~60 lines)
 .claude/
   settings.json                    -- Claude Code hooks and project settings
   agents/                          -- 49 agent definitions (YAML frontmatter)
-  skills/                          -- 16 active skill definitions (YAML frontmatter)
+  skills/                          -- 17 active skill definitions (YAML frontmatter)
   skills-archived/                 -- 62 archived (game-production pipeline, incl. code-review)
   hooks/                           -- 12 hook scripts (.sh) wired by settings.json
   rules/                           -- 11 path-specific rule files
