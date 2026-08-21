@@ -48,6 +48,8 @@
 
 ## 🚀 快速开始
 
+> 💡 **只需要框架？请自行切换到 `Empty` 分支** — `main` 分支是包含示例游戏（TheGame）与完整 AI 开发工作流（`.claude/` 技能/代理、`docs/` 系统文档、钩子、MCP 等）的开发主分支。若你只想要**纯框架**进行二次开发，请克隆后执行 `git checkout Empty`，该分支聚焦框架项目本身。
+
 ### 环境要求
 
 - **Godot**: 4.7+（.NET 版本，Godot .NET SDK 4.7.0）
@@ -585,6 +587,60 @@ TheGame/DataTables/GameConfigs/*.bytes          ← 二进制数据（运行时�
 | `UIOutPutPathGe` / `EntityOutPutPathGe` | Ge 脚本输出目录 | `"res://TheGame/"` |
 | `UIOutPutPathLogic` / `EntityOutPutPathLogic` | Logic 脚本输出目录 | `"res://TheGame/"` |
 | `NodePrefix` | 子节点名称前缀（用于自动收集） | `"m_"` |
+
+---
+
+## 🤖 AI 开发工作流（Claude Code）
+
+GGF 集成了完整的 **Claude Code AI 开发工作流**，可用自然语言驱动框架开发。相关配置集中管理在项目根 `.claude/` 目录：
+
+```
+开发者（自然语言需求）
+      │
+      ▼
+┌──────────────────────────────────────────────┐
+│                Claude Code                   │
+│  ┌─────────┐ ┌────────┐ ┌────────┐ ┌───────┐  │
+│  │ Skills  │ │ Agents │ │ Hooks  │ │  MCP  │  │
+│  │/ggf-dev │ │godot-* │ │Pre/Post│ │Code-  │  │
+│  │/luban-  │ │csharp- │ │ToolUse │ │graph  │  │
+│  │dev      │ │special-│ │ 校验   │ │知识图谱│  │
+│  │/grill-  │ │ist 等  │ │        │ │       │  │
+│  │with-docs│ │        │ │        │ │       │  │
+│  └─────────┘ └────────┘ └────────┘ └───────┘  │
+└───────────────────┬────────────────────────────┘
+                    │ 读取 / 校验 / 生成
+        ┌───────────┼─────────────┐
+        ▼           ▼             ▼
+  ┌──────────┐ ┌─────────┐ ┌─────────────┐
+  │ docs/*.md │ │ CLAUDE.md│ │ .claude/docs│
+  │ 模块系统文档│ │ 主配置/约定│ │ 技能索引等   │
+  └──────────┘ └─────────┘ └─────────────┘
+                    │ 产出代码 / 文档
+                    ▼
+        ┌─────────────────────────┐
+        │   GGF 框架代码与项目文档   │
+        │  Framework/ + TheGame/   │
+        └─────────────────────────┘
+```
+
+| 组件 | 说明 |
+|------|------|
+| **技能（Skills）** | `skills/` 下 **17 个活跃技能**：`/ggf-dev`（框架开发红线 + 模块文档路由）、`/luban-dev`（配表工具）、`/grill-with-docs`（代码深度审查）、`/improve-codebase-architecture`（架构加深分析）等。游戏生产流水线技能（GDD/故事/冲刺/QA/发布/团队编排，61 个）已归档至 `skills-archived/`（2026-08 精简），需要时移回即恢复 |
+| **代理（Agents）** | `agents/` — 40+ 专职子代理（`godot-specialist`、`godot-csharp-specialist`、`gameplay-programmer` 等）。引擎特化代理（`unity-*`/`ue-*`/`unreal-*`）已移除（2026-07） |
+| **文档** | 仓库根 `docs/` — 20+ 篇模块系统文档（每模块一篇）；`CLAUDE.md` — 主配置与开发约定；`.claude/docs/` — 技能索引 / 快速入门 / 工作流目录 |
+| **钩子（Hooks）** | `hooks/` — SessionStart、PreToolUse/PostToolUse（Bash 与编辑校验）、Notification、Stop 等自动化护栏 |
+| **MCP** | CodeGraph 代码知识图谱（`.mcp.json`）— SQLite 索引全量符号 / 文件 / 调用关系，支持代码智能问答 |
+
+**推荐入口**：
+
+- 框架开发 → `/ggf-dev`（红线 + 模块文档路由 + 关键 API 速查）
+- 配置表增删改查 / 导表 → `/luban-dev`
+- 代码深度审查 → `/grill-with-docs`
+- 架构加深分析 → `/improve-codebase-architecture`
+- 项目现状审计 → `/project-stage-detect`
+
+技能完整索引见 `.claude/docs/skills-reference.md`。
 
 ---
 
