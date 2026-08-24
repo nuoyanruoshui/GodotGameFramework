@@ -7,6 +7,7 @@
 
 using GameFramework;
 using Godot;
+using GodotGameFramework.Extensions;
 using System;
 
 namespace GodotGameFramework
@@ -29,45 +30,6 @@ namespace GodotGameFramework
     /// </summary>
     public class DefaultLogHelper : GameFrameworkLog.ILogHelper
     {
-        /// <summary>会话日志路径（持久化，崩溃后可读取）。</summary>
-        private static readonly string SessionLogPath =
-            System.IO.Path.Combine(ProjectSettings.GlobalizePath("user://"), "session.log");
-
-        /// <summary>日志文件写入锁。</summary>
-        private static readonly object LogFileLock = new object();
-
-        /// <summary>会话日志最大字节数（超过后截半，防止无限增长）。</summary>
-        private const long MaxSessionLogBytes = 512 * 1024; // 512 KB
-
-        /// <summary>
-        /// 将 Warning 及以上级别日志写入 user://session.log（线程安全，带大小控制）。
-        /// </summary>
-        private static void PersistToSessionLog(string line)
-        {
-            try
-            {
-                lock (LogFileLock)
-                {
-                    System.IO.File.AppendAllText(SessionLogPath, line + "\n", System.Text.Encoding.UTF8);
-
-                    // 超过上限时截半保留
-                    var info = new System.IO.FileInfo(SessionLogPath);
-                    if (info.Length > MaxSessionLogBytes)
-                    {
-                        string[] allLines = System.IO.File.ReadAllLines(SessionLogPath, System.Text.Encoding.UTF8);
-                        int keep = allLines.Length / 2;
-                        System.IO.File.WriteAllLines(SessionLogPath,
-                            allLines.AsSpan(allLines.Length - keep).ToArray(),
-                            System.Text.Encoding.UTF8);
-                    }
-                }
-            }
-            catch
-            {
-                // 日志持久化失败不能影响主流程
-            }
-        }
-
         /// <summary>
         /// 记录日志。
         /// 由核心框架的 GameFrameworkLog 类自动调用。
@@ -79,31 +41,30 @@ namespace GodotGameFramework
             switch (level)
             {
                 case GameFrameworkLogLevel.Debug:
-                    // Debug 级别使用灰色文字标识
-                    GD.Print($"[DEBUG] {message}");
+                    GD.PrintRich("[DEBUG]".ColorString(Colors.White) + message);
                     break;
 
                 case GameFrameworkLogLevel.Info:
-                    GD.Print(message);
+                    GD.PrintRich("[INFO]".ColorString(Colors.Green) + message);
                     break;
 
                 case GameFrameworkLogLevel.Warning:
-                    GD.Print($"[WARNING] {message}");
+                    GD.PrintRich($"{"[WARNING]".ColorString(Colors.Yellow)} {message}");
                     GD.PushWarning(message.ToString());
                     break;
 
                 case GameFrameworkLogLevel.Error:
-                    GD.Print($"[ERROR] {message}");
+                    GD.PrintRich($"{"[ERROR]".ColorString(Colors.Red)} {message}");
                     GD.PushError(message.ToString());
                     break;
 
                 case GameFrameworkLogLevel.Fatal:
-                    GD.Print($"[FATAL] {message}");
+                    GD.PrintRich($"{"[FATAL]".ColorString(Colors.Red)} {message}");
                     GD.PushError($"[FATAL] {message}");
                     break;
 
                 default:
-                    GD.Print($"[UNKNOWN LOG LEVEL] {message}");
+                    GD.PrintRich($"[UNKNOWN LOG LEVEL] {message}");
                     GD.PushError($"[UNKNOWN LOG LEVEL] {message}");
                     break;
             }

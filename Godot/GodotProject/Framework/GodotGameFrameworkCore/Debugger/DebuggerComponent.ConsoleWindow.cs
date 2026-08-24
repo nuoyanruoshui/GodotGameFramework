@@ -1,6 +1,7 @@
 using GameFramework;
 using GameFramework.Debugger;
 using Godot;
+using GodotGameFramework.Extensions;
 using System;
 using System.Collections.Generic;
 
@@ -458,15 +459,27 @@ public sealed partial class DebuggerComponent
             // Godot 引擎错误格式: "ERROR: Message" 或 "ERROR: Condition ... is true."
             if (trimmed.StartsWith("ERROR:") || trimmed.Contains("ERROR:"))
             {
-                string msg = ExtractMeaningfulMessage(trimmed, "ERROR:");
+                string msg = ExtractMeaningfulMessage(trimmed, "ERROR:".ColorString(Colors.Red));
                 return (GameFrameworkLogLevel.Error, msg);
             }
 
             // Godot 引擎警告格式: "WARNING: Message"
             if (trimmed.StartsWith("WARNING:") || trimmed.Contains("WARNING:"))
             {
-                string msg = ExtractMeaningfulMessage(trimmed, "WARNING:");
+                string msg = ExtractMeaningfulMessage(trimmed, "WARNING:".ColorString(Colors.Yellow));
                 return (GameFrameworkLogLevel.Warning, msg);
+            }
+
+            if (trimmed.StartsWith("INFO:") || trimmed.Contains("INFO:"))
+            {
+                string msg = ExtractMeaningfulMessage(trimmed, "INFO:".ColorString(Colors.Green));
+                return (GameFrameworkLogLevel.Info, msg);
+            }
+
+            if (trimmed.StartsWith("DEBUG:") || trimmed.Contains("DEBUG:"))
+            {
+                string msg = ExtractMeaningfulMessage(trimmed, "DEBUG:".ColorString(Colors.White));
+                return (GameFrameworkLogLevel.Debug, msg);
             }
 
             // Godot 脚本错误: "E 0:00:01.234   ..." 或 "  <C++ 错误>  ..."

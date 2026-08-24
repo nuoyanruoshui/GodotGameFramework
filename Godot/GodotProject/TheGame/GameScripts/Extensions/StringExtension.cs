@@ -55,11 +55,11 @@ namespace GodotGameFramework.Extensions
         public static string ColorString(this string str, string color)
         {
             StringBuilder builder = new StringBuilder();
-            builder.Append("<color=");
-            builder.Append(color);
-            builder.Append(">");
+            builder.Append("[color=");
+            builder.Append(color.Contains('#') ? color : $"#" + color);
+            builder.Append("]");
             builder.Append(str);
-            builder.Append("</color>");
+            builder.Append("[/color]");
             return builder.ToString();
         }
         public static string ColorString(this string str, Color color)
