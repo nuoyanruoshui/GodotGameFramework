@@ -2729,36 +2729,63 @@ namespace GodotGameFramework
         /// <summary>
         /// 菲比啾比
         /// </summary>
-        public static void FeiBi()
+        public static void FeiBi(Color color = default)
         {
-            GameFrameworkLog.Info("      _                ___68.__________  __________.87___      _   _");
-            GameFrameworkLog.Info("   _c@7,_#_  +!248W#__.c7!:4$61$5?,=c84.__#,,25_  cc#,#,#___?:=03__");
-            GameFrameworkLog.Info("    53$?Wc._   _@,__.b@$#:$=,W?,#,10@;?110:+@@4,7W-++@;;._9-_  _6__");
-            GameFrameworkLog.Info("    3@9.=W;_   _@__0._9_+;7,.#44-:a=$=2WW116#5#;11a00@??!16.$__.=_");
-            GameFrameworkLog.Info("   _8@b___+___.?@0c,_______,-_  ___=-=,__ _@_$@__,a;944W-4411W:9__");
-            GameFrameworkLog.Info("      ___!W1.____ ___                       __     _  __,W9___W__ _");
-            GameFrameworkLog.Info("   __+W,____   _                      ___                 ___8$2___");
-            GameFrameworkLog.Info(" _:$__________     _______.=;07WW#WWWW70;=_______          _____-W;");
-            GameFrameworkLog.Info("5+____,W3,,+W_____a$$3=,,,,,,,,,,,,,,,,,,,,,,,!7W4=___           __");
-            GameFrameworkLog.Info("__ _4:,,,5W8987-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,-!,,cW3__ _       _");
-            GameFrameworkLog.Info("____7,,,#88885,,,,,,,,,;-,,,,,,,,,,,,,,,,,,,,2W30!2;,,=85___      _");
-            GameFrameworkLog.Info("____9,,,0988W,,,,,,,,,+,,,,,,,,b,,,,,,,,,,;,,,,8!?5$W3,,,,,,-Wc__   _");
-            GameFrameworkLog.Info("_?WW;,,,,:W9,,,:-,,,,+,,,,,,,,c,,,,,,,,,,,+,,,,,,,WW0,,,,,,,,,,,W,_");
-            GameFrameworkLog.Info(" __W,,,,2+,,,,,:,,,-c+-,,,-c-;,,,,,,,,,,,,c,;cc+-,,,,,,,,,,,,,,,,!9");
-            GameFrameworkLog.Info(" _W,,,,9-,,,,,c,,,,,b,,,,,,,,c,,,,,,,,,,,,cc,,,,,,-b,,,,,,,,,,,,,,W");
-            GameFrameworkLog.Info("$:=28.4,,,,,,;,,,,,:2$WWWWWWW?bcbccc--=;b,.c,-c=;,,,c,,,,,,;,,,,,,8");
-            GameFrameworkLog.Info("_____?=,,,,,,c,+-,W6..bWW$W2.b8=.......7WWW$$WWWW6b-;,,,,,,--,,,,,8");
-            GameFrameworkLog.Info("    _3,,,,,,,cb,c,,c$558-____W:...........;476a...5W9,,,,,,:-,,,,,8");
-            GameFrameworkLog.Info("    __?,,,,,,,W-=-c645555555558-.......7654W____.W..c,,,,,,c,,,,,,W");
-            GameFrameworkLog.Info("    __W,,,,,,-3=====1cccc;ccccW........W2344468545#.c,,,,,:,,,,,,=7");
-            GameFrameworkLog.Info("    __;a,,,,,,-8==!=a=1?;::?1,...!?!...7bccc+cccc0c=-,,,,,;,,,,,,2.");
-            GameFrameworkLog.Info("    ___$,,,,,,,,,68;=====........?==!....1a====!1==c,c,,-+,,,,,,,#_");
-            GameFrameworkLog.Info("      _W,,,,,,,,,,,,,,b7W5b........,......-===:;=+b+b-,c,,,,,,,,,9_");
-            GameFrameworkLog.Info("      _#,,,,,,,,,,,,,,,,71!!!0#=#0578WWWWWWWWW79W,,,cb,,,,,,,,,,,7_");
-            GameFrameworkLog.Info("     __$,,,,,,,,,,,,,,9!!!!8!__9a!!67--W88888-79__60,,,,,,,,,,,,,5_");
-            GameFrameworkLog.Info("     _b:,,,,,,,,,,,,,W!!!07___7=c!!!;WWW888842W__ __W=,,,,,,,,,,,5_");
-            GameFrameworkLog.Info("    __W,,,,,,,,,,,,,,8?!!3b__.$a!!c!!W$$9W98;87+,1WWWW8,,,,,,,,,,$_");
-            GameFrameworkLog.Info("    __6,,,,,,,,,,,,,c3!!?7____Wa-!!!!29$W9999WWWWW$c___5-,,,,,,,,-!");
+            GameFrameworkLog.Info("      _                ___68.__________  __________.87___      _   _".ColorString(color));
+            GameFrameworkLog.Info("   _c@7,_#_  +!248W#__.c7!:4$61$5?,=c84.__#,,25_  cc#,#,#___?:=03__".ColorString(color));
+            GameFrameworkLog.Info("    53$?Wc._   _@,__.b@$#:$=,W?,#,10@;?110:+@@4,7W-++@;;._9-_  _6__".ColorString(color));
+            GameFrameworkLog.Info("    3@9.=W;_   _@__0._9_+;7,.#44-:a=$=2WW116#5#;11a00@??!16.$__.=_".ColorString(color));
+            GameFrameworkLog.Info("   _8@b___+___.?@0c,_______,-_  ___=-=,__ _@_$@__,a;944W-4411W:9__".ColorString(color));
+            GameFrameworkLog.Info("      ___!W1.____ ___                       __     _  __,W9___W__ _".ColorString(color));
+            GameFrameworkLog.Info("   __+W,____   _                      ___                 ___8$2___".ColorString(color));
+            GameFrameworkLog.Info(" _:$__________     _______.=;07WW#WWWW70;=_______          _____-W;".ColorString(color));
+            GameFrameworkLog.Info("5+____,W3,,+W_____a$$3=,,,,,,,,,,,,,,,,,,,,,,,!7W4=___           __".ColorString(color));
+            GameFrameworkLog.Info("__ _4:,,,5W8987-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,-!,,cW3__ _       _".ColorString(color));
+            GameFrameworkLog.Info("____7,,,#88885,,,,,,,,,;-,,,,,,,,,,,,,,,,,,,,2W30!2;,,=85___      _".ColorString(color));
+            GameFrameworkLog.Info("____9,,,0988W,,,,,,,,,+,,,,,,,,b,,,,,,,,,,;,,,,8!?5$W3,,,,,,-Wc__   _".ColorString(color));
+            GameFrameworkLog.Info("_?WW;,,,,:W9,,,:-,,,,+,,,,,,,,c,,,,,,,,,,,+,,,,,,,WW0,,,,,,,,,,,W,_".ColorString(color));
+            GameFrameworkLog.Info(" __W,,,,2+,,,,,:,,,-c+-,,,-c-;,,,,,,,,,,,,c,;cc+-,,,,,,,,,,,,,,,,!9".ColorString(color));
+            GameFrameworkLog.Info(" _W,,,,9-,,,,,c,,,,,b,,,,,,,,c,,,,,,,,,,,,cc,,,,,,-b,,,,,,,,,,,,,,W".ColorString(color));
+            GameFrameworkLog.Info("$:=28.4,,,,,,;,,,,,:2$WWWWWWW?bcbccc--=;b,.c,-c=;,,,c,,,,,,;,,,,,,8".ColorString(color));
+            GameFrameworkLog.Info("_____?=,,,,,,c,+-,W6..bWW$W2.b8=.......7WWW$$WWWW6b-;,,,,,,--,,,,,8".ColorString(color));
+            GameFrameworkLog.Info("    _3,,,,,,,cb,c,,c$558-____W:...........;476a...5W9,,,,,,:-,,,,,8".ColorString(color));
+            GameFrameworkLog.Info("    __?,,,,,,,W-=-c645555555558-.......7654W____.W..c,,,,,,c,,,,,,W".ColorString(color));
+            GameFrameworkLog.Info("    __W,,,,,,-3=====1cccc;ccccW........W2344468545#.c,,,,,:,,,,,,=7".ColorString(color));
+            GameFrameworkLog.Info("    __;a,,,,,,-8==!=a=1?;::?1,...!?!...7bccc+cccc0c=-,,,,,;,,,,,,2.".ColorString(color));
+            GameFrameworkLog.Info("    ___$,,,,,,,,,68;=====........?==!....1a====!1==c,c,,-+,,,,,,,#_".ColorString(color));
+            GameFrameworkLog.Info("      _W,,,,,,,,,,,,,,b7W5b........,......-===:;=+b+b-,c,,,,,,,,,9_".ColorString(color));
+            GameFrameworkLog.Info("      _#,,,,,,,,,,,,,,,,71!!!0#=#0578WWWWWWWWW79W,,,cb,,,,,,,,,,,7_".ColorString(color));
+            GameFrameworkLog.Info("     __$,,,,,,,,,,,,,,9!!!!8!__9a!!67--W88888-79__60,,,,,,,,,,,,,5_".ColorString(color));
+            GameFrameworkLog.Info("     _b:,,,,,,,,,,,,,W!!!07___7=c!!!;WWW888842W__ __W=,,,,,,,,,,,5_".ColorString(color));
+            GameFrameworkLog.Info("    __W,,,,,,,,,,,,,,8?!!3b__.$a!!c!!W$$9W98;87+,1WWWW8,,,,,,,,,,$_".ColorString(color));
+            GameFrameworkLog.Info("    __6,,,,,,,,,,,,,c3!!?7____Wa-!!!!29$W9999WWWWW$c___5-,,,,,,,,-!".ColorString(color));
+        }
+
+        public static void Miku(Color color = default)
+        {
+            GameFrameworkLog.Info("_______________#########_______________________".ColorString(color));
+            GameFrameworkLog.Info("______________############_____________________".ColorString(color));
+            GameFrameworkLog.Info("______________#############____________________".ColorString(color));
+            GameFrameworkLog.Info("_____________##__###########___________________".ColorString(color));
+            GameFrameworkLog.Info("____________###__######_#####__________________".ColorString(color));
+            GameFrameworkLog.Info("____________###_#######___####_________________".ColorString(color));
+            GameFrameworkLog.Info("___________###__##########_####________________".ColorString(color));
+            GameFrameworkLog.Info("__________####__###########_####_______________".ColorString(color));
+            GameFrameworkLog.Info("________#####___###########__#####_____________".ColorString(color));
+            GameFrameworkLog.Info("_______######___###_########___#####___________".ColorString(color));
+            GameFrameworkLog.Info("_______#####___###___########___######_________".ColorString(color));
+            GameFrameworkLog.Info("______######___###__###########___######_______".ColorString(color));
+            GameFrameworkLog.Info("_____######___####_##############__######______".ColorString(color));
+            GameFrameworkLog.Info("____#######__#####################_#######_____".ColorString(color));
+            GameFrameworkLog.Info("____#######__##############################____".ColorString(color));
+            GameFrameworkLog.Info("___#######__######_#################_#######___".ColorString(color));
+            GameFrameworkLog.Info("___#######__######_######_#########___######___".ColorString(color));
+            GameFrameworkLog.Info("___#######____##__######___######_____######___".ColorString(color));
+            GameFrameworkLog.Info("___#######________######____#####_____#####____".ColorString(color));
+            GameFrameworkLog.Info("____######________#####_____#####_____####_____".ColorString(color));
+            GameFrameworkLog.Info("_____#####________####______#####_____###______".ColorString(color));
+            GameFrameworkLog.Info("______#####______;###________###______#________".ColorString(color));
+            GameFrameworkLog.Info("________##_______####________####______________".ColorString(color));
         }
     }
 }
