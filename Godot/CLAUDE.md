@@ -162,7 +162,7 @@ UI lifecycle: `OnInit` → `OnOpen` → `OnCover`/`OnReveal` → `OnUpdate` → 
 
 Opening: `GF.UI.OpenUIForm(UIFormId.MenuForm)` or `await GF.UI.OpenUIFormAsync<T>(UIFormId.MenuForm)`.
 
-TheGame UIs: `LoadingForm`, `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`, `SettingForm`, `QuestionTips`. `LoadingForm` subscribes to `OpenUIFormUpdateEventArgs`/`LoadSceneUpdateEventArgs` (progress bar + Tween smoothing) and `OpenUIFormSuccessEventArgs`/`LoadSceneSuccessEventArgs` (auto-close with re-entry guard `m_IsCloseRequested`). `QuestionTips` implements `ITips` for confirmation dialogs.
+TheGame UIs: `LoadingForm`, `MenuForm`, `MainForm`, `GameOverForm`, `PauseMenuForm`, `TestOverlayForm`, `SettingForm`, `QuestionTips`. `LoadingForm` subscribes only to `OpenUIFormUpdateEventArgs`/`LoadSceneUpdateEventArgs` (progress bar + Tween smoothing) — it does **not** auto-close on success events. Callers open it via `GF.UI.OpenLoadingUIFormAsync()` and explicitly close it in `finally` via `CloseLoading()` (`LoadingForm.Current` 供跨流程收尾,如 `ProcedureGame` 在 MenuForm 打开后关掉 `ProcedurePrelode` 留下的遮罩). `QuestionTips` implements `ITips` for confirmation dialogs.
 
 `UIItemBase : Control` for reusable UI widgets. Pooled via `UIItemInstanceObject` (infrastructure present; the sample `ScorePopupItem` is currently commented out).
 

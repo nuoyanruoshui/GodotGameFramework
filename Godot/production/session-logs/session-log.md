@@ -5620,3 +5620,15 @@ Godot/.codegraph/daemon.pid
 Godot/GodotProject/GodotProject.csproj
 ---
 
+## Session End: 20260825_200126
+### Commits
+14b619f 加入节点树使用示例
+### Uncommitted Changes
+Godot/CLAUDE.md
+Godot/GodotProject/TheGame/GameScripts/Manager/LevelManager.cs
+Godot/GodotProject/TheGame/GameScripts/UI/SettingForm.Logic.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedureGame.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/Procedure/ProcedurePrelode.cs
+Godot/GodotProject/TheGame/MainPack/Scripts/UI/LoadingForm.Logic.cs
+---
+

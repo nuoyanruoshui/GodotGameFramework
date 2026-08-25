@@ -97,13 +97,21 @@ namespace GameLogic
 
 		private async void OnBackToMenu()
 		{
-			await GF.UI.OpenLoadingUIFormAsync();
-			GF.UI.CloseUIForm(this);
-			GF.UI.CloseUIForm((VarInt32)GF.DataNode.GetData(nameof(MainForm)));
-			GF.UI.OpenUIForm(UIFormId.MenuForm);
-			GF.Entity.HideAllLoadedEntities();
-			NodePool.ReleaseAll();
-			GF.Scene.UnloadScene((VarString)GF.DataNode.GetData("Scene"));
+			var loading = await GF.UI.OpenLoadingUIFormAsync();
+			try
+			{
+				GF.UI.CloseUIForm(this);
+				GF.UI.CloseUIForm((VarInt32)GF.DataNode.GetData(nameof(MainForm)));
+				GF.UI.OpenUIForm(UIFormId.MenuForm);
+				GF.Entity.HideAllLoadedEntities();
+				NodePool.ReleaseAll();
+				GF.Scene.UnloadScene((VarString)GF.DataNode.GetData("Scene"));
+			}
+			finally
+			{
+				// 清理完成（或中途异常）后显式收掉加载遮罩
+				loading?.CloseLoading();
+			}
 		}
 
 		private void OnCloseButtonPressed()

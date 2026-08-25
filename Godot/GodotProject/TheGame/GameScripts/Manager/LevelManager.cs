@@ -25,20 +25,28 @@ public partial class LevelManager : SingletonNode<LevelManager>
     public int Timer => 15 * Mathf.Min(m_LevelConfig.Waves.Length, 1);
     public async Task StartLevel(string level)
     {
-        await GF.UI.OpenLoadingUIFormAsync();
-        m_LevelConfig = ConfigSystem.Instance.Tables.TbLevelConfig.DataList.FirstOrDefault(x => x.Level == level);
-        m_Scene = (Node2D)await GF.Scene.LoadSceneAsync(m_LevelConfig.Map);
-        Node2D spawnPoint = m_Scene.GetNode<Node2D>("SpawnPoint");
-        m_Line2D = m_Scene.GetNode<Line2D>("Line2D");
-        Cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
-        Cat.GlobalPosition = spawnPoint.GlobalPosition;
-        StartWave();
-        Level = level;
-        m_MainForm = await GF.UI.OpenUIFormAsync<MainForm>(UIFormId.MainForm);
+        var loading = await GF.UI.OpenLoadingUIFormAsync();
+        try
+        {
+            m_LevelConfig = ConfigSystem.Instance.Tables.TbLevelConfig.DataList.FirstOrDefault(x => x.Level == level);
+            m_Scene = (Node2D)await GF.Scene.LoadSceneAsync(m_LevelConfig.Map);
+            Node2D spawnPoint = m_Scene.GetNode<Node2D>("SpawnPoint");
+            m_Line2D = m_Scene.GetNode<Line2D>("Line2D");
+            Cat = await GF.Entity.ShowEntityAsync<CatEntity>(EntityId.Cat);
+            Cat.GlobalPosition = spawnPoint.GlobalPosition;
+            StartWave();
+            Level = level;
+            m_MainForm = await GF.UI.OpenUIFormAsync<MainForm>(UIFormId.MainForm);
 
-        //节点使用
-        GF.DataNode.SetData(nameof(MainForm), (VarInt32)m_MainForm.SerialId);
-        GF.DataNode.SetData("Scene", (VarString)m_LevelConfig.Map);
+            //节点使用
+            GF.DataNode.SetData(nameof(MainForm), (VarInt32)m_MainForm.SerialId);
+            GF.DataNode.SetData("Scene", (VarString)m_LevelConfig.Map);
+        }
+        finally
+        {
+            // 加载完成（或中途异常）时显式收掉加载遮罩，遮罩全程覆盖场景/实体/主界面加载
+            loading?.CloseLoading();
+        }
     }
 
     public async void StartWave(int waveIndex = 0)

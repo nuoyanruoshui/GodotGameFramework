@@ -36,6 +36,9 @@ public class ProcedureGame : ProcedureBase
         HotUpdateSafetyGuard.MarkStartupSuccess();
 
         await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm);
+
+        // 主菜单已打开，收掉加载遮罩（遮罩由 ProcedurePrelode 打开并保持到此）
+        LoadingForm.Current?.CloseLoading();
     }
 
     /// <summary>
