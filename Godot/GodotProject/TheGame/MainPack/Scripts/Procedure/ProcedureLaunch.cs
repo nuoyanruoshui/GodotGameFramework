@@ -8,6 +8,7 @@ using System.Linq;
 using GameConfig.Constant;
 using GameFramework;
 using GameFramework.Procedure;
+using Godot;
 using GodotGameFramework;
 using GodotGameFramework.NodePool;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
@@ -39,7 +40,7 @@ public class ProcedureLaunch : ProcedureBase
     {
         base.OnEnter(procedureOwner);
 
-        Log.FeiBi();
+        Log.FeiBi(Colors.Yellow);
         Log.Info($"[LaunchProcedure] 验证框架组件...");
         m_Components.TryUpdate(m_NeedComponents[0], GF.Base != null, false);
         m_Components.TryUpdate(m_NeedComponents[1], GF.Event != null, false);
