@@ -35,10 +35,10 @@ public class ProcedureGame : ProcedureBase
         // 标记启动成功：游戏已进入可玩状态，后续崩溃不再归因于热更
         HotUpdateSafetyGuard.MarkStartupSuccess();
 
-        await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm);
+        // await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm);
 
         // 主菜单已打开，收掉加载遮罩（遮罩由 ProcedurePrelode 打开并保持到此）
-        LoadingForm.Current?.CloseLoading();
+        // LoadingForm.Current?.CloseLoading();
     }
 
     /// <summary>
