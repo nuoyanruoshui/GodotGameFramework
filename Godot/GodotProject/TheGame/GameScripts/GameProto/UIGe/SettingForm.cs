@@ -88,6 +88,8 @@ namespace GameLogic
 		private Button m_CloseButton;
 		[Export]
 		private OptionButton m_OptionButton;
+		[Export]
+		private Button m_BackToMenuButton;
 
 	}
 }

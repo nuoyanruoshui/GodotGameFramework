@@ -1,7 +1,9 @@
+using GameConfig;
 using GameFramework.Localization;
 using GameFramework.UI;
 using Godot;
 using GodotGameFramework;
+using GodotGameFramework.NodePool;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
 using System;
@@ -88,7 +90,20 @@ namespace GameLogic
 					GF.Sound.SetVolume(SoundComponent.DefaultSfxGroup, (float)value / 100);
 					GF.Sound.SetVolume(SoundComponent.DefaultUiGroup, (float)value / 100);
 				};
+
+				m_BackToMenuButton.Pressed += OnBackToMenu;
 			}
+		}
+
+		private async void OnBackToMenu()
+		{
+			await GF.UI.OpenLoadingUIFormAsync();
+			GF.UI.CloseUIForm(this);
+			GF.UI.CloseUIForm((VarInt32)GF.DataNode.GetData(nameof(MainForm)));
+			GF.UI.OpenUIForm(UIFormId.MenuForm);
+			GF.Entity.HideAllLoadedEntities();
+			NodePool.ReleaseAll();
+			GF.Scene.UnloadScene((VarString)GF.DataNode.GetData("Scene"));
 		}
 
 		private void OnCloseButtonPressed()
@@ -119,6 +134,8 @@ namespace GameLogic
 			Visible = true;
 			#endregion
 			GF.Base.PauseGame();
+
+			m_BackToMenuButton.Visible = userData != null && userData is MainForm;
 		}
 
 		/// <summary>

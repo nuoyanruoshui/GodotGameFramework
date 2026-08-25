@@ -107,6 +107,7 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     public virtual void OnShow(object userData)
     {
         Visible = true;
+
     }
 
     /// <summary>
@@ -115,6 +116,7 @@ public partial class ActorEntity : CharacterBody2D, IEntity, IActor
     public virtual void OnHide(bool isShutdown, object userData)
     {
         Visible = false;
+        CollisionLayer = LayerMask.LayerToMask2D("Ignore");
     }
 
     /// <summary>

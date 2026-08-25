@@ -79,6 +79,7 @@ public partial class CatEntity : ActorEntity
 			m_Config = ConfigSystem.Instance.Tables.TbCharacterConfig.DataList.FirstOrDefault(x => x.EntityId == EntityId.Cat);
 			m_ShotPos = GetNode<Node2D>("ShotPos");
 			m_HitBox.BodyEntered += OnBodyEntered;
+			m_Fsm.Start<IdleState>();
 
 		}
 		if (m_Check != null)
@@ -100,8 +101,10 @@ public partial class CatEntity : ActorEntity
 	public override void OnShow(object userData)
 	{
 		base.OnShow(userData);
-		m_Fsm.Start<IdleState>();
+
+		CollisionLayer = LayerMask.LayerToMask2D("Player");
 	}
+
 	public override void OnUpdate(float elapseSeconds, float realElapseSeconds)
 	{
 		base.OnUpdate(elapseSeconds, realElapseSeconds);

@@ -43,6 +43,8 @@ public partial class AngerEntity : ActorEntity
         m_AttackTimer = 0f;
         m_HSlider.Value = ActorData.Hp;
         Anim.Play("Idle");
+
+        CollisionLayer = LayerMask.LayerToMask2D("Enemy");
     }
     public void SetTarget(ActorEntity target)
     {

@@ -35,6 +35,10 @@ public partial class LevelManager : SingletonNode<LevelManager>
         StartWave();
         Level = level;
         m_MainForm = await GF.UI.OpenUIFormAsync<MainForm>(UIFormId.MainForm);
+
+        //节点使用
+        GF.DataNode.SetData(nameof(MainForm), (VarInt32)m_MainForm.SerialId);
+        GF.DataNode.SetData("Scene", (VarString)m_LevelConfig.Map);
     }
 
     public async void StartWave(int waveIndex = 0)

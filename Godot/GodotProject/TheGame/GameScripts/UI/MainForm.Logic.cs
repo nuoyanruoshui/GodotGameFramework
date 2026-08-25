@@ -62,7 +62,7 @@ namespace GameLogic
 
 		private void OnSettingButtonPressed()
 		{
-			GF.UI.OpenUIForm(UIFormId.SettingForm);
+			GF.UI.OpenUIForm(UIFormId.SettingForm, this);
 		}
 
 		/// <summary>

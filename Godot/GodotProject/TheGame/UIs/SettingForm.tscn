@@ -10,7 +10,7 @@
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_62wwx"]
 texture = ExtResource("5_sqeo7")
 
-[node name="SettingForm" type="Control" unique_id=1915523127 node_paths=PackedStringArray("m_MusicHSlider", "m_EffectHSlider", "m_CloseButton", "m_OptionButton")]
+[node name="SettingForm" type="Control" unique_id=1915523127 node_paths=PackedStringArray("m_MusicHSlider", "m_EffectHSlider", "m_CloseButton", "m_OptionButton", "m_BackToMenuButton")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -23,6 +23,7 @@ m_MusicHSlider = NodePath("Content/Music/m_MusicHSlider")
 m_EffectHSlider = NodePath("Content/Effect/m_EffectHSlider")
 m_CloseButton = NodePath("Content/m_CloseButton")
 m_OptionButton = NodePath("Content/m_OptionButton")
+m_BackToMenuButton = NodePath("Content/m_BackToMenuButton")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=1653091560]
 layout_mode = 1
@@ -173,3 +174,19 @@ offset_right = 61.0
 offset_bottom = 81.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="m_BackToMenuButton" type="Button" parent="Content" unique_id=684415185]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -86.0
+offset_top = -77.0
+offset_right = 87.0
+offset_bottom = -35.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 33
+text = "返回主菜单"
