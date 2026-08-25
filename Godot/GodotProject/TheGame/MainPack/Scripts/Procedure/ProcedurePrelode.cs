@@ -15,6 +15,7 @@ using GodotGameFramework;
 using GodotGameFramework.NodePool;
 using GodotGameFramework.Sound;
 using GodotGameFramework.UI;
+using GameLogic;
 using ProcedureOwner = GameFramework.Fsm.IFsm<GameFramework.Procedure.IProcedureManager>;
 
 /// <summary>
@@ -78,16 +79,25 @@ public class ProcedurePrelode : ProcedureBase
         NodePool.Instance.Active(); // 启动节点池
         LayerMask.Instance.Active(); // 启动层级工具\
         await GF.UI.OpenLoadingUIFormAsync();
-        await GF.Archive.LoadAsync();
+        try
+        {
+            await GF.Archive.LoadAsync();
 
-        if (IsLoadAll())
-        {
-            ChangeState<ProcedureGame>(procedureOwner);
+            if (IsLoadAll())
+            {
+                ChangeState<ProcedureGame>(procedureOwner);
+            }
+            else
+            {
+                Log.Warning("[ProcedurePrelode] 部分模块加载失败，继续进入游戏。");
+                ChangeState<ProcedureGame>(procedureOwner);
+            }
         }
-        else
+        catch (System.Exception ex)
         {
-            Log.Warning("[ProcedurePrelode] 部分模块加载失败，继续进入游戏。");
-            ChangeState<ProcedureGame>(procedureOwner);
+            // 存档加载异常时收掉加载遮罩，避免永久挂住；正常路径由 ProcedureGame 在 MenuForm 打开后关闭
+            Log.Fatal("[ProcedurePrelode] 存档加载失败: {0}", ex);
+            LoadingForm.Current?.CloseLoading();
         }
     }
     private void LoadLocalization()

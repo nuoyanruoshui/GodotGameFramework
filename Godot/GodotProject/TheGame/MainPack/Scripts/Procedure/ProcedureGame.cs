@@ -28,14 +28,17 @@ public class ProcedureGame : ProcedureBase
     /// 进入流程。
     /// 加载配置、重置游戏状态、创建并启动游戏状态 FSM。
     /// </summary>
-    protected internal override void OnEnter(ProcedureOwner procedureOwner)
+    protected internal override async void OnEnter(ProcedureOwner procedureOwner)
     {
         base.OnEnter(procedureOwner);
 
         // 标记启动成功：游戏已进入可玩状态，后续崩溃不再归因于热更
         HotUpdateSafetyGuard.MarkStartupSuccess();
 
-        Log.Info("开始你的游戏吧");
+        await GF.UI.OpenUIFormAsync<MenuForm>(UIFormId.MenuForm);
+
+        // 主菜单已打开，收掉加载遮罩（遮罩由 ProcedurePrelode 打开并保持到此）
+        LoadingForm.Current?.CloseLoading();
     }
 
     /// <summary>
