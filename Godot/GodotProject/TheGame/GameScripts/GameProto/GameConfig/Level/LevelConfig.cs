@@ -20,6 +20,7 @@ public sealed partial class LevelConfig : Luban.BeanBase
         Level = _buf.ReadString();
         Map = _buf.ReadString();
         {int __n0 = _buf.ReadSize(); Waves = new MonsterSpawnWaves[__n0];for(var __index0 = 0 ; __index0 < __n0 ; __index0++) { MonsterSpawnWaves __e0;__e0 = global::GameConfig.MonsterSpawnWaves.DeserializeMonsterSpawnWaves(_buf); Waves[__index0] = __e0;}}
+        Pos = ExternalTypeUtil.NewVector3(global::GameConfig.vector3.Deserializevector3(_buf));
     }
 
     public static LevelConfig DeserializeLevelConfig(ByteBuf _buf)
@@ -40,6 +41,7 @@ public sealed partial class LevelConfig : Luban.BeanBase
     /// </summary>
     public readonly string Map;
     public readonly MonsterSpawnWaves[] Waves;
+    public readonly Godot.Vector3 Pos;
    
     public const int __ID__ = 735472700;
     public override int GetTypeId() => __ID__;
@@ -56,6 +58,7 @@ public sealed partial class LevelConfig : Luban.BeanBase
         + "Level:" + Level + ","
         + "Map:" + Map + ","
         + "Waves:" + Luban.StringUtil.CollectionToString(Waves) + ","
+        + "pos:" + Pos + ","
         + "}";
     }
 }
