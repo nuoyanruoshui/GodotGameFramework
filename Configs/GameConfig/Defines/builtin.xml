@@ -3,7 +3,7 @@
         <var name="x" type="float" />
         <var name="y" type="float" />
         <mapper target="client" codeTarget="cs-bin,cs-simple-json,cs-newtonsoft-json">
-            <option name="type" value="UnityEngine.Vector2" />
+            <option name="type" value="Godot.Vector2" />
             <option name="constructor" value="ExternalTypeUtil.NewVector2" />
         </mapper>
     </bean>
@@ -12,7 +12,7 @@
         <var name="y" type="float" />
         <var name="z" type="float" />
         <mapper target="client" codeTarget="cs-bin,cs-simple-json,cs-newtonsoft-json">
-            <option name="type" value="UnityEngine.Vector3" />
+            <option name="type" value="Godot.Vector3" />
             <option name="constructor" value="ExternalTypeUtil.NewVector3" />
         </mapper>
     </bean>
@@ -22,7 +22,7 @@
         <var name="z" type="float" />
         <var name="w" type="float" />
         <mapper target="client" codeTarget="cs-bin,cs-simple-json,cs-newtonsoft-json">
-            <option name="type" value="UnityEngine.Vector4" />
+            <option name="type" value="Godot.Vector4" />
             <option name="constructor" value="ExternalTypeUtil.NewVector4" />
         </mapper>
     </bean>
@@ -30,7 +30,7 @@
         <var name="x" type="int" />
         <var name="y" type="int" />
         <mapper target="client" codeTarget="cs-bin,cs-simple-json,cs-newtonsoft-json">
-            <option name="type" value="UnityEngine.Vector2Int" />
+            <option name="type" value="Godot.Vector2Int" />
             <option name="constructor" value="ExternalTypeUtil.NewVector2Int" />
         </mapper>
     </bean>
@@ -39,7 +39,7 @@
         <var name="y" type="int" />
         <var name="z" type="int" />
         <mapper target="client" codeTarget="cs-bin,cs-simple-json,cs-newtonsoft-json">
-            <option name="type" value="UnityEngine.Vector3" />
+            <option name="type" value="Godot.Vector3" />
             <option name="constructor" value="ExternalTypeUtil.NewVector3" />
         </mapper>
     </bean>
