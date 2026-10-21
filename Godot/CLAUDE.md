@@ -338,7 +338,7 @@ The `Tools/GameEventSourceGenerator/` Unity/TEngine Roslyn Source Generator proj
 | Plugin | Function |
 |--------|----------|
 | **ComponentInsoector** | Custom inspector plugins for framework components (Base, Procedure, Scene, Setting, Entity, UI, Sound, Localization, Download, WebRequest, Resource) + NodePool + UIForm script generator (`ScriptGenerateInspector`) with auto child-node collection and assignment |
-| **ExportInspector** | AssetBundle visual export management panel — scan `.tres` bundle markers, expand to view per-resource details (type, size, import status), one-click export `.pck` subpackages + `GameFrameworkVersion.dat` manifest. Supports **full mode** (source files + imported) and **imported-only mode** (only `.ctex`/`.fontdata`/`.sample`, 80%+ smaller) |
+| **ExportInspector** | AssetBundle visual export management panel — scans `.tres` bundle markers **via dependency metadata first** (`ResourceLoader.GetDependencies`, no eager load of every resource), expand to view per-resource details (type, size, import status), one-click export `.pck` subpackages + `GameFrameworkVersion.dat` manifest. Supports **full mode** (source files + imported) and **imported-only mode** (only `.ctex`/`.fontdata`/`.sample`, 80%+ smaller) |
 | **TopMenu** | `GameFrameworkLog` / `OpenFolder` / `Generate File` submenus — toggle log level (rewrites csproj `DefineConstants`), open `res://` / `user://` folders, and generate: **Localization File** (`Configs/Localization/*.xlsx` → `.txt`), **GameConfig File** (run Luban `gen_code_bin_to_project.bat/.sh`), **Collection Res** (scan `res://TheGame/`, regenerate `ResourcesCollectionConstant.cs`). Merged from the former `LocalizationEditor` + `Resources` plugins |
 
 Enabled in `project.godot`:
@@ -396,7 +396,7 @@ public class PackVersionList {
 ### ExportInspector (addon)
 
 C# `EditorPlugin` (`addons/ExportInspector/`) for visual AssetBundle management:
-- Scans project for `AssetBundle.gd` marker resources (`.tres` files)
+- Scans `.tres`/`.res` markers **via `ResourceLoader.GetDependencies()` metadata first** (no eager load of every resource — avoids Godot's "Handle is not initialized" GCHandle bug, godotengine/godot#112067); only dependency-matching candidates are loaded and type-verified
 - Tree view with expandable bundles showing each file: type label, size, import status (✅/⚠️/—)
 - Toggle: enabled, export enabled, **export-only-imported** (skip source files, only pack `.ctex`/`.fontdata`/`.sample`)
 - One-click export to timestamped directory, generates `GameFrameworkVersion.dat` with configurable version string

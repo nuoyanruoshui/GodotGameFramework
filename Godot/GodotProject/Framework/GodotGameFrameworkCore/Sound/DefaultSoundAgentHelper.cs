@@ -247,7 +247,7 @@ namespace GodotGameFramework.Sound
             m_IsPaused = false;
 
             // 开始播放
-            Play();
+            base.Play();
 
             // 如果需要淡入
             if (fadeInSeconds > 0f)

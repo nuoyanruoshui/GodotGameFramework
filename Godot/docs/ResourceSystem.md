@@ -255,7 +255,7 @@ byte[] bytes = GF.Resource.LoadBinary("res://TheGame/GameProto/GameConfig/tbenti
 
 编辑器右上 Dock「AssetBundle 导出管理」，**不依赖工程导出**，随时手动出包（热更工作流的主要工具）：
 
-1. 扫描全项目 `.tres`/`.res`，脚本全局名含 `AssetBundle` 的即为包标记
+1. 扫描全项目 `.tres`/`.res`：先读**依赖元数据**（`ResourceLoader.GetDependencies()`，不实例化资源），依赖命中 `AssetBundle.gd`（路径或 UID；脚本路径来自 `ProjectSettings.GetGlobalClassList()`，并以默认路径兜底）才 `ResourceLoader.Load` 候选并校验脚本全局名
 2. Tree 展示：包名 / 类型 / 大小 / 导入状态（✅ 已导入 · ⚠️ 缓存缺失 · —）+ 三个可勾选列（启用 / 导出 / 仅产物），勾选直接 `ResourceSaver.Save` 回写 `.tres`
 3. 「导出全部」→ 在导出目录下建**时间戳子目录**（`yyyy-MM-dd_HH-mm-ss`），逐包 `PckPacker` 打包：
    - 全量模式：源文件 + `.import` + 导入产物（解析 `.import` 的 `dest_files`）
@@ -263,6 +263,22 @@ byte[] bytes = GF.Resource.LoadBinary("res://TheGame/GameProto/GameConfig/tbenti
 4. 生成 `GameFrameworkVersion.dat`：逐包填 `Name/Size/SHA256/Url`（`Url` = `UpdateSettingRes.RemoteUrl + "/{Name}.pck"`），`Version` 取面板输入（校验 `\d+.\d+.\d+` 格式）
 5. 导出目录与版本号持久化在 EditorSettings（`godot_asset_bundle/*`）
 6. 「打开」按钮：在导出目录行旁，点击调用 `OS.ShellOpen` 直接打开导出文件夹，方便检查产出或上传
+
+**为什么先读依赖元数据（2026-10 修复）**
+
+编辑器里 `ResourceLoader.Load` 会给资源创建 C# 托管包装；包装被 GC 回收、而原生资源仍留在 `ResourceCache` 时，后续引用计数 1→2 会在
+`ScriptManagerBridge.SwapGCHandleForType` 抛 `System.InvalidOperationException: Handle is not initialized.`（引擎缺陷，Godot 4.7.2 仍存在：
+[#112067](https://github.com/godotengine/godot/issues/112067)、[#124587](https://github.com/godotengine/godot/issues/124587)）。
+旧实现启动时对全工程 `.tres`/`.res` 逐个 `ResourceLoader.Load`（本工程一次约 54 个候选 + 37 个条目），正好把主题/动画/贴图连同 C# 资源
+一起加载又丢弃，从而间歇性触发该异常（GGF issue #3）。
+
+现在的约束：
+
+- 扫描阶段只读 `GetDependencies()` 元数据（实测 `HasCached()` 保持 `false`），只对命中标记脚本的候选做一次加载；包标记集合 `_bundles` 复用于文件列表与打包，不再为「排除标记文件」重复加载
+- 初始扫描延迟一帧执行（`CallDeferred`），避免在 `EditorPlugin._EnterTree` 阶段做批量 IO
+- `UpdateSettingRes` 由 `GetUpdateSettingRes()` 保持强引用，导出时不再「加载后立刻丢弃」
+
+> 这是编辑器侧规避；引擎缺陷本身仍需上游修复。运行时/其它编辑器代码若也大量「加载 C# 资源后丢弃」，仍可能偶发同一日志。
 
 产出目录整体上传服务器即完成一次热更发布（客户端流程见 `DownloadSystem.md` §5）。
 

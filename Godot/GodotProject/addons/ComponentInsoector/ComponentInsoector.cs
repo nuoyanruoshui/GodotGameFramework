@@ -54,34 +54,37 @@ namespace GodotGameFramework.Editor
 
 		public override void _ExitTree()
 		{
-			RemoveInspectorPlugin(m_ProcedureComponent);
-			RemoveInspectorPlugin(m_BaseComponent);
-			RemoveInspectorPlugin(m_SceneComponent);
-			RemoveInspectorPlugin(m_SettingComponent);
-			RemoveInspectorPlugin(m_EntityComponent);
-			RemoveInspectorPlugin(m_UIComponent);
-			RemoveInspectorPlugin(m_SoundComponent);
-			RemoveInspectorPlugin(m_LocalizationComponent);
-			RemoveInspectorPlugin(m_DownloadComponent);
-			RemoveInspectorPlugin(m_WebRequestComponent);
-			RemoveInspectorPlugin(m_ResourceComponent);
-			RemoveInspectorPlugin(m_ScriptGenerateInspector);
-			RemoveInspectorPlugin(m_NodePoolInspector);
-			RemoveInspectorPlugin(m_ArchiveSettingInspector);
-			m_ProcedureComponent.Free();
-			m_BaseComponent.Free();
-			m_SceneComponent.Free();
-			m_SettingComponent.Free();
-			m_EntityComponent.Free();
-			m_UIComponent.Free();
-			m_SoundComponent.Free();
-			m_LocalizationComponent.Free();
-			m_DownloadComponent.Free();
-			m_WebRequestComponent.Free();
-			m_ResourceComponent.Free();
-			m_ScriptGenerateInspector.Free();
-			m_NodePoolInspector.Free();
-			m_ArchiveSettingInspector.Free();
+			ReleaseInspectorPlugin(m_ProcedureComponent);
+			ReleaseInspectorPlugin(m_BaseComponent);
+			ReleaseInspectorPlugin(m_SceneComponent);
+			ReleaseInspectorPlugin(m_SettingComponent);
+			ReleaseInspectorPlugin(m_EntityComponent);
+			ReleaseInspectorPlugin(m_UIComponent);
+			ReleaseInspectorPlugin(m_SoundComponent);
+			ReleaseInspectorPlugin(m_LocalizationComponent);
+			ReleaseInspectorPlugin(m_DownloadComponent);
+			ReleaseInspectorPlugin(m_WebRequestComponent);
+			ReleaseInspectorPlugin(m_ResourceComponent);
+			ReleaseInspectorPlugin(m_ScriptGenerateInspector);
+			ReleaseInspectorPlugin(m_NodePoolInspector);
+			ReleaseInspectorPlugin(m_ArchiveSettingInspector);
+		}
+
+		/// <summary>
+		/// 注销并释放一个 Inspector 插件。
+		/// <see cref="EditorInspectorPlugin"/> 派生自 RefCounted，不能用 <c>Free()</c>
+		/// （会报 "Can't free a RefCounted object" / "Nonexistent function 'free'"），
+		/// 只能通过 <see cref="GodotObject.Dispose"/> 释放 C# 包装持有的引用。
+		/// </summary>
+		private void ReleaseInspectorPlugin(EditorInspectorPlugin plugin)
+		{
+			if (plugin == null) return;
+
+			if (IsInstanceValid(plugin))
+			{
+				RemoveInspectorPlugin(plugin);
+				plugin.Dispose();
+			}
 		}
 	}
 }
