@@ -71,6 +71,7 @@ namespace GodotGameFramework.Editor
 			ReleaseInspectorPlugin(m_ScriptGenerateInspector);
 			ReleaseInspectorPlugin(m_NodePoolInspector);
 			ReleaseInspectorPlugin(m_ArchiveSettingInspector);
+			ReleaseInspectorPlugin(m_LocalizationKeyInspector);
 		}
 
 		/// <summary>
