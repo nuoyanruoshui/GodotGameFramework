@@ -58,6 +58,9 @@ namespace GodotGameFramework.Editor
         private const string EditorSettingExportFolder = "godot_asset_bundle/export_folder";
         private const string EditorSettingVersion = "godot_asset_bundle/version";
 
+        /// <summary>AssetBundle 标记脚本的默认路径（全局类未注册时的回退）</summary>
+        private const string DefaultAssetBundleScriptPath = "res://addons/asset_bundle/AssetBundle.gd";
+
         // ═══════════════════════════════════════════════════════════
         //  控件
         // ═══════════════════════════════════════════════════════════
@@ -77,6 +80,14 @@ namespace GodotGameFramework.Editor
         private string _version = "1.0.0";
         private readonly Dictionary<string, Godot.Resource> _bundles = new();
 
+        // AssetBundle 标记脚本的路径 / UID 集合。用来先读资源依赖元数据筛选候选，
+        // 避免把工程里所有 .tres/.res 都 ResourceLoader.Load 一遍。
+        private readonly HashSet<string> _bundleScriptPaths = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _bundleScriptUids = new(StringComparer.Ordinal);
+
+        // 保持引用，避免托管包装被 GC 回收后原生资源仍被缓存复用（Godot #112067）。
+        private Godot.Resource _updateSettingRes;
+
         // ═══════════════════════════════════════════════════════════
         //  生命周期
         // ═══════════════════════════════════════════════════════════
@@ -89,7 +100,9 @@ namespace GodotGameFramework.Editor
 #pragma warning disable CS0618
             AddControlToDock(DockSlot.RightUl, _dockPanel);
 #pragma warning restore CS0618
-            RefreshBundleList();
+            // 延迟一帧再扫描：等编辑器把工程/全局类/UID 缓存都准备好，
+            // 也避免在插件 _EnterTree 阶段做大量文件读取。
+            Callable.From(RefreshBundleList).CallDeferred();
         }
 
         public override void _ExitTree()
@@ -248,11 +261,16 @@ namespace GodotGameFramework.Editor
 
         private void RefreshBundleList()
         {
+            // 延迟扫描可能在插件被禁用/重载后执行，此时控件已失效。
+            if (_bundleTree == null || !IsInstanceValid(_bundleTree)) return;
+
             _bundles.Clear();
+            RebuildBundleScriptIndex();
             _bundleTree.Clear();
             _treeRoot = _bundleTree.CreateItem();
 
             ScanDirectoryForBundles("res://");
+            GD.Print($"[ExportInspector] 扫描完成: {_bundles.Count} 个资源包");
 
             if (_bundles.Count == 0)
             {
@@ -396,11 +414,92 @@ namespace GodotGameFramework.Editor
             dir.ListDirEnd();
         }
 
+        /// <summary>
+        /// 收集 AssetBundle 标记脚本的路径与 UID（全局类列表 + 默认路径），
+        /// 用于在真正加载资源之前先根据依赖元数据筛选候选。
+        /// </summary>
+        private void RebuildBundleScriptIndex()
+        {
+            _bundleScriptPaths.Clear();
+            _bundleScriptUids.Clear();
+
+            _bundleScriptPaths.Add(DefaultAssetBundleScriptPath);
+
+            foreach (var info in ProjectSettings.GetGlobalClassList())
+            {
+                var className = info["class"].AsStringName().ToString();
+                if (!string.Equals(className, "AssetBundle", StringComparison.Ordinal)) continue;
+
+                var scriptPath = info["path"].AsString();
+                if (!string.IsNullOrEmpty(scriptPath))
+                    _bundleScriptPaths.Add(scriptPath);
+            }
+
+            foreach (var scriptPath in _bundleScriptPaths)
+            {
+                var uid = ResourceUid.PathToUid(scriptPath);
+                if (!string.IsNullOrEmpty(uid) && uid.StartsWith("uid://", StringComparison.Ordinal))
+                    _bundleScriptUids.Add(uid);
+            }
+        }
+
+        /// <summary>
+        /// 通过 <see cref="ResourceLoader.GetDependencies"/> 读取依赖元数据，判断资源是否引用
+        /// AssetBundle 标记脚本。该接口只解析资源头，不会实例化资源（<c>HasCached</c> 保持 false），
+        /// 因此不会产生 C# 托管包装，也就不会触发 Godot 的 GCHandle 复用缺陷（#112067）。
+        /// 依赖字符串格式：<c>path</c> 或 <c>uid://xxx::::res://fallback/path</c>。
+        /// </summary>
+        private bool DependsOnBundleScript(string resPath)
+        {
+            string[] dependencies;
+            try
+            {
+                dependencies = ResourceLoader.GetDependencies(resPath);
+            }
+            catch (Exception ex)
+            {
+                GD.PushWarning($"[ExportInspector] 读取依赖元数据失败: {resPath} ({ex.Message})");
+                return false;
+            }
+
+            if (dependencies == null) return false;
+
+            foreach (var dependency in dependencies)
+            {
+                if (string.IsNullOrEmpty(dependency)) continue;
+
+                // 单段 = 纯路径；三段 = uid :: (空) :: fallback path
+                var sections = dependency.Split("::");
+                var fallbackPath = sections[^1];
+                if (_bundleScriptPaths.Contains(fallbackPath)) return true;
+
+                var uid = sections[0];
+                if (!uid.StartsWith("uid://", StringComparison.Ordinal)) continue;
+
+                if (_bundleScriptUids.Contains(uid)) return true;
+
+                // 依赖里没有回退路径时，再用 UID 反查脚本路径
+                if (string.IsNullOrEmpty(fallbackPath))
+                {
+                    long id = ResourceUid.TextToId(uid);
+                    if (ResourceUid.HasId(id) && _bundleScriptPaths.Contains(ResourceUid.GetIdPath(id)))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         /// <summary>尝试将文件作为 AssetBundle 加载</summary>
         private void TryAddBundle(string path)
         {
             var ext = Path.GetExtension(path)?.ToLower();
             if (ext != ".tres" && ext != ".res") return;
+            if (_bundles.ContainsKey(path)) return;
+
+            // 先由依赖元数据筛选候选，避免把工程内所有 .tres/.res（主题、动画、样式…）
+            // 以及它们的依赖贴图提前加载成 C# 托管对象。
+            if (!DependsOnBundleScript(path)) return;
 
             var resource = ResourceLoader.Load(path);
             if (resource == null) return;
@@ -408,13 +507,10 @@ namespace GodotGameFramework.Editor
             var script = resource.GetScript().As<Script>();
             if (script == null) return;
 
-            var globalName = script.GetGlobalName();
-            if (string.IsNullOrEmpty(globalName) || !globalName.ToString().Contains("AssetBundle")) return;
+            var globalName = script.GetGlobalName().ToString();
+            if (string.IsNullOrEmpty(globalName) || !globalName.Contains("AssetBundle", StringComparison.Ordinal)) return;
 
-            if (!_bundles.ContainsKey(path))
-            {
-                _bundles[path] = resource;
-            }
+            _bundles[path] = resource;
         }
 
         /// <summary>从 Resource 读取 Bundle 信息，并扫描文件夹内的具体文件</summary>
@@ -511,18 +607,10 @@ namespace GodotGameFramework.Editor
         /// <summary>添加单个资源条目到 BundleInfo</summary>
         private void AddResourceItem(BundleInfo info, string fullPath, string fileName)
         {
-            // 跳过 AssetBundle 元数据文件自身
+            // 跳过 AssetBundle 元数据文件自身。
+            // 扫描阶段已把所有标记收进 _bundles，这里直接查表，不再为了识别标记去加载资源。
             var ext = Path.GetExtension(fileName)?.ToLower();
-            if (ext is ".tres" or ".res")
-            {
-                var resCheck = ResourceLoader.Load(fullPath);
-                if (resCheck != null)
-                {
-                    var script = resCheck.GetScript().As<Script>();
-                    if (script != null && script.GetGlobalName().ToString().Contains("AssetBundle"))
-                        return;
-                }
-            }
+            if ((ext is ".tres" or ".res") && _bundles.ContainsKey(fullPath)) return;
 
             var typeLabel = GetTypeLabel(ext, fileName);
             long fileSize = GetFileSize(fullPath);
@@ -727,7 +815,10 @@ namespace GodotGameFramework.Editor
                 _txtExportFolder.Text = dir;
                 SaveExportFolderPreference();
                 GD.Print($"导出目录已设为: {dir}");
+                dialog.QueueFree();
             };
+            dialog.Canceled += dialog.QueueFree;
+            dialog.CloseRequested += dialog.QueueFree;
 
             EditorInterface.Singleton.GetBaseControl().AddChild(dialog);
             dialog.PopupCenteredRatio(0.6f);
@@ -736,14 +827,28 @@ namespace GodotGameFramework.Editor
         {
             if (string.IsNullOrEmpty(_exportFolder))
             {
-                var dialog = new ConfirmationDialog();
-                dialog.Title = "警告";
-                dialog.DialogText = "导出文件夹为空";
-                dialog.Confirmed += () => dialog.QueueFree();
-                dialog.Canceled += () => dialog.QueueFree();
+                ShowWarningDialog("警告", "导出文件夹为空，请先选择导出目录。");
                 return;
             }
             OS.ShellOpen(_exportFolder);
+        }
+
+        /// <summary>
+        /// 弹出提示对话框。<see cref="AcceptDialog"/> 是 Window(Node)，必须挂到编辑器节点树
+        /// 并 Popup 才会显示；关闭后 QueueFree，避免每次点击都留下一个游离节点。
+        /// </summary>
+        private void ShowWarningDialog(string title, string message)
+        {
+            var dialog = new AcceptDialog
+            {
+                Title = title,
+                DialogText = message,
+            };
+            dialog.Confirmed += dialog.QueueFree;
+            dialog.CloseRequested += dialog.QueueFree;
+
+            EditorInterface.Singleton.GetBaseControl().AddChild(dialog);
+            dialog.PopupCentered();
         }
 
         // ═══════════════════════════════════════════════════════════
@@ -831,7 +936,7 @@ namespace GodotGameFramework.Editor
             }
         }
 
-        private static void PackDirectoryContents(PckPacker packer, string dirPath, BundleInfo bundle)
+        private void PackDirectoryContents(PckPacker packer, string dirPath, BundleInfo bundle)
         {
             var dir = DirAccess.Open(dirPath);
             if (dir == null) return;
@@ -855,20 +960,12 @@ namespace GodotGameFramework.Editor
                 }
                 else
                 {
-                    // 跳过 AssetBundle 元数据文件
+                    // 跳过 AssetBundle 元数据文件（扫描阶段已收集，直接查表）
                     var ext = Path.GetExtension(fileName)?.ToLower();
-                    if (ext is ".tres" or ".res")
+                    if ((ext is ".tres" or ".res") && _bundles.ContainsKey(fullPath))
                     {
-                        var resCheck = ResourceLoader.Load(fullPath);
-                        if (resCheck != null)
-                        {
-                            var script = resCheck.GetScript().As<Script>();
-                            if (script != null && script.GetGlobalName().ToString().Contains("AssetBundle"))
-                            {
-                                fileName = dir.GetNext();
-                                continue;
-                            }
-                        }
+                        fileName = dir.GetNext();
+                        continue;
                     }
 
                     PackFileWithImport(packer, fullPath, bundle.ExportOnlyImported);
@@ -1006,6 +1103,21 @@ namespace GodotGameFramework.Editor
         //  版本文件生成
         // ═══════════════════════════════════════════════════════════
 
+        /// <summary>
+        /// 加载并缓存 UpdateSettingRes。
+        /// 缓存引用可避免托管包装被回收后、原生资源仍被 ResourceCache 复用所触发的
+        /// "Handle is not initialized"（Godot #112067 / #124587）。
+        /// </summary>
+        private Godot.Resource GetUpdateSettingRes()
+        {
+            if (_updateSettingRes != null && IsInstanceValid(_updateSettingRes))
+                return _updateSettingRes;
+
+            _updateSettingRes = ResourceLoader.Load(
+                string.Format(GameFolderConstant.MainPackResources, "UpdateSettingRes"));
+            return _updateSettingRes;
+        }
+
         private void CreatePackVersionFile(string exportDir, int num)
         {
             if (num == 0)
@@ -1013,7 +1125,13 @@ namespace GodotGameFramework.Editor
                 GD.Print("[ExportInspector] 没有成功导出的包，跳过版本文件生成。");
                 return;
             }
-            var res = ResourceLoader.Load(string.Format(GameFolderConstant.MainPackResources, "UpdateSettingRes"));
+            var res = GetUpdateSettingRes();
+            if (res == null)
+            {
+                GD.PrintErr("[ExportInspector] 无法加载 UpdateSettingRes，跳过版本文件生成。");
+                return;
+            }
+            var remoteUrl = res.Get(UpdateSettingRes.Parameters.RemoteUrl).AsString();
             var blist = _bundles.ToList();
             var packs = new Pack[num];
             int idx = 0;
@@ -1032,7 +1150,7 @@ namespace GodotGameFramework.Editor
                     Name = info.Name,
                     Size = fileInfo.Exists ? fileInfo.Length : 0,
                     Hash = fileInfo.Exists ? NodeUtility.ComputeSHA256(pckPath) : string.Empty,
-                    Url = res.Get(UpdateSettingRes.Parameters.RemoteUrl) + "/" + info.Name + ".pck",
+                    Url = $"{remoteUrl}/{info.Name}.pck",
                     Type = PackType.Resource,
                 };
                 idx++;

@@ -398,7 +398,7 @@ public class PackVersionList {
 ### ExportInspector (addon)
 
 C# `EditorPlugin` (`addons/ExportInspector/`) for visual AssetBundle management:
-- Scans project for `AssetBundle.gd` marker resources (`.tres` files)
+- Scans `.tres`/`.res` markers **via `ResourceLoader.GetDependencies()` metadata first** (no eager load of every resource — avoids Godot's "Handle is not initialized" GCHandle bug, godotengine/godot#112067); only dependency-matching candidates are loaded and type-verified
 - Tree view with expandable bundles showing each file: type label, size, import status (✅/⚠️/—)
 - Toggle: enabled, export enabled, **export-only-imported** (skip source files, only pack `.ctex`/`.fontdata`/`.sample`)
 - One-click export to timestamped directory, generates `GameFrameworkVersion.dat` with configurable version string

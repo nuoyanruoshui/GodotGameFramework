@@ -112,8 +112,9 @@ namespace Calcatz.EzpzInspector {
             if (!string.IsNullOrEmpty(script.ResourcePath)) {
                 if (!typeCache.TryGetValue(script.ResourcePath, out var type)) {
                     var temp = script.New().AsGodotObject();
+                    if (temp == null) return false;
                     type = temp.GetType();
-                    temp.Free();
+                    ReleaseTemporaryInstance(temp);
                     typeCache.Add(script.ResourcePath, type);
 
                     var methods = GetExportedButtonMethods(type);
@@ -153,6 +154,25 @@ namespace Calcatz.EzpzInspector {
                     (propertyCache.ContainsKey(type) && propertyCache[type].Count > 0);
             }
             return false;
+        }
+
+        /// <summary>
+        /// 释放 _CanHandle 里通过 <c>script.New()</c> 创建的临时实例。
+        /// <para>Node 尚未入树，可直接 <c>Free()</c>；Resource 等 RefCounted 不能 <c>Free()</c>
+        /// （会报 "Can't free a RefCounted object"），只能 <c>Dispose()</c> 释放 C# 包装持有的引用。</para>
+        /// </summary>
+        private static void ReleaseTemporaryInstance(GodotObject instance) {
+            if (instance == null) return;
+
+            if (instance is Node node) {
+                node.Free();
+            }
+            else if (instance is RefCounted) {
+                instance.Dispose();
+            }
+            else {
+                instance.Free();
+            }
         }
 
         public override void _ParseCategory(GodotObject @object, string category) {
