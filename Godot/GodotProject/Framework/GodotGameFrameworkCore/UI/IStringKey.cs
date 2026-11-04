@@ -5,6 +5,7 @@ namespace GodotGameFramework.Localization
     /// </summary>
     public interface IStringKey
     {
+        string StringKey { get; }
         void SetLocalizationValue();
     }
 }
