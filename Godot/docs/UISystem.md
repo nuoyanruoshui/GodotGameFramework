@@ -313,6 +313,8 @@ public void SetLocalizationValue()
 ```
 
 > 注意：由于收集只扫子树，界面自身的 `SetLocalizationValue()` 不会被 `UIStringKeys` 收到，需要在别处（如切换语言事件）手动调用，或者使用实现了 `IStringKey` 的内置 `LabelTr` / `ButtonTr` 组件挂在树里（`GodotGameFrameworkCore/Localization/ButtonTr.cs` / `LabelTr.cs`）。
+>
+> 💡 `LabelTr` / `ButtonTr` 的 `StringKey` 在 Inspector 里是**键选择器**（可搜索、按 `MainForm.*` 过滤、直接显示译文），不用手敲键名；识别规则与实现细节见 [LocalizationSystem.md §3.6](LocalizationSystem.md)。
 
 ---
 

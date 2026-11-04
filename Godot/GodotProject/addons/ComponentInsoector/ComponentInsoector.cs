@@ -20,6 +20,7 @@ namespace GodotGameFramework.Editor
 		ScriptGenerateInspector m_ScriptGenerateInspector;
 		NodePoolInspectorPlugin m_NodePoolInspector;
 		ArchiveSettingInspectorPlugin m_ArchiveSettingInspector;
+		LocalizationKeyInspectorPlugin m_LocalizationKeyInspector;
 		public override void _EnterTree()
 		{
 			m_ProcedureComponent = new ProcedureComponentInspectorPlugin();
@@ -36,6 +37,7 @@ namespace GodotGameFramework.Editor
 			m_ScriptGenerateInspector = new ScriptGenerateInspector();
 			m_NodePoolInspector = new NodePoolInspectorPlugin();
 			m_ArchiveSettingInspector = new ArchiveSettingInspectorPlugin();
+			m_LocalizationKeyInspector = new LocalizationKeyInspectorPlugin();
 			AddInspectorPlugin(m_BaseComponent);
 			AddInspectorPlugin(m_ProcedureComponent);
 			AddInspectorPlugin(m_SceneComponent);
@@ -50,6 +52,7 @@ namespace GodotGameFramework.Editor
 			AddInspectorPlugin(m_ScriptGenerateInspector);
 			AddInspectorPlugin(m_NodePoolInspector);
 			AddInspectorPlugin(m_ArchiveSettingInspector);
+			AddInspectorPlugin(m_LocalizationKeyInspector);
 		}
 
 		public override void _ExitTree()
@@ -68,6 +71,7 @@ namespace GodotGameFramework.Editor
 			ReleaseInspectorPlugin(m_ScriptGenerateInspector);
 			ReleaseInspectorPlugin(m_NodePoolInspector);
 			ReleaseInspectorPlugin(m_ArchiveSettingInspector);
+			ReleaseInspectorPlugin(m_LocalizationKeyInspector);
 		}
 
 		/// <summary>
