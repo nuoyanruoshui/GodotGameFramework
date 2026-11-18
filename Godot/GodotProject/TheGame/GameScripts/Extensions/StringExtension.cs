@@ -52,7 +52,7 @@ namespace GodotGameFramework.Extensions
 
             return null;
         }
-        public static string ColorString(this string str, string color)
+        public static string ColorString(this object str, string color)
         {
             StringBuilder builder = new StringBuilder();
             builder.Append("[color=");
@@ -62,7 +62,7 @@ namespace GodotGameFramework.Extensions
             builder.Append("[/color]");
             return builder.ToString();
         }
-        public static string ColorString(this string str, Color color)
+        public static string ColorString(this object str, Color color)
         {
             return str.ColorString(color.ToHtml());
         }
